@@ -379,7 +379,7 @@ with ordinary use and is independent of which schema version is recorded.
 | Drift | How it shows up | How to detect |
 |---|---|---|
 | Issues without criteria | Filed by hand since the migration — the usual source | `gh issue list --state open --json number,title,body`, check for `### Done when` |
-| Decorative blocking | A `blocked` label with no edge; readiness reports it ready | Compare `labels` against `blockedBy.totalCount` |
+| Decorative blocking | A `blocked` label with no edge; readiness reports it ready | `labels` contains a blocking label while `blockedBy.totalCount == 0` |
 | A tracker regrowing | Progress rows reappearing in a tracked file | §1a's search, re-run |
 | Reintroduced instructions | "update the roadmap when done" added back | §1c's grep, re-run |
 | The block edited away | `## Task tracking` gone, gutted, or contradicted | Read `AGENTS.md`/`CLAUDE.md` |
