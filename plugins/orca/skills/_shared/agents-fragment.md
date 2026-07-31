@@ -1,8 +1,8 @@
 # The AGENTS.md fragment — transcribe, do not improvise
 
-`/orca:adopt` appends the block below to a consuming project's `AGENTS.md` or
+`/orca:migrate` appends the block below to a consuming project's `AGENTS.md` or
 `CLAUDE.md`. A plugin cannot write a project's always-loaded context, so this is
-the one-time manual step that makes the tracking model stick.
+the manual step that makes the tracking model stick.
 
 > **The fenced block is app-agnostic** — it describes the tracking model only,
 > and mentions no specific tool or project. Claude Code plugins have no
@@ -20,8 +20,14 @@ one already carrying contributor instructions. If neither exists, create
 `AGENTS.md` — and make sure anything referring to it (such as a gutted roadmap
 stub) names the file you actually wrote.
 
+The `<!-- orca-skills tracking model vN -->` line is **not decoration.**
+`/orca:migrate` reads it on every later run to tell a repo migrated under an
+older schema from one already current. Drop it and the next run cannot
+distinguish the two.
+
 ```markdown
 ## Task tracking
+<!-- orca-skills tracking model v1 -->
 
 - Task state lives in GitHub Issues. No tracked file records progress, status,
   or completion.

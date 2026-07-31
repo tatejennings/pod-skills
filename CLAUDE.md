@@ -43,7 +43,7 @@ the shared file, not a skill's restatement of it:
 
 - `_shared/github-backlog.md` — milestone resolution, the readiness query, `gh`
   constraints. *(app-agnostic: GitHub only, nothing Orca-specific)*
-- `_shared/agents-fragment.md` — the block `/orca:adopt` appends to a consuming
+- `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a consuming
   repo's `AGENTS.md`. *(app-agnostic)*
 - `_shared/issue-schema.md` — the `### Done when` contract all five skills read.
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff

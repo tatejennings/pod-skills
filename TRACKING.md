@@ -120,9 +120,10 @@ Releases qualify, which is why they are the obvious example — but so do "Phase
 
 ## What the skills do with it
 
-- **`/orca:adopt`** migrates an existing project into this model, and re-runs as
-  a drift audit afterwards. It is the on-ramp for everything else — the other
-  skills consume the convention it produces.
+- **`/orca:migrate`** brings a project into this model, and re-runs whenever the
+  repo or the model has moved — after a plugin upgrade that changes what the
+  skills expect, or as a drift audit. It is the on-ramp for everything else: the
+  other skills consume the convention it produces.
 - **`/orca:plan`** accepts an issue number, milestone, or description, writes the
   `### Done when` checklist when it drafts, and never emits a step that writes
   progress to a tracked file.
@@ -136,9 +137,14 @@ Releases qualify, which is why they are the obvious example — but so do "Phase
 
 ## Required setup in a consuming project
 
-**The easy path:** run `/orca:adopt` once in the project. It audits what is
-there, proposes migrating roadmap items to issues, narrative to `docs/specs/`,
-and appends the rules below — proposing everything before it writes anything.
+**The easy path:** run `/orca:migrate` in the project. It audits what is there,
+proposes migrating roadmap items to issues, narrative to `docs/specs/`, and
+appends the rules below — proposing everything before it writes anything.
+
+Re-run it later whenever either side has moved: after upgrading the plugin (the
+model may now expect something new), or to catch drift. It records which schema
+version it applied, so a later run knows the difference between a repo that is
+current and one that merely was.
 
 To do it by hand, paste this into the project's `AGENTS.md` or `CLAUDE.md` (a
 plugin cannot write your project's always-loaded context, which is why this step
@@ -147,6 +153,7 @@ exists at all). The canonical copy — the one the skill transcribes — is
 
 ```markdown
 ## Task tracking
+<!-- orca-skills tracking model v1 -->
 
 - Task state lives in GitHub Issues. No tracked file records progress, status,
   or completion.
@@ -189,7 +196,7 @@ No fan-out, nothing to cache — which is what keeps `/orca:status` safe to loop
 **A `blocked` label is not a dependency.** Labels are decorative to every
 readiness query; only real `blocked-by` edges are read. A backlog whose blocking
 is expressed in labels will report everything ready — which is the honest reading
-of that data, and a thing `/orca:adopt` flags.
+of that data, and a thing `/orca:migrate` flags.
 
 **Issue types are org-level.** Personal-account repos cannot use them, so
 classify with **labels** and never emit `--type`.
@@ -200,7 +207,7 @@ treat sub-issues as display-only enrichment when present.
 
 **Guard the write, not the filename.** A tracked `ROADMAP.md` is not itself a bug
 — a human-authored narrative roadmap is legitimate. What must fail is a skill
-*writing progress into* a tracked file. (`/orca:adopt` is the exception that
+*writing progress into* a tracked file. (`/orca:migrate` is the exception that
 *proposes* converting one, and it proposes rather than acting.)
 
 **Verifying `--json` fields.** Ask for a bogus field (`gh issue list --json

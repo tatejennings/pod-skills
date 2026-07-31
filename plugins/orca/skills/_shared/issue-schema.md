@@ -1,6 +1,6 @@
 # Issue body schema — the contract every skill in this plugin reads
 
-One shape, five consumers. `/orca:adopt` establishes it, `/orca:plan` writes it,
+One shape, five consumers. `/orca:migrate` establishes it, `/orca:plan` writes it,
 `/orca:handoff` binds an executor to it, `/orca:status` reads readiness from it,
 and `/orca:verify` mechanically checks it. **Point at this file; do not restate
 the schema inside a skill.**
@@ -97,7 +97,7 @@ Keep recognition loose and conservative:
 - `/orca:plan` **writes** the checklist when it drafts or refines an issue. This
   is the main way conforming issues come to exist after adoption.
 
-`/orca:adopt` is the only skill that retrofits the schema across a backlog, and
+`/orca:migrate` is the only skill that retrofits the schema across a backlog, and
 it proposes every rewrite before making it — an issue body is someone's writing.
 
 ## Why the checklist lives in the issue

@@ -1,10 +1,10 @@
 # orca-skills
 
 A Claude Code **plugin marketplace** for skills that add a **GitHub-Issues
-backlog and planning layer** on top of [Orca](https://orca.computer) — adopt a
-tracking model in a repo, plan work adversarially, hand it off to a worktree
-agent, watch the lanes, and gate the finished branch against the issue's own
-acceptance checklist.
+backlog and planning layer** on top of [Orca](https://orca.computer) — migrate a
+repo's tracking onto a shared model, plan work adversarially, hand it off to a
+worktree agent, watch the lanes, and gate the finished branch against the issue's
+own acceptance checklist.
 
 > **Requires Orca** — an app that manages git repositories as sets of worktrees,
 > each with its own terminals and agents. These skills drive it through its
@@ -50,21 +50,27 @@ Inside a session use `/plugin marketplace add …` and
 `/plugin install orca@orca-skills`, then `/reload-plugins` — new skills don't
 appear until the plugin reloads.)
 
-Then, **once per project** you point the skills at:
+Then, in **each project** you point the skills at:
 
 ```
-/orca:adopt
+/orca:migrate
 ```
 
 Everything else assumes the tracking model it establishes. Skipping it works if
 your repo already keeps state in GitHub milestones and issues — but the failure
 mode is quiet, so run it at least as an audit.
 
+**Re-run it after upgrading this plugin.** When a release changes what the skills
+expect of a repo, `/orca:migrate` is what moves your project onto the new
+contract — it records which schema version it applied, so it knows the difference
+between a repo that is current and one that merely was. It also catches drift the
+other direction, when practice slips away from the model.
+
 ## Skills
 
 | Skill | What it does |
 |---|---|
-| `/orca:adopt` | Run once per project. Audits how the repo tracks roadmaps, tasks, and specs today, then proposes a migration to the model the other skills read — milestones and issues for state, `docs/specs/` for narrative, a `### Done when` checklist on every issue. Writes nothing until you approve. |
+| `/orca:migrate` | Brings a repo's tracking up to the model the other skills read — milestones and issues for state, `docs/specs/` for narrative, a `### Done when` checklist on every issue. Run it to onboard a project, again after a plugin upgrade that changes what the skills expect, and any time to audit for drift. Writes nothing until you approve. |
 | `/orca:handoff` | Turns "hand off #84" into a verified one-command lane launch: reads the issue, derives the slug, writes the executor contract outside the repo, links the issue natively, reports the lane, and stops. |
 | `/orca:status` | The read-only dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. Also renders the stateless roadmap. |
 | `/orca:verify` | The evidence gate. Checks a finished branch against its issue's own `### Done when` checklist — runs the commands, greps the diff, and refuses to guess at what only a human can judge. Never merges. |
@@ -76,7 +82,7 @@ you merge.
 ## The pipeline
 
 ```
-/orca:adopt          … once per repo — establishes the tracking model
+/orca:migrate        … establishes the tracking model; re-run when it changes
       ↓
 ready issue
   → /orca:plan       … you approve the plan              ← GATE 1
