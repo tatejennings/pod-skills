@@ -51,13 +51,31 @@ git -C <path> diff <merge-base>...HEAD
 
 - `` `<string>` appears in the diff`` ⇒ search **added lines**, not the whole
   diff. A string appearing in a *removed* line is the opposite of the claim.
+
+  ```bash
+  git -C <path> diff <merge-base>...HEAD | grep '^+' | grep -c '<string>'
+  ```
+
+  **Verified**: on a branch that *deleted* the required token, a whole-diff grep
+  returned 1 match and would have passed; the added-lines grep returned 0 and
+  correctly failed. This is not a hypothetical distinction.
 - `` `<path>` is modified`` ⇒ check the changed-file list
   (`git diff --name-only <merge-base>...HEAD`).
 - **Novelty matters when the criterion says it does.** If a criterion requires a
   *new* artifact — a new report, a new entry, a new id — then finding a
-  pre-existing one is a **fail**. Check that the thing is in the added lines and
-  did not exist at the merge base. An unchanged file that already satisfied the
+  pre-existing one is a **fail**. An unchanged file that already satisfied the
   string never satisfies a criterion about producing it.
+
+  For a new *file*, the check is the added-files list plus a merge-base probe —
+  existence alone proves nothing:
+
+  ```bash
+  git -C <path> diff --name-only --diff-filter=A <merge-base>...HEAD   # added on this branch?
+  git -C <path> cat-file -e <merge-base>:<path> 2>/dev/null            # existed before? ⇒ not new
+  ```
+
+  **Verified**: against a branch that touched neither, a naive "does the file
+  exist" check passed while the correct check failed.
 
 ### 3. Human criteria — report, never assert
 
