@@ -3,6 +3,36 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.0.3 — 2026-07-31
+
+**`/orca:verify`'s failure path is now exercised.** A gate that has only ever
+returned `pass` is untested, and this was precondition #1 for ever enabling the
+automation. Run against a throwaway issue and two constructed branches in this
+repo; issue closed and branches deleted afterward.
+
+What the probe confirmed:
+
+- **`fail` reports every unmet criterion, not just the first** — three failures,
+  each with its own evidence (exit code, match count, changed-file list).
+- **`pass-with-review`, never `pass`**, once the checkable criteria were
+  satisfied but a prose criterion remained. That distinction is the difference
+  between a gate and a rubber stamp, and it holds.
+- **Prose criteria are deferred, never guessed at.**
+
+Two frauds the gate claims to catch were reproduced deliberately, and **both
+would have passed a naive implementation**:
+
+- **Pre-existing artifact.** For a criterion demanding a *new* file, "does it
+  exist" passed while the correct check — `--diff-filter=A` plus a merge-base
+  probe — failed. The exact commands are now in `_shared/evidence-gates.md`
+  rather than left as prose.
+- **Removed-line match.** On a branch that *deleted* the required token, a
+  whole-diff `grep` returned 1 match and would have passed; the added-lines-only
+  grep returned 0 and correctly failed. A branch removing the thing the criterion
+  demanded would have been waved through.
+
+Both are documented as verified, with the commands that distinguish them.
+
 ## 1.0.2 — 2026-07-31
 
 **`orca worktree create` does not always create a checkout.** Found by probing a
