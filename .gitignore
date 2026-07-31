@@ -1,0 +1,6 @@
+.DS_Store
+CLAUDE.local.md
+*.log
+.claude/settings.local.json
+tmp/
+scratch/
