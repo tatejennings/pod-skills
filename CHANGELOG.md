@@ -3,6 +3,78 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.0.0 — 2026-07-31
+
+The suite is complete: five skills and one disabled-by-default automation.
+
+**`/orca:status`** — the read-only dashboard, and the join this plugin exists for.
+Orca knows lanes; GitHub knows the backlog; neither is complete alone.
+
+- **The lane half is one call.** `orca worktree ps --json` already returns branch,
+  `linkedIssue`, `linkedPR`, `workspaceStatus`, `liveTerminalCount`, and live
+  `agents[].state`. Per-lane fan-out is explicitly forbidden — only `git status`
+  and `rev-parse HEAD` are fetched per lane, and only for lanes that might be
+  reapable.
+- **`linkedPR` is a number, not a state**, so PR state comes from one repo-wide
+  `gh pr list` joined locally by branch.
+- **New verdict `awaiting-gate`** — a draft PR with no agent running. That is a
+  lane asking for `/orca:verify`, and it is the state this pipeline is built
+  around. A draft PR is the expected shape, never a problem to report.
+- **Degrades honestly**: Orca down ⇒ backlog half only; `gh` down ⇒ lane half
+  only; both ⇒ stop. Never presents a partial run as complete.
+- **Reports decorative blocking**: issues with a `blocked` label but no
+  dependency edge are called ready, and the report says so rather than silently
+  trusting either signal.
+- **`--roadmap`** regenerates the gitignored `ROADMAP.md`, and **refuses to write
+  it if it is tracked** — pointing at `/orca:migrate`, which proposes untracking
+  with consent.
+- **`--reap`** deletes only `merged-reapable` lanes, re-running the
+  primary-checkout proof immediately before each delete. Ambiguity is always a
+  skip, never a prompt.
+
+**`/orca:verify`** — the evidence gate, and the one genuinely new thing here.
+
+- Checks the branch against the issue's own `### Done when` checklist: runs the
+  command criteria, greps **added lines only** for diff assertions, and **refuses
+  to guess** at prose criteria.
+- **No checklist ⇒ stop.** Inventing criteria and then passing them is the exact
+  failure the gate exists to prevent.
+- **Checkbox state is never evidence.** `- [x]` means someone typed an `x`.
+- Catches two subtle frauds by construction: a **pre-existing** artifact offered
+  for a criterion demanding a new one, and **stale evidence** produced before the
+  change it supposedly validates.
+- Three verdicts, and `pass` vs `pass-with-review` is load-bearing — `pass` is
+  impossible while any human criterion is outstanding.
+- Reports **every** failed criterion, so an executor does not burn a cycle per
+  failure.
+- Never merges, never closes an issue, never marks a PR ready unprompted.
+
+**`/orca:plan`** — adversarial planning: parallel research agents, a drafted plan,
+then a cold-reader agent attacking completeness, holes, single-context
+feasibility, and blast radius.
+
+- **Writes the `### Done when` checklist onto the issue.** This is what makes the
+  work gateable later, and it is part of planning rather than an afterthought.
+  Fabricating criteria is called out as worse than a short honest list.
+- Adopts a pre-written plan verbatim rather than re-planning it, while still
+  reviewing it.
+- **`--launch`** hands the approved plan to `/orca:handoff`. Five disqualifiers
+  stop an auto-launch — a split verdict, an unresolved fork, a review finding
+  against an adopted plan, work already in flight, or Orca unavailable.
+
+**The automation** (`_shared/automation.md`) — a config artifact, not a skill,
+and **shipped disabled**.
+
+- The precheck is where safety lives: it fails closed, and carries readiness,
+  concurrency caps, daily PR caps, issue-collision checks, and the circuit
+  breaker.
+- Eight preconditions before enabling, the first being that `/orca:verify` has
+  been seen to **fail** on incomplete work — a gate that has only ever passed is
+  untested.
+- **Verified**: automation subcommands take a positional `<id>` (`show`, `edit`,
+  `run`) except `runs`, which takes `--id`. The CLI is genuinely inconsistent
+  here, so the file says so rather than assuming symmetry.
+
 ## 0.3.0 — 2026-07-31
 
 **`/orca:handoff`** — hands a GitHub issue or an agreed plan to a fresh agent in

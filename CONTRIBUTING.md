@@ -41,6 +41,7 @@ argument.
 - `_shared/issue-schema.md` — the `### Done when` contract
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety, the handoff command
 - `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion
+- `_shared/automation.md` — the disabled-by-default scheduled automation
 
 Change the shared file, not a skill's restatement of it.
 

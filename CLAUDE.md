@@ -49,6 +49,8 @@ the shared file, not a skill's restatement of it:
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff
   invocation.
 - `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion.
+- `_shared/automation.md` — the scheduled automation, shipped disabled, and the
+  preconditions for enabling it. A config artifact, not a skill.
 
 The first two are **app-agnostic**: they describe GitHub and the tracking model
 only, with nothing Orca-specific in them. Plugins have no dependency mechanism,
