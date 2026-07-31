@@ -93,28 +93,46 @@ Then, in the caller:
 - **blocked** = anything else — report *what* blocks it, since that is the
   actionable part.
 
-**The `blockedBy` shape.** Verified: it returns
-`{"nodes": [...], "totalCount": N}`, and `totalCount` is `0` with an empty
-`nodes` array when nothing blocks the issue. That is enough for the common case:
-`totalCount == 0` ⇒ ready.
+### The `blockedBy` shape — verified on live data
 
-What is **not** yet verified on live data is whether `nodes` entries carry a
-`state`, and therefore whether `totalCount` counts *closed* blockers too. It
-almost certainly does — GitHub keeps the relationship after the blocker closes.
-So treat `totalCount > 0` as "inspect further, not automatically blocked":
+Verified 2026-07-31 against a repo with real dependency edges. `blockedBy`
+returns `{"nodes": [...], "totalCount": N}`, and **each node carries the
+blocker's `state`**, along with `number`, `title`, `url`, and `id`:
 
-```bash
-# For the few issues with totalCount > 0, resolve the blockers' real state:
-gh issue view <blocker-number> --json number,state,title
+```json
+{
+  "number": 88,
+  "title": "K2 · Live-run handoff",
+  "blockedBy": {
+    "totalCount": 1,
+    "nodes": [
+      { "number": 87, "state": "OPEN", "title": "K1 · CloudSyncService",
+        "url": "https://github.com/…/issues/87", "id": "I_kwD…" }
+    ]
+  }
+}
 ```
 
-An issue whose every blocker is `CLOSED` is **ready**. Confirm the node shape
-the first time this runs against a repo with a real dependency, and if `nodes`
-does expose `state`, simplify to a single pass over the list output and update
-this file.
+Two consequences, both good:
 
-Do not fan out to `gh issue view` per issue. It works, but it is one request per
-issue, and `/orca:status` is designed to be safe under `/loop 15m`.
+**Readiness is one pass over the list output — no follow-up calls at all.**
+
+```
+ready  ⇔  every node in blockedBy.nodes has state == "CLOSED"
+          (vacuously true when totalCount == 0)
+```
+
+Do **not** use `totalCount > 0` as "blocked". `totalCount` counts the
+relationship, which GitHub keeps after the blocker closes — so an issue whose
+blockers have all closed still reports a non-zero count while being perfectly
+ready. Read `state`, not the count.
+
+**Blocked issues can name their blockers without another query.** `nodes` already
+carries `number` and `title`, so report `blocked by #87 (K1 · CloudSyncService)`
+rather than a bare number. That is the actionable part, and it is free.
+
+Never fan out to `gh issue view` per issue for readiness. Everything needed is in
+the one call above, which is what keeps `/orca:status` safe under `/loop 15m`.
 
 ### Writing dependencies
 

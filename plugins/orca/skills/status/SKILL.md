@@ -162,7 +162,10 @@ READY NEXT
 
 - **Exclude issues already covered by a live lane or an open PR** — those are in
   flight, not ready.
-- Show blocked issues **with their blockers**; that is the actionable part.
+- Show blocked issues **with their blockers, by number and title** — `blockedBy.nodes`
+  already carries both, so it costs nothing. An issue is blocked only when some
+  blocker is still `OPEN`; a non-zero `totalCount` whose blockers have all closed
+  is **ready** (`../_shared/github-backlog.md`).
 - Cap at ~8 and say how many more there are.
 - **Flag issues with no `### Done when` checklist** — they cannot be gated by
   `/orca:verify`, so mark them `(no criteria)` and point at `/orca:plan` or
@@ -170,11 +173,11 @@ READY NEXT
 - Nothing ready and nothing blocked ⇒ one line pointing at `/orca:migrate`
   (audit the backlog) or `/orca:plan` (nothing is filed yet).
 
-**Report decorative blocking honestly.** If issues carry a `blocked` label but
-`blockedBy.totalCount` is 0, every readiness query calls them ready — which is
-the honest reading of the data. Say so rather than silently trusting either
-signal: *"3 issues carry a `blocked` label with no dependency edge; readiness
-below treats them as ready."*
+**Report decorative blocking honestly.** If issues carry a `blocked` label but no
+dependency edge (`blockedBy.totalCount == 0`), every readiness query calls them
+ready — which is the honest reading of the data. Say so rather than silently
+trusting either signal: *"3 issues carry a `blocked` label with no dependency
+edge; readiness below treats them as ready."*
 
 ## 6. Output
 

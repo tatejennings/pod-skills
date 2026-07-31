@@ -43,8 +43,9 @@ gh issue view <n> --json number,title,body,labels,milestone,state,assignees,bloc
 ```
 
 Quote the body in Context. Follow any `docs/specs/<slug>.md` link as requirements
-input. Non-empty `blockedBy` ⇒ check whether those blockers are actually closed;
-planning blocked work is usually a mistake worth surfacing first.
+input. Any blocker still `OPEN` in `blockedBy.nodes[].state` ⇒ planning blocked
+work is usually a mistake worth surfacing first. (A non-zero `totalCount` with
+every blocker `CLOSED` is ready — the relationship outlives the blocker.)
 
 **Milestone name** — prefer GitHub, per `../_shared/github-backlog.md`; fall back
 to in-repo docs only when no matching milestone exists. Quote the real

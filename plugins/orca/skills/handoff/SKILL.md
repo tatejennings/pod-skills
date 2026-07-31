@@ -59,9 +59,11 @@ Then check three things, and **report rather than silently proceeding** on any:
 
 - **State.** A closed issue ⇒ stop and ask; handing off finished work is almost
   always a mistake.
-- **Blockers.** `blockedBy.totalCount > 0` ⇒ resolve whether those blockers are
-  actually closed (`gh issue view <blocker> --json state`). Genuinely blocked ⇒
-  say what blocks it and ask before continuing.
+- **Blockers.** Read `blockedBy.nodes[].state` — an issue is blocked only if some
+  blocker is still `OPEN`. A non-zero `totalCount` alone means nothing; GitHub
+  keeps the relationship after a blocker closes. Genuinely blocked ⇒ name the
+  open blockers (`#87 (K1 · CloudSyncService)` — `nodes` carries the titles) and
+  ask before continuing.
 - **Already in flight.** An open PR referencing it, an assignee, or a live
   worktree with `linkedIssue == <n>`:
 

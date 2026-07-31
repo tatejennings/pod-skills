@@ -3,6 +3,34 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.0.1 — 2026-07-31
+
+**`blockedBy.nodes` carries `state` — verified on live data**, closing the one
+open question in `_shared/github-backlog.md`. Nodes also carry `number`,
+`title`, `url`, and `id`.
+
+Two corrections follow, and both make the readiness logic simpler *and* more
+correct:
+
+- **Readiness is one pass over the list output, with no follow-up calls.** The
+  spec previously told callers to resolve each blocker's state with a per-issue
+  `gh issue view`. That fan-out is now deleted.
+- **`totalCount > 0` never meant "blocked", and the old wording risked implying
+  it.** GitHub keeps the relationship after a blocker closes, so an issue whose
+  blockers have all closed still reports a non-zero count while being perfectly
+  ready. The rule is now stated as: ready ⇔ every node's `state` is `CLOSED`
+  (vacuously true at count 0). An implementation that read the count would have
+  reported ready work as permanently blocked.
+
+`/orca:status` now reports blockers **by number and title** (`blocked by #87 (K1
+· CloudSyncService)`), which `nodes` provides for free. `/orca:handoff` and
+`/orca:plan` read `state` rather than the count when deciding whether work is
+blocked.
+
+`/orca:migrate`'s decorative-blocking check is unchanged in substance — a
+blocking *label* with `totalCount == 0` is still exactly the defect it looks for
+— but the condition is spelled out rather than left as "compare".
+
 ## 1.0.0 — 2026-07-31
 
 The suite is complete: five skills and one disabled-by-default automation.
