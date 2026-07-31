@@ -4,12 +4,12 @@ One spec, many consumers: `adopt`, `plan`, `status`, `verify`, `handoff`.
 **Do not copy these queries into a skill** — a copy is where drift starts.
 Point at this file.
 
-> **A sibling copy lives in `supacode-skills`** at
-> `plugins/supacode/skills/_shared/github-backlog.md`. This file is app-agnostic
-> — nothing in it mentions Orca or Supacode — so the two copies should stay
-> identical in substance. Claude Code plugins have no dependency mechanism, so
-> each plugin must be self-contained to install standalone; that is why this is a
-> copy rather than a reference. **A fix here belongs there too, and vice versa.**
+> **This file is app-agnostic** — nothing in it is specific to Orca, or to any
+> project the skills are pointed at. It describes GitHub and `gh` only, so it is
+> portable to any plugin built on the same tracking model. Claude Code plugins
+> have no dependency mechanism, so each plugin carries its own copy rather than
+> referencing a shared one; if you maintain such a copy elsewhere, a fix here
+> belongs there too.
 
 Verified against `gh` 2.96.0, 2026-07-31. Floor is `gh` 2.94.0, the release that
 added dependencies, sub-issues, and issue types.

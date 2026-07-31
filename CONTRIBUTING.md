@@ -8,9 +8,8 @@ workflow these skills describe is for the *consuming* projects they are pointed
 at, not for the plugin itself.
 
 Do not read the pipeline in [README.md](README.md) as instructions for working
-here. It is the one repo that opts out — `supacode-skills` makes the same
-admission about itself. A plugin repo cannot dogfood its own skills: there is
-nothing to build, nothing to verify, and one author.
+here. It is the one repo that opts out. A plugin repo cannot dogfood its own
+skills: there is nothing to build, nothing to verify, and one author.
 
 ## Adding or editing a skill
 
@@ -45,11 +44,11 @@ argument.
 
 Change the shared file, not a skill's restatement of it.
 
-**The first two have sibling copies in `supacode-skills`** and are app-agnostic
-by design. Plugins have no dependency mechanism, so each must be self-contained
-to install standalone. Both files carry a header naming the sibling — **a fix to
-one belongs in the other**, and letting them diverge silently is the failure the
-header exists to prevent.
+**The first two are app-agnostic by design** — GitHub and the tracking model
+only, with nothing Orca-specific in them. Plugins have no dependency mechanism,
+so each plugin built on this model carries its own copy rather than referencing a
+shared one. Both files say so in a header; if you maintain such a copy elsewhere,
+keep the two in sync rather than letting them diverge silently.
 
 ## Testing a change without installing
 

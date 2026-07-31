@@ -4,16 +4,11 @@
 `CLAUDE.md`. A plugin cannot write a project's always-loaded context, so this is
 the one-time manual step that makes the tracking model stick.
 
-> **A sibling copy lives in `supacode-skills`** at
-> `plugins/supacode/skills/_shared/agents-fragment.md`. The fenced block is
-> app-agnostic and should stay identical in substance across both; the surrounding
-> prose differs only in which skill does the appending. Claude Code plugins have no
-> dependency mechanism, so each plugin must be self-contained to install
-> standalone. **A fix to the fenced rules belongs in both copies.**
->
-> This copy carries two rules the sibling does not yet have — the issue-body
-> schema and the generated-roadmap line. Both are app-agnostic and would be
-> improvements there too.
+> **The fenced block is app-agnostic** — it describes the tracking model only,
+> and mentions no specific tool or project. Claude Code plugins have no
+> dependency mechanism, so each plugin carries its own copy rather than
+> referencing a shared one; if you maintain such a copy elsewhere, a fix to the
+> fenced rules belongs there too.
 
 **Copy the fenced block verbatim.** These rules are what stop lanes from
 re-creating the tracked-progress-file problem, and a paraphrase drifts. Append
@@ -54,7 +49,7 @@ frequently the wrong one for a personal project. Check before writes, not after.
 Appending these rules is only half the job. Search the project's existing
 `CLAUDE.md`/`AGENTS.md` for instructions telling contributors to update a
 roadmap, status board, or progress file — e.g. "always update `ROADMAP.md`",
-"mark the chunk complete in the status board" — and **delete or rewrite them**.
+"mark the task complete in the status board" — and **delete or rewrite them**.
 
 Leaving them is the most common way a migration reverts: the tracked file becomes
 a stub, the instruction survives, and the next session helpfully refills it.

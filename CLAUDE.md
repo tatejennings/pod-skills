@@ -42,18 +42,18 @@ Five files are read by several skills and are dangerous when they drift. Change
 the shared file, not a skill's restatement of it:
 
 - `_shared/github-backlog.md` — milestone resolution, the readiness query, `gh`
-  constraints. *(sibling copy in `supacode-skills`)*
+  constraints. *(app-agnostic: GitHub only, nothing Orca-specific)*
 - `_shared/agents-fragment.md` — the block `/orca:adopt` appends to a consuming
-  repo's `AGENTS.md`. *(sibling copy in `supacode-skills`)*
+  repo's `AGENTS.md`. *(app-agnostic)*
 - `_shared/issue-schema.md` — the `### Done when` contract all five skills read.
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff
   invocation.
 - `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion.
 
-The first two are **app-agnostic and duplicated in `supacode-skills` on
-purpose** — plugins have no dependency mechanism, so each must install
-standalone. Both carry a header naming the sibling: **a fix to one belongs in
-the other.**
+The first two are **app-agnostic**: they describe GitHub and the tracking model
+only, with nothing Orca-specific in them. Plugins have no dependency mechanism,
+so each plugin built on this model carries its own copy rather than referencing a
+shared one. Both files say so in a header — keep any copies you maintain in sync.
 
 Repetition elsewhere (the handoff invocation, "nothing ever merges") is
 deliberate — an instruction present where it is needed cannot be missed.
@@ -62,8 +62,8 @@ deliberate — an instruction present where it is needed cannot be missed.
 
 **Commit straight to `main`.** No branches, no PRs, no lanes. This repo is
 markdown and JSON with no runtime and no parallel work, so the lane workflow the
-skills describe does not apply to it — it is the one repo that opts out.
-`supacode-skills` says the same about itself.
+skills describe does not apply to it — a plugin repo cannot dogfood its own
+skills. It is the one repo that opts out.
 
 ## After any skill edit
 
