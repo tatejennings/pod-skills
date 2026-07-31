@@ -3,6 +3,50 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.0.2 — 2026-07-31
+
+**`orca worktree create` does not always create a checkout.** Found by probing a
+real create response; it invalidates an assumption inherited from the planning
+document and fixes a defect that could have committed to the wrong repository.
+
+Against a **project-backed** repo (`projectId` like `github:<owner>/<repo>`
+rather than `repo:<uuid>`), `worktree create --agent claude --json` returned
+`ok: true` with `path` equal to the **primary checkout**, `branch: ""`,
+`head: ""`, and a three-segment id (`<repoId>::<path>::workspace:<uuid>`).
+`git worktree list` showed one checkout: Orca had created a metadata-only
+workspace entry pointing at the primary checkout, not an isolated worktree.
+
+Why that mattered:
+
+- **`/orca:handoff` would have launched an agent into the primary checkout** —
+  the user's real working directory — while reporting it as an isolated lane.
+  The executor would have committed onto whatever branch was checked out there.
+- **`/orca:status` would have rendered it as a lane**, since the filter was
+  `repoId` + `isMainWorktree: false` and the entry reports `false`.
+- **`--reap` was already safe.** Its `--git-dir` vs `--git-common-dir` proof
+  would have found them equal and refused to delete. The one check written to be
+  paranoid is the one that held.
+
+Fixes:
+
+- **`/orca:handoff` now verifies isolation before reporting success**, with the
+  git proof, and stops with an explanation if the worktree shares the primary
+  checkout's path. `ok: true` is explicitly not sufficient.
+- **`/orca:status` drops entries whose `path` equals the primary checkout's** and
+  reports them separately as non-isolated, rather than as lanes.
+  `isMainWorktree: false` is documented as necessary but not sufficient.
+- **Branch is never predicted or reported empty.** `result.worktree.branch` came
+  back `""` — as it does for the primary worktree in `worktree list` — so the
+  skills fall back to `git branch --show-current` and, failing that, say the
+  branch could not be determined.
+- **Worktree IDs may have three segments.** The shared spec no longer implies
+  exactly two.
+
+Also confirms the response shape that was previously unverified:
+`result.worktree.{path,branch,id}` and `result.agentTerminalHandle` (with
+`result.startupTerminal.handle` as an alias), closing the honest gap recorded in
+0.3.0.
+
 ## 1.0.1 — 2026-07-31
 
 **`blockedBy.nodes` carries `state` — verified on live data**, closing the one
