@@ -205,36 +205,55 @@ orca worktree create --name <slug> --no-parent \
 
 Drop `--issue <n>` when the work has no issue. Everything else stays.
 
-**Verify the response rather than assuming it worked.** Read the JSON and pull
-out four things:
+**Verify the response rather than assuming it worked.** Response shape, confirmed
+live at 1.4.162:
 
 | What | Where |
 |---|---|
-| The **actual** branch Orca derived | the created worktree's `branch` |
-| Worktree path and id | the created worktree's `path` / `id` |
-| The agent's terminal handle | `result.agentTerminalHandle` |
-| Warnings | `result.warnings` |
+| The created worktree | `result.worktree` — with `path`, `branch`, `id` |
+| The agent's terminal handle | `result.agentTerminalHandle` (also `result.startupTerminal.handle`) |
+| Warnings | `result.warnings`, when present |
 
-`result.agentTerminalHandle` is documented in `orca worktree create --help`;
-older runtimes return only `result.startupTerminal.handle`, and folder-based
-repos may return neither — an absent handle is not by itself a failure.
+An absent handle is not by itself a failure; folder-based repos may return none.
 
-**The exact nesting of the worktree object in the create response is not
-documented by `orca agent-context`, which covers commands and flags rather than
-response shapes.** Do not hard-code a path to it: read the JSON, find the created
-worktree, and take `branch` from it. If you cannot locate it, fall back to
-`orca worktree show --worktree name:<slug> --json` rather than reporting a branch
-you predicted. Verify against a real response the first time this runs on a new
-Orca version, and correct `../_shared/orca-lanes.md` if the shape differs.
+### Then verify the lane is actually isolated — this is not optional
+
+`ok: true` does **not** mean a separate checkout exists. Against a project-backed
+repo, `worktree create` can return success having made only a metadata entry that
+points at the **primary checkout** — empty `branch`, `path` equal to the main
+repo, and `isMainWorktree: false` despite not being isolated
+(`../_shared/orca-lanes.md`).
+
+That case is dangerous here specifically: the agent this skill launches would run
+in the user's real working directory and commit onto whatever branch is checked
+out there, while this report calls it a lane.
+
+So after creating, and **before reporting success**:
+
+```bash
+git -C <result.worktree.path> rev-parse --git-dir --git-common-dir
+```
+
+- **Different** ⇒ a real linked worktree. Continue.
+- **Equal**, or `path` matches the primary checkout, ⇒ **stop and report it.**
+  Say the worktree was not isolated, that the agent is running in the primary
+  checkout, and that the entry can be removed with
+  `orca worktree rm --worktree id:<exact-id> --force`. Do not present it as a
+  successful handoff.
+
+**Branch:** take `result.worktree.branch` when non-empty. When empty — which does
+occur — fall back to `git -C <path> branch --show-current`, and if that is empty
+too, report that the branch could not be determined rather than inventing one.
+Never predict it from the slug.
+
+Do **not** cache the terminal handle for later use — handles are routing metadata
+and change. Re-resolve via `orca terminal list --worktree <selector>` if needed
+(you should not need it in this skill).
 
 If `--agent claude` is rejected as an unknown agent id, **stop and report the
 error rather than substituting a different agent.** The user asked for a Claude
 lane; silently launching something else is worse than failing. `orca worktree
 create --help` lists what the installed version accepts.
-
-Do **not** cache the terminal handle for later use — handles are routing
-metadata and change. Re-resolve via `orca terminal list --worktree <selector>`
-if you ever need it again (you should not, in this skill).
 
 ## 5. Report, then stop
 

@@ -24,14 +24,16 @@ memory. That rule has caught real defects, including one below.
 Everything in this section was checked against live `--help` or live `--json`
 output at the version above.
 
-### A worktree ID is `<repoId>::<absolute-path>`
+### A worktree ID is `<repoId>::<absolute-path>` — sometimes with a third segment
 
 ```
 <repo-uuid>::/absolute/path/to/checkout
+<repo-uuid>::/absolute/path/to/checkout::workspace:<uuid>     # also occurs
 ```
 
-Both halves matter: the repo UUID and the absolute filesystem path, joined by
-`::`. Take the exact string from a command's JSON output — never assemble one.
+Take the exact string from a command's JSON output — **never assemble one, and
+never assume it has exactly two segments.** The three-segment form appears for
+project-backed workspaces (below) and is a valid selector.
 
 **The key name differs between commands.** This is a real trap:
 
@@ -68,12 +70,56 @@ where Orca puts worktrees and to repos whose names prefix-match each other
 (`app` vs `app-website`). Treat the path layout above as informational, not as a
 selector.
 
-### Orca derives the branch itself
+### `worktree create` does not always create a checkout — CHECK
 
-`worktree create` names the branch `refs/heads/<git-username>/<name>` — user-
-prefixed, derived from the worktree name. **Do not pass a hand-built
-`<type>/<slug>` branch and assume it took.** Read `branch` back from the create
-response and use that value everywhere downstream.
+**Verified 2026-07-31, and this invalidates a natural assumption.** Against a
+project-backed repo (`projectId` of the form `github:<owner>/<repo>` rather than
+`repo:<uuid>`), `orca worktree create --name X --agent claude --json` returned
+`ok: true` with:
+
+```json
+"path":   "/Users/…/the-primary-checkout",   ← NOT a new directory
+"branch": "",                                 ← no branch
+"head":   "",
+"isMainWorktree": false,
+"id": "<repoId>::/…/the-primary-checkout::workspace:<uuid>"
+```
+
+`git worktree list` showed **one** checkout. Orca had created a metadata-only
+workspace entry *pointing at the primary checkout*, not an isolated worktree.
+
+The danger is specific and severe: an agent launched into that "lane" runs **in
+the primary checkout**, on whatever branch is checked out there, while every
+report calls it an isolated lane. It will commit onto `main` in the user's real
+working directory.
+
+**So never trust `ok: true` alone. After any create, verify isolation:**
+
+```bash
+git -C <returned-path> rev-parse --git-dir --git-common-dir
+```
+
+Different ⇒ a real linked worktree. **Equal ⇒ it is the primary checkout** —
+report that plainly and do not treat it as a lane. Also treat an empty `branch`
+or a `path` equal to the primary checkout's as a failure to isolate.
+
+Note that `isMainWorktree: false` is **not sufficient** — the probe entry above
+reported `false` while sharing the primary path. Only the git proof settles it.
+
+If the repo is project-backed and a real checkout is required, that is a repo
+registration/setup question, not something a skill should work around silently.
+
+### Branch derivation is not guaranteed either
+
+Orca *may* name a new branch `refs/heads/<git-username>/<name>`, but the probe
+above returned an empty `branch`, and the primary worktree also reports
+`branch: ""` in `worktree list`. So:
+
+- **Never predict the branch**, and never pass a hand-built `<type>/<slug>` and
+  assume it took.
+- **Never report an empty `branch` as though it were real.** Fall back to
+  `git -C <path> branch --show-current`, and if that is also empty, say the
+  branch could not be determined.
 
 ### Terminal handles are routing metadata, not identity
 
