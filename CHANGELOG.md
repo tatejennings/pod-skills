@@ -3,6 +3,45 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 0.3.0 — 2026-07-31
+
+**`/orca:handoff`** — hands a GitHub issue or an agreed plan to a fresh agent in
+its own Orca worktree, then stops. Reads the issue and its `### Done when`
+criteria, refuses to launch over work already in flight, derives the worktree
+name, writes an executor contract outside the repo, creates the lane with the
+issue linked natively, and reports the branch Orca actually derived.
+
+The launch command itself lives in `_shared/orca-lanes.md`; this skill owns the
+layer around it — what gets handed off, and what binds the executor.
+
+Load-bearing details:
+
+- **The contract goes outside the repo.** A new checkout cannot see another
+  checkout's untracked files, but any absolute path is readable. The launch
+  prompt stays a single pointer sentence so nothing multi-line has to survive
+  shell quoting.
+- **The issue's `### Done when` checklist is copied into the contract verbatim**,
+  so the executor sees exactly the criteria `/orca:verify` will later apply. No
+  checklist ⇒ the contract says so explicitly rather than letting the executor
+  assume.
+- **Never launch a second lane on an issue that already has one.** Checked
+  against live worktrees (`linkedIssue`) and open PRs before creating anything.
+- **The branch is read back, never predicted.** Orca derives
+  `refs/heads/<user>/<name>` itself.
+- **Draft PRs only**, and the executor is told never to mark its own PR ready —
+  that waits on the evidence gate and a human.
+- **A rejected `--agent claude` stops the run.** Silently substituting another
+  agent is worse than failing.
+- **The skill never monitors the lane it launches.** A full handoff that starts
+  supervising is a different request, and Orca's bundled `orchestration` skill
+  owns it.
+
+**Honest gap:** the exact nesting of the worktree object inside the create
+response is not documented by `orca agent-context`, which covers commands and
+flags but not response shapes. Rather than assert a path verified only against a
+transcript from an older Orca build, the skill reads the response defensively and
+falls back to `orca worktree show`. Worth pinning down on the first real launch.
+
 ## 0.2.0 — 2026-07-31
 
 First skill: **`/orca:migrate`**.
