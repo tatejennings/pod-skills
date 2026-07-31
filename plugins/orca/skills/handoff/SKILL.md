@@ -39,7 +39,25 @@ user-editable and frequently does not match the directory):
 
 ```bash
 orca worktree current --json     # resolves cwd to a path: selector
+orca repo list --json            # find this repo's "kind"
 ```
+
+**Check `kind` before doing any work.** A repo registered as `kind: folder`
+cannot produce a git worktree — `worktree create` returns `ok: true` while
+sharing the primary checkout (`../_shared/orca-lanes.md`). The classification is
+sticky, so a repo with commits, a remote, and a healthy working tree can still be
+`folder`.
+
+Stop before writing anything and report the fix, which is verified:
+
+```bash
+orca project setups --json                                  # find the setup id
+orca project setup-update --setup <id> --kind git --json
+```
+
+(`orca repo add --path` does **not** re-detect; it returns the existing record
+unchanged.) Checking here costs one call and avoids launching an agent into the
+user's working directory.
 
 Run from the repo you are handing work off in. Inside an existing lane this still
 works, but check §1's in-flight rule carefully — handing off from a lane usually
@@ -218,11 +236,12 @@ An absent handle is not by itself a failure; folder-based repos may return none.
 
 ### Then verify the lane is actually isolated — this is not optional
 
-`ok: true` does **not** mean a separate checkout exists. Against a project-backed
-repo, `worktree create` can return success having made only a metadata entry that
-points at the **primary checkout** — empty `branch`, `path` equal to the main
-repo, and `isMainWorktree: false` despite not being isolated
-(`../_shared/orca-lanes.md`).
+`ok: true` does **not** mean a separate checkout exists. Against a repo Orca
+registered as `kind: folder`, `worktree create` can return success having made
+only a metadata entry that points at the **primary checkout** — empty `branch`,
+`path` equal to the main repo, and `isMainWorktree: false` despite not being
+isolated (`../_shared/orca-lanes.md`). §0's `kind` check catches this earlier;
+this is the backstop for anything it misses.
 
 That case is dangerous here specifically: the agent this skill launches would run
 in the user's real working directory and commit onto whatever branch is checked
