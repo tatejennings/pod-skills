@@ -17,8 +17,8 @@ shared specs every skill will read.
 
 | File | What it fixes in place |
 |---|---|
-| `github-backlog.md` | Milestone resolution, the one-call readiness query, `gh` constraints and gotchas. *Copied from `supacode-skills`; sibling note in the header.* |
-| `agents-fragment.md` | The block `/orca:adopt` appends to a consuming repo's `AGENTS.md`. *Copied from `supacode-skills`; extended with the issue-schema and generated-roadmap rules.* |
+| `github-backlog.md` | Milestone resolution, the one-call readiness query, `gh` constraints and gotchas. App-agnostic — GitHub only. |
+| `agents-fragment.md` | The block `/orca:adopt` appends to a consuming repo's `AGENTS.md`, including the issue-schema and generated-roadmap rules. |
 | `issue-schema.md` | **New.** The `### Done when` contract all five skills read — and the three buckets (command / diff assertion / human) that make a criterion checkable. |
 | `orca-lanes.md` | **New.** Orca's identity and selector model, native lane fields, deletion safety, degraded mode, and the proven handoff invocation. |
 | `evidence-gates.md` | **New.** How `/orca:verify` checks a criterion: evidence rules, verdicts, and the prohibition on guessing at human criteria. |

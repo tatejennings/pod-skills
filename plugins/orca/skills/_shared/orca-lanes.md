@@ -27,7 +27,7 @@ output at the version above.
 ### A worktree ID is `<repoId>::<absolute-path>`
 
 ```
-1c0e3480-de94-4520-9eed-ae67ae3c8ef9::/Users/tate/Documents/Projects/orca-skills
+<repo-uuid>::/absolute/path/to/checkout
 ```
 
 Both halves matter: the repo UUID and the absolute filesystem path, joined by
@@ -53,18 +53,20 @@ silently degrades.
 `displayName` is user-editable and frequently does *not* match the directory
 name. A repo whose folder is `my-project` may be registered as `MyProject`, in
 which case `--repo name:my-project` fails with `repo_not_found` — not an empty
-result, a hard error. Verified live: this exact mismatch exists in the author's
-own setup and would have shipped as a broken selector in every skill.
+result, a hard error. Verified live against a repo whose display name had been
+edited — a broken selector here fails every skill, so do not assume the two
+match.
 
 Derive the path from the primary checkout and pass `path:<abs-path>`. Use
 `name:` only for a name a human just typed and confirmed.
 
 ### Worktrees live under `~/orca/workspaces/<repo>/<name>/`
 
-Not a dot-directory, and **not** where Supacode puts them. Do not port a
-path-prefix filter from the sibling plugin. To find this repo's lanes, filter on
-**`repoId` plus `isMainWorktree: false`** — structural, and immune to both path
-layout changes and repos whose names prefix-match each other.
+**Do not identify lanes by a path prefix.** Filter on **`repoId` plus
+`isMainWorktree: false`** instead — structural, and immune to both a change in
+where Orca puts worktrees and to repos whose names prefix-match each other
+(`app` vs `app-website`). Treat the path layout above as informational, not as a
+selector.
 
 ### Orca derives the branch itself
 
@@ -106,10 +108,12 @@ return neither.
 | `comment` | free-text note set via `worktree set --comment` |
 
 This is why `/orca:status` is cheap: Orca stores lane state, so the lane half is
-one call. The sibling plugin fans out 4+ calls per lane because Supacode stores
-none of it. **Do not port that fan-out.** What Orca does *not* have — and what
-this plugin adds — is the backlog half: milestones, readiness, git dirty state,
-and PR *state* (`linkedPR` is a number, not a status).
+**one call for every lane**. Never fan out per-lane commands to rebuild facts
+this call already returns.
+
+What Orca does *not* have — and what this plugin adds — is the backlog half:
+milestones, readiness, dependencies, git dirty state, and PR *state*
+(`linkedPR` is a number, not a status; resolving it needs `gh`).
 
 ## Safety rules
 
