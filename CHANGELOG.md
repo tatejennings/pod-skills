@@ -9,12 +9,42 @@ Notable changes to the `orca` plugin. Versions track
 real create response; it invalidates an assumption inherited from the planning
 document and fixes a defect that could have committed to the wrong repository.
 
-Against a **project-backed** repo (`projectId` like `github:<owner>/<repo>`
-rather than `repo:<uuid>`), `worktree create --agent claude --json` returned
-`ok: true` with `path` equal to the **primary checkout**, `branch: ""`,
-`head: ""`, and a three-segment id (`<repoId>::<path>::workspace:<uuid>`).
-`git worktree list` showed one checkout: Orca had created a metadata-only
-workspace entry pointing at the primary checkout, not an isolated worktree.
+Against a repo Orca registered as **`kind: folder`** rather than `kind: git`,
+`worktree create --agent claude --json` returned `ok: true` with `path` equal to
+the **primary checkout**, `branch: ""`, `head: ""`, and a three-segment id
+(`<repoId>::<path>::workspace:<uuid>`). `git worktree list` showed one checkout:
+Orca had created a metadata-only workspace entry pointing at the primary
+checkout, not an isolated worktree.
+
+**Why a repo ends up `kind: folder`:** this one was registered with Orca while
+its `HEAD` was still unborn — a fresh `git init` with zero commits, so there was
+no git repo to detect. **The classification is sticky**: it stayed `folder` after
+the repo had five commits, a GitHub remote, and a working tree `git` was entirely
+happy with. A repo can look healthy to `git` and still be unable to produce
+worktrees, which is why the check is worth its one call.
+
+An earlier draft of this entry blamed the `projectId` prefix
+(`github:<owner>/<repo>` vs `repo:<uuid>`). **That was wrong** — a `kind: git`
+repo carries the `github:` form too. `kind` is the discriminator.
+
+**The fix, verified end to end:**
+
+```bash
+orca project setups --json                                  # find the setup id
+orca project setup-update --setup <id> --kind git --json
+```
+
+After reclassifying, `worktree create` produced a real isolated checkout at
+`~/orca/workspaces/<repo>/<name>/`, with a two-segment id, a derived branch
+(`refs/heads/<git-username>/<name>`), and `--git-dir` ≠ `--git-common-dir`.
+`orca repo add --path` is **idempotent and does not re-detect**, so it is not a
+fix.
+
+This also **restores the branch-derivation claim** that 1.0.2's first draft had
+weakened: Orca does derive `refs/heads/<git-username>/<name>` on a `kind: git`
+repo. The username comes from Orca's per-repo `gitUsername` and is not
+necessarily the GitHub account you would guess, so the branch is still read back
+from the response rather than predicted.
 
 Why that mattered:
 

@@ -33,7 +33,7 @@ output at the version above.
 
 Take the exact string from a command's JSON output — **never assemble one, and
 never assume it has exactly two segments.** The three-segment form appears for
-project-backed workspaces (below) and is a valid selector.
+workspace entries (see `kind: folder`, below) and is a valid selector.
 
 **The key name differs between commands.** This is a real trap:
 
@@ -73,9 +73,8 @@ selector.
 ### `worktree create` does not always create a checkout — CHECK
 
 **Verified 2026-07-31, and this invalidates a natural assumption.** Against a
-project-backed repo (`projectId` of the form `github:<owner>/<repo>` rather than
-`repo:<uuid>`), `orca worktree create --name X --agent claude --json` returned
-`ok: true` with:
+repo Orca has registered as **`kind: folder`** rather than `kind: git`,
+`orca worktree create --name X --agent claude --json` returned `ok: true` with:
 
 ```json
 "path":   "/Users/…/the-primary-checkout",   ← NOT a new directory
@@ -106,20 +105,60 @@ or a `path` equal to the primary checkout's as a failure to isolate.
 Note that `isMainWorktree: false` is **not sufficient** — the probe entry above
 reported `false` while sharing the primary path. Only the git proof settles it.
 
-If the repo is project-backed and a real checkout is required, that is a repo
-registration/setup question, not something a skill should work around silently.
+### The usual cause: `kind: folder`
 
-### Branch derivation is not guaranteed either
+Check how Orca registered the repo:
 
-Orca *may* name a new branch `refs/heads/<git-username>/<name>`, but the probe
-above returned an empty `branch`, and the primary worktree also reports
-`branch: ""` in `worktree list`. So:
+```bash
+orca repo list --json      # each repo's "kind": "git" | "folder"
+```
 
-- **Never predict the branch**, and never pass a hand-built `<type>/<slug>` and
-  assume it took.
-- **Never report an empty `branch` as though it were real.** Fall back to
-  `git -C <path> branch --show-current`, and if that is also empty, say the
-  branch could not be determined.
+- **`kind: git`** — Orca tracks it as a git repo; `worktree create` should
+  produce a real isolated checkout with a derived branch.
+- **`kind: folder`** — Orca treats it as a plain directory. It cannot create git
+  worktrees from it, so `worktree create` yields a workspace entry sharing the
+  primary path. **Verified live**: a repo registered while its `HEAD` was still
+  unborn (a fresh `git init` with zero commits) was recorded as `kind: folder`
+  and stayed that way after commits existed.
+
+**The classification is sticky.** It is decided at registration and never
+re-evaluated: the probe repo was still `kind: folder` long after it had commits,
+a remote, and a working tree that `git` was perfectly happy with. A repo can look
+completely healthy to `git` and still be unable to produce worktrees.
+
+This is a **repo registration problem, not something a skill should work
+around.** Report it and name the fix. **Verified working:**
+
+```bash
+orca project setups --json                                  # find the setup id
+orca project setup-update --setup <id> --kind git --json    # reclassify
+```
+
+After that, `worktree create` produced a real isolated checkout at
+`~/orca/workspaces/<repo>/<name>/`, with a derived branch and a two-segment id,
+and the `--git-dir` ≠ `--git-common-dir` proof passed. Note `orca repo add
+--path` is **idempotent and does not re-detect** — it returns the existing record
+unchanged, so it is not a fix.
+
+Do not silently launch an agent into a shared checkout.
+
+The `projectId` prefix (`github:<owner>/<repo>` vs `repo:<uuid>`) is **not** the
+discriminator — a `kind: git` repo can carry either. Read `kind`.
+
+### Orca derives the branch itself — on a `kind: git` repo
+
+**Verified**: a real worktree create returned
+`branch: "refs/heads/206668354_nbcuni/shape-probe2"` — `refs/heads/<git-username>/<name>`,
+user-prefixed and derived from the worktree name. The username comes from Orca's
+per-repo `gitUsername`, which is **not** necessarily the GitHub account you
+expect, so predicting the full ref is unwise even when the pattern holds.
+
+- **Never pass a hand-built `<type>/<slug>` branch and assume it took.**
+- **Read `branch` back** from the create response and use that value downstream.
+- **Never report an empty `branch` as though it were real.** It comes back empty
+  for `kind: folder` repos, and the primary worktree also reports `branch: ""` in
+  `worktree list`. Fall back to `git -C <path> branch --show-current`, and if
+  that is empty too, say the branch could not be determined.
 
 ### Terminal handles are routing metadata, not identity
 

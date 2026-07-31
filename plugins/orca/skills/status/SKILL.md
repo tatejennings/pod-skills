@@ -73,9 +73,9 @@ orca worktree ps --json
 Keep worktrees where `repoId` matches **and `isMainWorktree` is false**. Never
 use a path prefix (`../_shared/orca-lanes.md`).
 
-**That pair is necessary but not sufficient.** A project-backed repo can hold a
-workspace entry with `isMainWorktree: false` whose `path` is the *primary
-checkout* — verified live. Also drop any entry whose `path` equals the primary
+**That pair is necessary but not sufficient.** A repo registered as
+`kind: folder` can hold a workspace entry with `isMainWorktree: false` whose
+`path` is the *primary checkout* — verified live. Also drop any entry whose `path` equals the primary
 checkout's path: it is not an isolated lane, and rendering it as one implies work
 is happening somewhere it is not. Report such entries separately, in one line, as
 non-isolated workspace entries rather than silently hiding them.
