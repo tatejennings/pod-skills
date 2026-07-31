@@ -1,6 +1,6 @@
 # GitHub backlog queries — shared by every skill that reads or writes issues
 
-One spec, many consumers: `adopt`, `plan`, `status`, `verify`, `handoff`.
+One spec, many consumers: `migrate`, `plan`, `status`, `verify`, `handoff`.
 **Do not copy these queries into a skill** — a copy is where drift starts.
 Point at this file.
 
@@ -33,7 +33,7 @@ Two things this guard is **not**:
 - It is not a check on filenames. A tracked `ROADMAP.md` is perfectly legitimate
   as human-authored narrative — plenty of repos should have one. Guard the
   *write*, not the file's existence, and never refuse to run because such a file
-  is present. (`/orca:adopt` is the one skill that *proposes* changing such a
+  is present. (`/orca:migrate` is the one skill that *proposes* changing such a
   file's status, and it proposes rather than acting.)
 - It is not a reason to stop the whole task. Refuse the one write, explain, and
   continue with everything else. If a repo's own `CLAUDE.md` mandates the edit,

@@ -162,7 +162,7 @@ command -v orca && orca status --json     # result.runtime.reachable
 
 If the CLI is missing or the runtime is unreachable, **say so and stop** rather
 than half-working. The backlog half of some skills (`/orca:status`'s milestone
-and readiness sections, all of `/orca:adopt`) is pure `gh` and still works —
+and readiness sections, all of `/orca:migrate`) is pure `gh` and still works —
 where that is true, run it and report the lane half as unavailable. Never fail
 silently and never present a partial report as complete.
 

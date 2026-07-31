@@ -1,6 +1,6 @@
 {
   "name": "orca-skills",
-  "description": "Skills that add a GitHub-Issues backlog and planning layer on top of the Orca app — adopt a tracking model, plan work adversarially, hand it off to a worktree agent, watch the lanes, and gate the result against the issue's own acceptance checklist. Requires Orca.",
+  "description": "Skills that add a GitHub-Issues backlog and planning layer on top of the Orca app — migrate a repo's tracking onto the model, plan work adversarially, hand it off to a worktree agent, watch the lanes, and gate the result against the issue's own acceptance checklist. Requires Orca.",
   "owner": {
     "name": "Tate Jennings"
   },
@@ -8,7 +8,7 @@
     {
       "name": "orca",
       "source": "./plugins/orca",
-      "description": "Requires the Orca app. A GitHub-Issues backlog and planning layer over Orca's worktree/terminal CLI: adopt, plan, handoff, status, verify."
+      "description": "Requires the Orca app. A GitHub-Issues backlog and planning layer over Orca's worktree/terminal CLI: migrate, plan, handoff, status, verify."
     }
   ]
 }

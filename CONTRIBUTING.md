@@ -37,7 +37,7 @@ argument.
 ## Shared specs live in `_shared/`, not in copies
 
 - `_shared/github-backlog.md` — milestone resolution, readiness, `gh` constraints
-- `_shared/agents-fragment.md` — the block `/orca:adopt` appends to a repo
+- `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a repo
 - `_shared/issue-schema.md` — the `### Done when` contract
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety, the handoff command
 - `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion
