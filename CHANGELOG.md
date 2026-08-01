@@ -3,6 +3,33 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.1.0 — 2026-08-01
+
+**`ROADMAP.md` is now regenerated on every `/orca:status` run**, not only behind
+a flag. `--roadmap` is replaced by `--no-roadmap`, which suppresses it.
+
+The reasoning: an opt-in write means the file goes stale the moment you forget
+the flag, and **a stale generated file is worse than no file** — it still looks
+current. "Truth is rebuilt, never stored" does not hold if the rendering is only
+sometimes rebuilt. Since the file is derived and gitignored, regenerating it
+destroys nothing and cannot conflict, so the usual reason to withhold a write
+does not apply.
+
+This does cost the skill its unqualified "read-only" claim, so that is stated
+honestly rather than quietly dropped: the roadmap file is the one thing a bare
+run writes, and three guards bound it. **Any guard failing skips the write and
+reports one line — it never fails the run:**
+
+- **Never write a tracked `ROADMAP.md`** — that is the conflict surface the whole
+  model exists to avoid. This guard carries more weight now that the write is
+  unprompted.
+- **Never create the file in a repo with no backlog** — pointing the skill at an
+  unrelated repo must not litter it. An existing file is still refreshed.
+- **Never write outside the primary checkout.**
+
+`--reap` is unchanged and still opt-in; deleting worktrees is a different class
+of action from refreshing a derived file.
+
 ## 1.0.3 — 2026-07-31
 
 **`/orca:verify`'s failure path is now exercised.** A gate that has only ever

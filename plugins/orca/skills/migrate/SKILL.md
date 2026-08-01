@@ -264,11 +264,10 @@ This is where care is owed, because it is the destructive half.
   tracked file is a **no-op** — git keeps tracking it. Two honest options, and
   the user picks:
   - *Generated:* `git rm --cached ROADMAP.md`, add it to `.gitignore`, and it
-    becomes the regenerated view. Say plainly that the generator is
-    `/orca:status --roadmap` and **name it as not yet built if it is not** — do
-    not untrack a file on the promise of a command the user cannot run. Until it
-    exists, "generated" means "no longer tracked", which is still a valid choice
-    but a different one.
+    becomes the regenerated view — `/orca:status` rewrites it on every run.
+    Say plainly that untracking means the committed copy stops updating for
+    anyone reading the repo on GitHub; the file survives locally and refreshes,
+    but it leaves the remote.
   - *Keep it:* it stays tracked as human-authored narrative, and the generated
     roadmap uses a different filename. Legitimate — a narrative roadmap is not a
     bug. What must not happen is a *skill* writing progress into it.
