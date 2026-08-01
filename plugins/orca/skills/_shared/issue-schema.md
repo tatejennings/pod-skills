@@ -127,6 +127,43 @@ What makes a good scope label:
 **Do not rename a repo's existing labels to match a convention.** Vocabulary
 belongs to the project. Reuse what is there, and only add.
 
+## The `manual` label — work no agent can do
+
+Some work cannot be handed to an agent at all: account access, App Store or
+console configuration, a physical device, a purchase, a legal review, anything
+behind credentials a session does not hold. Mark those issues `manual`.
+
+```bash
+gh label create manual --description "Only a human can do this — never hand to an agent"
+```
+
+**It means the whole task is human**, not that part of it is. That distinction is
+what makes the label useful:
+
+| Situation | Where it belongs |
+|---|---|
+| The entire task needs a human | the `manual` **label** |
+| Some acceptance criteria need human judgement | the `### Done when` **checklist** |
+
+An issue with a few `*(human)*` criteria is still agent work — an agent
+implements, and a person judges the rest at review. Labelling that `manual` would
+hide real available work. Conversely, an issue that is *only* human should never
+reach a lane, because an agent will either stall or fake its way to a PR.
+
+How the skills read it:
+
+- **`/orca:status`** lists `manual` issues in their own section rather than under
+  `READY NEXT` — they are ready, but they are yours. Hiding them would lose work;
+  mixing them in would suggest they can be launched.
+- **`/orca:handoff`** refuses to launch a lane for one and says why. This is the
+  payoff: it stops an agent being handed something it structurally cannot finish.
+- **`/orca:triage`** asks when it is not obvious from the issue.
+
+Recognize the convention loosely — a repo may spell it `human`, `human only`, or
+`needs human`. Match on the label's meaning rather than requiring the exact
+string, and say which label you matched. Do not rename a repo's existing label to
+`manual`.
+
 ## Where this schema is enforced, and where it is not
 
 **Enforced** — a skill may require the checklist and stop without it:
