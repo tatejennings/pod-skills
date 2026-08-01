@@ -1,6 +1,7 @@
 # Issue body schema — the contract every skill in this plugin reads
 
-One shape, five consumers. `/orca:migrate` establishes it, `/orca:plan` writes it,
+One shape, six consumers. `/orca:migrate` establishes it, `/orca:triage` and
+`/orca:plan` write it,
 `/orca:handoff` binds an executor to it, `/orca:status` reads readiness from it,
 and `/orca:verify` mechanically checks it. **Point at this file; do not restate
 the schema inside a skill.**
@@ -94,6 +95,8 @@ Keep recognition loose and conservative:
   the checklist. It works on any repo.
 - `/orca:handoff` binds the executor to the checklist when one exists, and hands
   off fine when it does not — it notes the absence in the contract.
+- `/orca:triage` **writes** the checklist by asking the user what "done" looks
+  like. This is the main ongoing source of conforming issues.
 - `/orca:plan` **writes** the checklist when it drafts or refines an issue. This
   is the main way conforming issues come to exist after adoption.
 

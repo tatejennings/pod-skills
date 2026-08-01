@@ -153,6 +153,11 @@ Releases qualify, which is why they are the obvious example — but so do "Phase
   repo or the model has moved — after a plugin upgrade that changes what the
   skills expect, or as a drift audit. It is the on-ramp for everything else: the
   other skills consume the convention it produces.
+- **`/orca:triage`** works a batch of raw issues into plannable ones, one at a
+  time — asking what each means, what "done" looks like, when it is scheduled,
+  and what it depends on. It is where the readiness contract gets populated:
+  milestones assigned, `### Done when` checklists written, dependency edges
+  recorded.
 - **`/orca:plan`** accepts an issue number, milestone, or description, writes the
   `### Done when` checklist when it drafts, and never emits a step that writes
   progress to a tracked file.
