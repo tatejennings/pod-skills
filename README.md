@@ -59,16 +59,37 @@ right, so something has to ask.
 
 ## Install
 
+**From GitHub** — the usual way:
+
+```bash
+claude plugin marketplace add tatejennings/orca-skills
+claude plugin install orca@orca-skills
+```
+
+**From a local clone** — if you want to read or modify the skills:
+
 ```bash
 git clone git@github.com:tatejennings/orca-skills.git
 claude plugin marketplace add ./orca-skills
 claude plugin install orca@orca-skills
 ```
 
-`claude plugin marketplace add` also accepts a GitHub `owner/repo` directly.
-Inside a running session use `/plugin marketplace add …` and
-`/plugin install orca@orca-skills`, then **`/reload-plugins`** — new skills do
-not appear until the plugin reloads.
+Either way, **inside a running session** use the slash-command equivalents and
+then reload, since new skills do not appear until the plugin does:
+
+```
+/plugin marketplace add tatejennings/orca-skills
+/plugin install orca@orca-skills
+/reload-plugins
+```
+
+**Updating.** A GitHub-sourced marketplace does not refresh itself, and updating
+the catalog alone does **not** update the installed copy — run both:
+
+```bash
+claude plugin marketplace update orca-skills
+claude plugin update orca@orca-skills
+```
 
 **Requirements**
 

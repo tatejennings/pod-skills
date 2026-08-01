@@ -3,6 +3,19 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.8.1 — 2026-08-01
+
+**Install docs lead with the GitHub form.** `claude plugin marketplace add
+tatejennings/orca-skills` installs directly — no clone needed — but that was
+buried in a parenthetical after a three-command clone-first recipe, so the
+simplest path read as the advanced one. Both README and `GUIDE.html` now show
+GitHub first, the local clone second (for reading or modifying the skills), the
+in-session slash-command form for each, and the two-command update that a
+GitHub-sourced marketplace needs.
+
+The update step is worth its space: refreshing the catalog does **not** update
+the installed copy, and running only the first command is a quiet no-op.
+
 ## 1.8.0 — 2026-08-01
 
 **Four independent reviewers audited the suite** — correctness, triggering,
