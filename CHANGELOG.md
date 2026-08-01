@@ -3,6 +3,39 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.4.0 — 2026-08-01
+
+**The `manual` label** — work no agent can do: account access, store or console
+configuration, a physical device, a purchase, a legal review. A convention the
+skills understand, not a project-specific label.
+
+The distinction that makes it useful:
+
+| Situation | Where it belongs |
+|---|---|
+| The **whole task** needs a human | the `manual` **label** |
+| **Some acceptance criteria** need human judgement | the `### Done when` **checklist** |
+
+An issue with a few `*(human)*` criteria is still agent work — an agent
+implements and a person judges the rest at review. Labelling that `manual` would
+hide real available work. Conversely, an issue that is *only* human should never
+reach a lane, because an agent will either stall or fake its way to a PR.
+
+- **`/orca:status`** lists them under **`YOUR TASKS`**, a section of their own
+  directly after `READY NEXT`. Not hidden (they are real work) and not mixed in
+  (they cannot be launched). Blocked/ready is computed the same way, and the
+  section is omitted entirely when empty.
+- **`/orca:handoff`** refuses to launch a lane for one and says what the issue
+  needs from the user instead. This is the payoff — it stops an agent being
+  handed something it structurally cannot finish. An explicit override still
+  works, with a warning.
+- **`/orca:triage`** asks when it is not obvious from the issue.
+
+Recognition is loose: a repo may spell it `human`, `human only`, or `needs
+human`, so the skills match on meaning and report which label they matched
+rather than requiring the exact string. As with scope labels, they never rename a
+repo's existing label.
+
 ## 1.3.1 — 2026-08-01
 
 **Scope labels get a documented rule**, from noticing in the field that a

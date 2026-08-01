@@ -77,6 +77,12 @@ Then check three things, and **report rather than silently proceeding** on any:
 
 - **State.** A closed issue ⇒ stop and ask; handing off finished work is almost
   always a mistake.
+- **The `manual` label** ⇒ **stop.** The issue is marked as work no agent can do
+  — account access, store configuration, a physical device, a purchase
+  (`../_shared/issue-schema.md`). Launching a lane for one wastes an agent that
+  will either stall or fake its way to a PR. Say which label matched and what the
+  issue needs from the user instead. Only proceed if they explicitly override,
+  and say plainly that the agent is unlikely to be able to finish.
 - **Blockers.** Read `blockedBy.nodes[].state` — an issue is blocked only if some
   blocker is still `OPEN`. A non-zero `totalCount` alone means nothing; GitHub
   keeps the relationship after a blocker closes. Genuinely blocked ⇒ name the

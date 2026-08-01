@@ -167,6 +167,11 @@ The questions worth asking, in rough priority:
   (`../_shared/issue-schema.md`). Never leave scope unlabelled because nothing
   matched — a new label costs nothing, and unlabelled work is invisible to any
   grouping.
+- **Can an agent do this at all?** Ask when it is not obvious. Work behind
+  credentials, store or console configuration, a physical device, a purchase, or
+  a legal review is `manual` — the whole task, not just some criteria. Mark it
+  so `/orca:handoff` refuses to launch it and `/orca:status` lists it under YOUR
+  TASKS (`../_shared/issue-schema.md`).
 - **Is it already done, or no longer wanted?** Always worth offering — closing a
   stale issue is a legitimate and common triage outcome.
 

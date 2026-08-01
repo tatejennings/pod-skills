@@ -173,6 +173,8 @@ READY NEXT
 
 - **Exclude issues already covered by a live lane or an open PR** — those are in
   flight, not ready.
+- **Exclude `manual` issues** — they get their own section below
+  (`../_shared/issue-schema.md`). They are ready, but not lane work.
 - Show blocked issues **with their blockers, by number and title** — `blockedBy.nodes`
   already carries both, so it costs nothing. An issue is blocked only when some
   blocker is still `OPEN`; a non-zero `totalCount` whose blockers have all closed
@@ -183,6 +185,27 @@ READY NEXT
   `/orca:migrate`.
 - Nothing ready and nothing blocked ⇒ one line pointing at `/orca:migrate`
   (audit the backlog) or `/orca:plan` (nothing is filed yet).
+
+### YOUR TASKS — the `manual` section
+
+Unblocked issues in the active milestone carrying `manual`
+(`../_shared/issue-schema.md`) get their own block, directly after
+`READY NEXT`:
+
+```
+YOUR TASKS (manual — no agent can do these)
+  #102  Re-authorize Xcode Cloud            ready
+  #90   F2 · Ship ops                       blocked by #84, #87
+```
+
+Why a separate section rather than a flag in `READY NEXT`: these are real work
+and hiding them loses it, but they cannot be launched, so listing them beside
+launchable work invites handing one to an agent that will stall or fake a PR.
+
+Apply the same blocked/ready computation as `READY NEXT` — a blocked `manual`
+issue is not actionable either, and saying what blocks it is still the useful
+part. Nothing here ⇒ omit the section entirely rather than printing an empty
+heading.
 
 **Report decorative blocking honestly.** If issues carry a `blocked` label but no
 dependency edge (`blockedBy.totalCount == 0`), every readiness query calls them
