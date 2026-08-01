@@ -73,8 +73,14 @@ skills. It is the one repo that opts out.
 2. Bump `version` in `plugins/orca/.claude-plugin/plugin.json`.
 3. Add a `CHANGELOG.md` entry under the new version — what changed and why, per
    skill.
-4. Check the docs for drift: `README.md`'s skills table and the pipeline diagram.
-5. Publish locally — local marketplaces do **not** auto-refresh, and the first
+4. Check the docs for drift: `README.md`'s skills table, flag table, and pipeline
+   diagram.
+5. **Regenerate `GUIDE.html` whenever `README.md` changes** — it is the visual
+   version of the same content (gitignored, so it never shows up in a diff to
+   remind you). Create it if it is missing. A guide that silently lags the README
+   is worse than none, because it reads as current. Keep them in step: every
+   skill, every flag, every workflow.
+6. Publish locally — local marketplaces do **not** auto-refresh, and the first
    command alone does NOT update the installed copy:
 
    ```bash

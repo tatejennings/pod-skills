@@ -4,3 +4,7 @@ CLAUDE.local.md
 .claude/settings.local.json
 tmp/
 scratch/
+
+# Visual guide — generated from README.md, regenerate rather than editing.
+# Gitignored so it never diverges from the README in review.
+GUIDE.html
