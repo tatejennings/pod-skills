@@ -82,6 +82,51 @@ Keep recognition loose and conservative:
   body means someone typed an `x`; it is not evidence. Verify checks the world,
   not the checkbox.
 
+## Scope labels — reuse first, invent when nothing fits
+
+Beyond priority and status, most backlogs group work by **what part of the
+system it touches** — `sound`, `board-ui`, `cloud-sync`. That grouping is what
+makes "which of these ready issues would collide?" answerable, so it is worth
+keeping accurate.
+
+The rule when filing or triaging an issue:
+
+1. **List the labels the repo already has** and reuse the one that fits:
+
+   ```bash
+   gh label list --limit 100
+   ```
+
+2. **If none fits, create one named for the area of the work** — not for the
+   ticket, and not for the person doing it:
+
+   ```bash
+   gh label create "<area>" --description "<what work belongs here>"
+   ```
+
+3. **Never leave scope unlabelled** because nothing matched. An unlabelled issue
+   is invisible to any grouping, and a new label costs nothing.
+
+What makes a good scope label:
+
+- **Named for the area, not the letter.** `sound` beats `workstream:E` — a
+  reader should not need a legend, and these surface in `/orca:status`.
+- **No prefix needed.** `sound` reads better than `area:sound` or
+  `workstream:sound` on a chip.
+- **Match the repo's existing separator.** Multi-word labels use either spaces
+  (`board ui`) or hyphens (`board-ui`) — pick whichever the repo already uses and
+  stay consistent. GitHub's own defaults (`good first issue`, `help wanted`) use
+  spaces, so a repo that has not chosen should follow them. Mixing both means
+  nobody can guess a label's exact name. Spaces need quoting on the CLI
+  (`--label "board ui"`).
+- **One concern each.** A label covering two unrelated areas (balance *and*
+  audio) should be two labels; issues then land where they belong.
+- **Descriptive enough to be reused.** If the next issue in that area would want
+  a different label, the name is too narrow.
+
+**Do not rename a repo's existing labels to match a convention.** Vocabulary
+belongs to the project. Reuse what is there, and only add.
+
 ## Where this schema is enforced, and where it is not
 
 **Enforced** — a skill may require the checklist and stop without it:

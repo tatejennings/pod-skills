@@ -76,9 +76,16 @@ Flag an issue when any of these hold:
   under a heading that is not `### Done when`. The fix is a rename, **not**
   authoring new criteria.
 - **A milestone that has closed** while the issue stayed open.
+- **No scope label** — nothing saying which part of the system the work touches.
+  Reuse an existing label or create one named for the area, per
+  `../_shared/issue-schema.md`.
 - **Labels the repo no longer uses**, or a missing one the convention expects
   (infer the convention from what the majority of issues carry; do not impose
   one).
+- **Inconsistent label naming** — some multi-word labels with spaces, others
+  with hyphens. Report it once for the repo rather than per issue; it is a
+  label-set problem, and normalizing means recreating labels and moving every
+  issue, which is the user's call.
 - **An assignee but no activity for a long time** — worth one question: still
   yours, or hand it back?
 
@@ -155,6 +162,11 @@ The questions worth asking, in rough priority:
   milestone is what says when.
 - **Does it depend on anything?** Name candidates from the batch and the
   milestone. Record answers as **real edges**, not labels (§3).
+- **Which part of the system does it touch?** Offer the repo's existing scope
+  labels; if none fits, propose a new one named for the area
+  (`../_shared/issue-schema.md`). Never leave scope unlabelled because nothing
+  matched — a new label costs nothing, and unlabelled work is invisible to any
+  grouping.
 - **Is it already done, or no longer wanted?** Always worth offering — closing a
   stale issue is a legitimate and common triage outcome.
 

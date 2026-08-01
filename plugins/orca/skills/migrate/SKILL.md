@@ -246,6 +246,10 @@ dropping the work.
 Set `spec:<slug>` on issues derived from a spec, so re-running is a no-op (see
 §5).
 
+**Scope labels:** reuse the repo's existing ones and only add when nothing fits,
+per `../_shared/issue-schema.md`. Never rename a repo's labels to match a
+convention — vocabulary belongs to the project.
+
 ### 3b. Dependencies to record
 
 **Read the issue bodies, not just the labels.** Ordering is very often recorded
