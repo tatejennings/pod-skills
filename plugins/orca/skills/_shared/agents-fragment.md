@@ -36,7 +36,13 @@ distinguish the two.
   merge did not close its issue, the PR body was malformed; report that.
 - Progress notes go in issue comments, not files.
 - Design and rationale go in `docs/specs/<slug>.md`. Issue bodies link to the
-  spec; they do not restate it.
+  spec; they do not restate it. A planning doc is the plan, never a status
+  board — it changes when a decision changes, not when work progresses.
+- Blocking is a real dependency, not a label or a prose line:
+  `gh issue edit <blocked> --add-blocked-by <blocker>`. That edge is what
+  readiness reads; a label mirrors it and can go stale.
+- An issue with **no milestone** is the unscheduled backlog. Assigning a
+  milestone is what scheduling means.
 - Every issue carries a `### Done when` checklist of acceptance criteria —
   that checklist is what gates the work, and it is written when the issue is
   filed, not after the work is done.

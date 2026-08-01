@@ -152,9 +152,30 @@ none exist. Never report "no backlog" on the strength of an empty array alone.
 
 Note especially:
 
-- Issues with no milestone — they will need one, or an explicit "unscheduled".
+- **Open milestones with no `due_on`.** If two or more are open and none has a
+  date, **nothing resolves as the active milestone** — every later skill run has
+  to ask, which makes `/orca:status` interactive and breaks `/loop`. Propose a
+  date on the one that is actually active (§2); it need not be accurate, only
+  present and nearer than the others':
+
+  ```bash
+  gh api repos/{owner}/{repo}/milestones/<n> -X PATCH -f due_on="<ISO-8601>"
+  ```
+
+  Leave later milestones dateless rather than inventing far-future dates — a
+  dateless milestone cannot win the nearest-due-date rule, which is exactly what
+  you want for "after this one".
+
+- **Issues with no milestone.** This is the **unscheduled backlog** and is a
+  valid state, not a defect — do not propose a "Backlog" milestone. A milestone
+  is something you would finish and close; a permanent bucket makes its
+  progress count meaningless and adds another candidate for "active". Assigning
+  a milestone is what *scheduling* means. Flag only issues that look like real
+  work someone forgot to schedule.
 - Issues whose body has **no `### Done when` section** — the gap `/orca:verify`
-  cares about.
+  cares about. Check for the *criteria*, not the exact heading: an issue may
+  state acceptance criteria in prose or under a different heading, in which case
+  the fix is a heading rename, not authoring new criteria.
 - **`blocked` labels with no real dependency edge.** A label is decorative to
   every readiness query; only `blocked-by` edges are read. If the repo expresses
   blocking with labels or prose, say so plainly: *every readiness query currently
@@ -227,12 +248,33 @@ Set `spec:<slug>` on issues derived from a spec, so re-running is a no-op (see
 
 ### 3b. Dependencies to record
 
-Where the source expresses ordering ("after X", "requires Y", "blocked by Z"),
+**Read the issue bodies, not just the labels.** Ordering is very often recorded
+as prose — a `**Prereqs:** W1` line, "after X lands", "requires Y", "blocked by
+Z" — and prose is invisible to every readiness query. This is usually where the
+*real* dependency information lives, and a migration that only converts labels
+will miss it entirely:
+
+```bash
+gh issue list --state open --limit 200 --json number,title,body \
+  --jq '.[] | select(.body | test("prereq|depends on|blocked by|after .*lands|requires";"i"))
+        | "#\(.number) \(.title)"'
+```
+
+For each hit, read the surrounding line, resolve which issue it names, and
 propose a real edge:
 
 ```bash
 gh issue edit <blocked> --add-blocked-by <blocker>
 ```
+
+Prose often names work by a project-local id (`W1`, `E2`) rather than an issue
+number — resolve those by title before proposing, and **list any you could not
+resolve** rather than guessing. A wrong edge is worse than a missing one: it
+hides available work.
+
+**Leave the prose in place.** It usually carries reasoning the edge cannot ("W1,
+parallel-safe with W2"), and deleting it to avoid duplication loses that. The
+edge is what queries read; the prose is why.
 
 These run **after** creation, since they need both numbers. Propose them as a
 distinct group so the user can see the shape of the dependency graph before it
@@ -260,6 +302,20 @@ This is where care is owed, because it is the destructive half.
   every place that links to it (`grep -rn '<filename>'`) so nothing is left
   pointing at a corpse.
 - **A file that was mixed** → propose the reduced file, showing what remains.
+- **A planning doc that carries no status** → propose **nothing but a header
+  line.** A design record listing what the work is, in what order, and what it
+  depends on is the narrative half working correctly — not a violation. The only
+  real risk is that it and the generated `ROADMAP.md` are both called "the
+  roadmap", so name the distinction in the doc itself:
+
+  ```markdown
+  > **This is the plan, not a status board.** It changes when a decision
+  > changes — not when work progresses. Live state is GitHub Issues;
+  > `ROADMAP.md` (generated, gitignored) renders that state.
+  ```
+
+  The test for whether a doc is a plan or a tracker is whether it records
+  *progress*. "F2 depends on E1" is a plan; "F2 — in progress" is state.
 - **A tracked `ROADMAP.md`** needs an explicit decision, because gitignoring a
   tracked file is a **no-op** — git keeps tracking it. Two honest options, and
   the user picks:
