@@ -1,6 +1,7 @@
 # GitHub backlog queries — shared by every skill that reads or writes issues
 
-One spec, many consumers: `migrate`, `plan`, `status`, `verify`, `handoff`.
+One spec, many consumers: `migrate`, `triage`, `plan`, `status`, `verify`,
+`handoff`.
 **Do not copy these queries into a skill** — a copy is where drift starts.
 Point at this file.
 

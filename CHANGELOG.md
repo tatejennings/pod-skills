@@ -3,6 +3,56 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.3.0 — 2026-08-01
+
+**New skill: `/orca:triage`** — the sixth, and the one that closes the loop
+between filing an issue and planning it.
+
+Every other skill assumes a well-formed issue: `/orca:plan` wants requirements,
+`/orca:handoff` copies the `### Done when` checklist into the executor contract,
+`/orca:verify` gates on it. `/orca:migrate` retrofits that shape across a whole
+backlog **once**. Nothing handled the ongoing case — the issue filed last week
+with a one-line body and no milestone.
+
+**Batch in, one at a time out.** Takes a list of issue numbers, a filter, or a
+pasted pile of bugs/features/research items, reports the whole batch up front so
+the size is known, then works through them individually. Questions are chosen per
+issue rather than run from a script — an issue that already has clear scope may
+need only a milestone, and asking six questions about it trains the user to skim.
+
+**With no arguments it audits the entire open backlog**, and distinguishes two
+kinds of problem because they need different questions:
+
+- **Never triaged** — no milestone, no criteria, or a body too thin to act on.
+  Gets the full pass.
+- **Drifted since triage** — a `blocked` label whose blockers have all closed, a
+  dependency written only in prose with no edge, criteria under the wrong
+  heading, a closed milestone, an assignee gone quiet. Usually needs one
+  confirmation, not a re-interrogation.
+
+**Mechanical drift is batched, not asked one by one.** A stale `blocked` label or
+a wrong heading has exactly one correct fix; those are offered as a group and do
+not count against the ~10-item judgement cap. **A prose dependency is explicitly
+not mechanical** — resolving which issue `W1` names is a guess unless the title
+matches, and a wrong edge hides available work.
+
+Design decisions worth recording:
+
+- **Audit lives here, not in a separate skill.** An audit that finds "#101 has no
+  criteria" and then fixes it *is* triage; splitting them would produce one skill
+  that finds problems and hands them to the one that does the work.
+- **It does not overlap `/orca:migrate`.** Both audit, at different altitudes:
+  migrate checks repo-level structure (tracking block, tracked files regrowing
+  progress, schema version); triage checks per-issue hygiene (criteria,
+  milestones, edges, labels). Neither subsumes the other.
+- **No `/orca:capture`.** Filing an issue is `gh issue create`, which needs no
+  skill.
+- **Bugs, features, and research are one workflow**, not three. The questions are
+  identical and only the label differs; a research item's honest "done" is a
+  written finding, which the schema's prose bucket already covers.
+- **A clean audit reports what it checked**, not just "nothing to do" — the
+  latter is indistinguishable from a run that failed to look.
+
 ## 1.2.0 — 2026-08-01
 
 Three findings from running the suite against a real, partially-migrated repo,
