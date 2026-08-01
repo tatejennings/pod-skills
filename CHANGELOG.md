@@ -3,6 +3,40 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.7.0 — 2026-08-01
+
+**`/orca:triage` now leads with its primary input: a pasted list of raw items
+that are not yet issues.** Filing them is the skill's job — the user should not
+have to create GitHub issues by hand before triaging, since that is the work
+being delegated.
+
+The capability was technically present in 1.3.0 but buried: one sentence in §1,
+every example showing issue numbers, and a description that opened with "a batch
+of issues". A skill that supports a case but presents as if it does not will not
+trigger on it, which is the same as not supporting it.
+
+- **Three input shapes, stated in order of how often they are used:** a pasted
+  list of raw items (§1a), specific issue numbers (§1b), nothing at all for a
+  full backlog audit (§1c).
+- **Raw items are filed one at a time, as each is triaged** — not created up
+  front and groomed after. An item abandoned mid-pass was never filed, and the
+  questions shape the body rather than patching it afterwards.
+- **Duplicate check before filing.** A backlog dump usually repeats something
+  already open; the skill searches and asks rather than creating a second copy.
+- **A raw item and an existing issue get different passes.** There is no body to
+  read for a raw item, so it plays back what it understood and proposes a title
+  first — the cheapest error to catch and the most expensive to leave. For a bug
+  the missing piece is usually the reproduction; for a research item it is what a
+  *finding* would look like, since that is its acceptance criterion.
+- **The user's phrasing is the requirement.** Sharpen the title, keep the
+  meaning.
+
+`README.md` and `GUIDE.html` both lead with the paste-a-list form, and the
+"capturing work mid-flight" workflow is rewritten as **"emptying your head into
+the backlog"**. The claim that filing needs no skill is corrected: triage *is*
+the capture step, and a capture skill that only created thin issues would just
+hand more work to triage.
+
 ## 1.6.2 — 2026-08-01
 
 **`GUIDE.html`** — the README's content laid out visually: the three-gate pipeline

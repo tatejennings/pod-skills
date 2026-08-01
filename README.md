@@ -121,20 +121,34 @@ one that merely *was*.
 ```
 
 #### `/orca:triage`
-Turns raw issues into plannable ones, **one at a time**, by asking: what does this
-actually mean, what would "done" look like, when, what does it depend on, can an
-agent even do it. Then writes the checklist, sets the milestone and scope label,
-and records real dependency edges.
+**Paste in a pile of raw bugs, features, and research items — it files them as
+proper GitHub issues, one at a time.** Nothing needs to exist in GitHub first;
+creating the issues *is* the work being delegated.
 
-Give it a batch and it works through them individually. Give it nothing and it
-**audits the whole open backlog** — catching both never-triaged issues and ones
-that have *drifted*: a `blocked` label whose blocker already closed, a dependency
-written only in prose, criteria under the wrong heading.
+For each item it asks what it actually means, what "done" would look like, when,
+what it depends on, and whether an agent can even do it — then creates the issue
+with a `### Done when` checklist, milestone, scope label, and real dependency
+edges. It checks for duplicates before filing, and each item is created as it is
+triaged, so an item you drop mid-pass was never filed.
 
 ```
-/orca:triage              # audit everything, then walk the problems
-/orca:triage 101 103 107  # just these
+/orca:triage
+  crash when rotating the device mid-run
+  workshop should remember your last tab
+  do we still need Firebase at all
+  splash wordmark should be the logo, not text
 ```
+
+It also works on issues that already exist:
+
+```
+/orca:triage 101 103 107  # groom these specific ones
+/orca:triage              # audit the whole backlog
+```
+
+With no arguments it **audits everything** — catching both never-triaged issues
+and ones that have *drifted*: a `blocked` label whose blocker already closed, a
+dependency written only in prose, criteria under the wrong heading.
 
 ### Deciding how to do the work
 
@@ -304,11 +318,23 @@ an entire executor run.
 /orca:migrate                   # after upgrading this plugin
 ```
 
-### 6. Capturing work mid-flight
+### 6. Emptying your head into the backlog
 
-There is no capture skill — `gh issue create` is enough, and Claude will do it
-unprompted. File the thought with whatever detail you have; `/orca:triage` is
-what turns it into something plannable later.
+You have been keeping a list — in a notes app, in your head, in a scratch file.
+Paste it:
+
+```
+/orca:triage
+  crash when rotating the device mid-run
+  workshop should remember your last tab
+  do we still need Firebase at all
+  splash wordmark should be the logo, not text
+```
+
+It works through them one at a time, asks what each needs, and files each as a
+proper issue as it goes. There is no separate capture skill because this is the
+capture step — and it is the one that produces issues the rest of the pipeline
+can actually consume.
 
 ---
 
