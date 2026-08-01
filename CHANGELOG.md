@@ -3,6 +3,36 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.5.0 — 2026-08-01
+
+**`/orca:handoff` is now `/orca:launch`.** Breaking, and worth it: the old name
+collided with vocabulary Orca's own bundled skills already claim.
+
+`orca-cli`'s description lists **"full handoff", "handover", "give this to
+another agent"** as its triggers, and `orchestration`'s spends a sentence
+redirecting *"hand off", "handoff", "handover"* to `orca-cli`. So "handoff" was
+claimed twice by skills shipped with the binary — and this plugin's description
+used the same phrases, competing for them. That is precisely the semantic
+collision this plugin's own authoring rules warn about, and the old name walked
+into it.
+
+`launch` names the outcome rather than the gesture: the skill produces a **lane**
+— a worktree with an agent already working. It does not perform the CLI-level
+handover; `orca-cli` owns that, and the skill body now says so explicitly.
+
+- The description no longer uses "hand off"/"handover" as triggers at all,
+  leaving those to `orca-cli`. It leads with "launch a lane for #84", "start work
+  on issue 84", "spin up a session to build this".
+- `/orca:plan --launch` now invokes a skill of the same name, which reads more
+  obviously than `--launch` invoking `handoff` did.
+- Prose across the suite reworded from "handing work off" to "starting it in a
+  lane" where the change reads better; the mechanical sense of "handoff" is kept
+  where it is still accurate (`_shared/orca-lanes.md`'s "handoff invocation" is
+  the CLI command, and correctly named).
+
+Earlier changelog entries keep the old name — they describe releases where that
+is what it was called.
+
 ## 1.4.0 — 2026-08-01
 
 **The `manual` label** — work no agent can do: account access, store or console

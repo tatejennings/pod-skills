@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later. With --launch it hands the approved plan straight to a fresh agent in its own worktree via /orca:handoff. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", or "plan and launch this". This plans; it does not implement. Handing work to a worktree agent is /orca:handoff, and driving the Orca app directly is Orca's bundled orca-cli skill.
+description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later. With --launch it hands the approved plan straight to a fresh agent in its own worktree via /orca:launch. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", or "plan and launch this". This plans; it does not implement. Handing work to a worktree agent is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
 ---
 
 # Plan
@@ -10,7 +10,7 @@ milestone, or a free-form description of a feature or bug. **You plan; you do no
 implement.**
 
 The plan will likely be handed to a fresh agent in its own worktree
-(`/orca:handoff`), so it must be self-contained: an executor sees the plan and
+(`/orca:launch`), so it must be self-contained: an executor sees the plan and
 the issue, not this conversation.
 
 Scale to the work. A milestone-sized chunk gets the full treatment; a small bug
@@ -19,14 +19,15 @@ skip the review**.
 
 ## What this skill is not for
 
-- **Handing work off** ⇒ `/orca:handoff` (or `--launch` here, which invokes it).
+- **Starting the work in a lane** ⇒ `/orca:launch` (or `--launch` here, which
+  invokes it).
 - **Driving the Orca app** ⇒ Orca's bundled `orca-cli` skill.
 - **Checking finished work** ⇒ `/orca:verify`.
 
 ## 0. Preconditions
 
 - `$ARGUMENTS` empty ⇒ ask what to plan.
-- Check for `--launch`: plan, review, then hand off via `/orca:handoff` (§6).
+- Check for `--launch`: plan, review, then launch the lane via `/orca:launch` (§6).
 - The rest of `$ARGUMENTS` is the target — a leading `#` or an all-digits token
   means an issue; anything else is a milestone name or a description.
 - If not already in plan mode, call `EnterPlanMode` and stay there for the whole
@@ -97,7 +98,7 @@ up inline on anything load-bearing they left vague.
 
 ## 3. Draft the plan
 
-Use exactly these sections — they are what `/orca:handoff` packages:
+Use exactly these sections — they are what `/orca:launch` packages:
 
 - **Goal** — one paragraph; what "done" looks like.
 - **Context** — requirements source with quotes, relevant background.
@@ -190,12 +191,12 @@ ammunition against re-litigation later.
 - Present the final plan via `ExitPlanMode` for approval.
 - If the review said split, **present the split as the plan**: ordered sub-plans,
   each independently handoff-able.
-- Close by noting `/orca:handoff` can hand it to a fresh worktree agent — but do
+- Close by noting `/orca:launch` can start it in its own lane — but do
   not run it unasked; the user may execute inline.
 
 ## 6. `--launch` — hand off directly
 
-After folding in review findings, invoke the `orca:handoff` skill via the Skill
+After folding in review findings, invoke the `orca:launch` skill via the Skill
 tool. It writes the executor contract, creates the worktree, launches the agent,
 and stops. Then report: work planned, plan summary, review verdict, worktree,
 branch, and contract path.
