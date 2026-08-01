@@ -158,6 +158,10 @@ Releases qualify, which is why they are the obvious example — but so do "Phase
   and what it depends on. It is where the readiness contract gets populated:
   milestones assigned, `### Done when` checklists written, dependency edges
   recorded.
+- **`/orca:wave`** plans several ready issues concurrently, one context each,
+  then checks the finished plans against each other for file collisions — work
+  that is independently ready can still overlap, and dependency edges cannot
+  express that.
 - **`/orca:plan`** accepts an issue number, milestone, or description, writes the
   `### Done when` checklist when it drafts, and never emits a step that writes
   progress to a tracked file.
