@@ -62,8 +62,12 @@ claude --plugin-dir ./plugins/orca   # overrides the installed copy for that ses
 1. `claude plugin validate .` from the repo root.
 2. Bump `version` in `plugins/orca/.claude-plugin/plugin.json`.
 3. Add a `CHANGELOG.md` entry under that version.
-4. Check `README.md` (skills table, pipeline) for drift.
-5. Publish locally — local marketplaces do not auto-refresh, and the first
+4. Check `README.md` (skills table, flag table, pipeline) for drift.
+5. **Regenerate `GUIDE.html` if `README.md` changed** — the visual guide is
+   generated from it and gitignored, so nothing in a diff will remind you.
+   Create it if absent; a guide that lags the README reads as current and is
+   worse than none.
+6. Publish locally — local marketplaces do not auto-refresh, and the first
    command alone does **not** update the installed copy:
 
    ```bash

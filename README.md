@@ -403,3 +403,6 @@ confident wrong work.
   checklist, and how *this* repo works (it commits straight to `main`).
 - **[CHANGELOG.md](CHANGELOG.md)** — what changed, and the field findings behind
   each change.
+- **`GUIDE.html`** — the same content as this README, laid out visually with the
+  pipeline as a diagram. Generated and gitignored; open it from your clone.
+  Regenerated whenever this README changes.

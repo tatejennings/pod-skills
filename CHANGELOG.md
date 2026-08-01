@@ -3,6 +3,25 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.6.2 — 2026-08-01
+
+**`GUIDE.html`** — the README's content laid out visually: the three-gate pipeline
+as an actual diagram, every skill as a card carrying its own invocation, the
+verdicts colour-coded, and the six workflows as expandable panels.
+
+Generated and **gitignored**, for the same reason `ROADMAP.md` is: it is derived
+from the README, so committing it would create a second copy to keep in step and
+a diff to review on every docs change.
+
+That gitignoring has one cost worth naming — **nothing in a diff will remind
+anyone it exists**, so it can rot silently. Both `CLAUDE.md` and
+`CONTRIBUTING.md`'s after-edit checklists now carry an explicit step:
+regenerate it whenever `README.md` changes, and create it if it is missing. A
+guide that lags the README reads as current, which is worse than not having one.
+
+Verified at build: the HTML parses with no unclosed or mismatched tags, and all
+seven skills, five flags, and six workflows appear in both files.
+
 ## 1.6.1 — 2026-08-01
 
 **README rewritten** as usable documentation rather than a description of the
