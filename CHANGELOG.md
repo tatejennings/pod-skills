@@ -3,6 +3,35 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.3.1 — 2026-08-01
+
+**Scope labels get a documented rule**, from noticing in the field that a
+grouping label is only useful if a reader can understand it without a legend.
+
+`../_shared/issue-schema.md` gains a section: when filing or triaging, list the
+repo's existing labels and **reuse** one; if none fits, **create one named for
+the area of the work**; never leave scope unlabelled because nothing matched.
+
+What makes a good scope label:
+
+- **Named for the area, not a letter.** `sound` beats `workstream:E` — these
+  surface in `/orca:status`, where a code means nothing.
+- **No prefix.** `sound` reads better than `area:sound` on a chip.
+- **One concern each.** A label covering two unrelated areas should be two
+  labels.
+- **Consistent separator.** Spaces or hyphens, but not both — mixing them means
+  nobody can guess a label's exact name. GitHub's own defaults (`good first
+  issue`, `help wanted`) use spaces, so a repo that has not chosen should follow
+  them.
+
+**`/orca:triage` now flags a missing scope label** as a triage gap, asks which
+part of the system an issue touches, and reports mixed separators **once for the
+repo** rather than per issue — normalizing means recreating labels and moving
+every issue, which is the user's call.
+
+**Neither skill renames existing labels to match a convention.** Vocabulary
+belongs to the project; the skills reuse and add.
+
 ## 1.3.0 — 2026-08-01
 
 **New skill: `/orca:triage`** — the sixth, and the one that closes the loop
