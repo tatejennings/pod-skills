@@ -1,6 +1,6 @@
 ---
 name: status
-description: Read-only dashboard joining Orca's lane state against the GitHub backlog - every worktree's branch, issue, PR state, session liveness and a verdict saying what needs attention, plus active-milestone progress and a READY NEXT list of unblocked issues, which makes this the answer to "what should I work on next". With --roadmap it regenerates the gitignored ROADMAP.md from GitHub state; with --reap it deletes provably-finished lanes after strict safety checks. Non-interactive and conservative by construction, so looping it is safe. Use when the user says "/orca:status", "/orca:status --reap", "/orca:status --roadmap", "what should I work on next", "what's ready", "what's blocked", "what's left in this milestone", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "regenerate the roadmap", or sets up "/loop 15m /orca:status". For driving the Orca app - creating worktrees, running terminals - use Orca's bundled orca-cli skill instead; this skill only reads, plus the narrowly-scoped deletion --reap performs.
+description: Dashboard joining Orca's lane state against the GitHub backlog - every worktree's branch, issue, PR state, session liveness and a verdict saying what needs attention, plus active-milestone progress and a READY NEXT list of unblocked issues, which makes this the answer to "what should I work on next". Also regenerates the gitignored ROADMAP.md from GitHub state on every run, so the rendering never goes stale; --no-roadmap suppresses that. With --reap it deletes provably-finished lanes after strict safety checks. Non-interactive and conservative by construction, so looping it is safe. Use when the user says "/orca:status", "/orca:status --reap", "what should I work on next", "what's ready", "what's blocked", "what's left in this milestone", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "regenerate the roadmap", or sets up "/loop 15m /orca:status". For driving the Orca app - creating worktrees, running terminals - use Orca's bundled orca-cli skill instead; apart from the roadmap file and the narrowly-scoped --reap deletion, this skill only reads.
 ---
 
 # Status
@@ -27,13 +27,18 @@ for every `gh` query. Do not restate them.
 
 ## Flags
 
+**`ROADMAP.md` is regenerated on every run** (§7) — it is a derived, gitignored
+rendering, so keeping it fresh is the point. `--no-roadmap` suppresses it.
+
 `$ARGUMENTS` may contain:
 
-- `--reap` — delete provably-finished lanes (§5). Strictly non-interactive:
+- `--reap` — delete provably-finished lanes (§8). Strictly non-interactive:
   every ambiguous case is reported, never deleted, never prompted.
-- `--roadmap` — regenerate the gitignored `ROADMAP.md` (§6).
+- `--no-roadmap` — skip the roadmap write; report only.
 
-Both compose with the default report and with each other.
+The roadmap write is the **only** thing a bare run writes, and §7's guards mean
+it never touches a tracked file or a repo with no backlog. Everything else here
+is read-only, which is what keeps `/loop 15m /orca:status` safe.
 
 ## 0. Preconditions and degraded mode
 
@@ -45,7 +50,7 @@ gh auth status
 **This skill degrades honestly rather than failing whole** — see
 `../_shared/orca-lanes.md`:
 
-- **Orca missing/unreachable** ⇒ run the backlog half (§3, §4, §6) and report the
+- **Orca missing/unreachable** ⇒ run the backlog half (§5, §6, §7) and report the
   lane half as unavailable, naming why. Milestones and readiness are pure `gh`.
 - **`gh` unavailable or no GitHub remote** ⇒ run the lane half (§2) and report the
   backlog half as unavailable.
@@ -200,27 +205,42 @@ action:
 - **merged PR that closed no issue** → "merged without `Closes #n` — the issue is
   still open", which is a malformed PR body, not a state to fix by hand
 
-## 7. `--roadmap` — regenerate the stateless roadmap
+## 7. The roadmap — regenerated every run
 
 `ROADMAP.md` is a **rendering of GitHub state**, never a source (`TRACKING.md`).
+It is rewritten on every run, without a flag, because a derived file that is only
+sometimes refreshed goes stale silently — and a stale generated file is worse
+than none, since it still looks current.
 
-**Refuse to write it if it is tracked:**
+Three guards, all mandatory. **Any one failing ⇒ skip the write** and say so in
+one line; never fail the whole run over it.
+
+**1. Never write a tracked file.**
 
 ```bash
 git ls-files --error-unmatch ROADMAP.md 2>/dev/null && echo TRACKED
 ```
 
-Tracked ⇒ do not write. Explain that a committed roadmap reintroduces the
-conflict surface the model exists to avoid, and point at `/orca:migrate`, which
-proposes untracking it with consent. Never `git rm` it here.
+Tracked ⇒ do not write, do not `git rm`. Explain that a committed roadmap
+reintroduces the conflict surface the model exists to avoid, and point at
+`/orca:migrate`, which proposes untracking it with consent. This guard matters
+more now that the write is unprompted.
 
-Untracked ⇒ write all open milestones (nearest due date first) with their issues:
+**2. Never create it in a repo with no backlog.** If §5 found no milestones and
+no issues, write nothing — pointing this skill at an unrelated repo must not
+litter it. An existing `ROADMAP.md` is still refreshed (it may legitimately
+become empty).
+
+**3. Never write outside the primary checkout.** Generate at the repo root, not
+in a lane's worktree.
+
+Then write all open milestones (nearest due date first) with their issues:
 
 ```markdown
 # Roadmap
 
-<!-- GENERATED by /orca:status --roadmap — do not edit; regenerate instead -->
-<!-- <YYYY-MM-DD> -->
+<!-- GENERATED by /orca:status — do not edit; it is rewritten on every run -->
+<!-- <YYYY-MM-DD HH:MM> -->
 
 ## v0.3 — Audio pass (4/11 closed)
 
@@ -270,7 +290,11 @@ the remote or the PR.
 - **Fanning out per-lane calls** for facts `worktree ps` already returned.
 - **Trusting `linkedPR` as a state.** It is a number; PR state comes from `gh`.
 - **Reporting a partial run as complete** when one half is unavailable.
-- **Writing a tracked `ROADMAP.md`**, or `git rm`-ing it here.
+- **Writing a tracked `ROADMAP.md`**, or `git rm`-ing it here. The write is
+  unprompted now, so this guard carries more weight than it used to.
+- **Creating `ROADMAP.md` in a repo with no backlog** — that is littering.
+- **Failing the whole run because the roadmap write was skipped.** It is one
+  line of report, never an error.
 - **Reaping on a cached `isMainWorktree`** instead of the live git proof.
 - **Prompting during `--reap`.** Ambiguity is always a skip.
 - **Treating a draft PR as a problem.** It is the expected state before the gate.

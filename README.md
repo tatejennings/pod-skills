@@ -72,7 +72,7 @@ other direction, when practice slips away from the model.
 |---|---|
 | `/orca:migrate` | Brings a repo's tracking up to the model the other skills read — milestones and issues for state, `docs/specs/` for narrative, a `### Done when` checklist on every issue. Run it to onboard a project, again after a plugin upgrade that changes what the skills expect, and any time to audit for drift. Writes nothing until you approve. |
 | `/orca:handoff` | Turns "hand off #84" into a verified one-command lane launch: reads the issue, derives the slug, writes the executor contract outside the repo, links the issue natively, reports the lane, and stops. |
-| `/orca:status` | The read-only dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. `--roadmap` regenerates the gitignored `ROADMAP.md`; `--reap` deletes provably-finished lanes. Safe to loop. |
+| `/orca:status` | The dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. Regenerates the gitignored `ROADMAP.md` every run so it never goes stale (`--no-roadmap` to skip); `--reap` deletes provably-finished lanes. Safe to loop. |
 | `/orca:verify` | The evidence gate. Checks a finished branch against its issue's own `### Done when` checklist — runs the commands, greps the diff, and refuses to guess at what only a human can judge. Never merges. |
 | `/orca:plan` | Adversarial implementation planning: research with parallel agents, draft, then have a cold reader attack the plan for holes, feasibility, and blast radius. With `--launch`, continues straight into `/orca:handoff`. |
 
