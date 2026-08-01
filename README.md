@@ -75,6 +75,7 @@ other direction, when practice slips away from the model.
 | `/orca:launch` | Turns "start #84" into a verified lane: reads the issue and its acceptance criteria, refuses work already in flight or marked `manual`, writes the executor contract outside the repo, creates the worktree with the issue linked, starts one agent on it, and stops. |
 | `/orca:status` | The dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. Regenerates the gitignored `ROADMAP.md` every run so it never goes stale (`--no-roadmap` to skip); `--reap` deletes provably-finished lanes. Safe to loop. |
 | `/orca:verify` | The evidence gate. Checks a finished branch against its issue's own `### Done when` checklist — runs the commands, greps the diff, and refuses to guess at what only a human can judge. Never merges. |
+| `/orca:wave` | Plans several issues at once, each in its own terminal in the current worktree, so you move between them answering questions instead of planning one at a time. Then checks the finished plans against each other for file collisions — the one place an overlap between two independently-ready issues is visible before launch. |
 | `/orca:plan` | Adversarial implementation planning: research with parallel agents, draft, then have a cold reader attack the plan for holes, feasibility, and blast radius. With `--launch`, continues straight into `/orca:launch`. |
 
 **Nothing in this pipeline ever merges.** Lanes end at a PR; the gate reports;
@@ -101,6 +102,8 @@ raw issues
       ↓
 ready issue
   → /orca:plan       … you approve the plan              ← GATE 1
+      (/orca:wave plans several at once, one terminal each,
+       then checks the plans against each other for collisions)
   → /orca:launch     … one worktree, one agent, then stop
   → executor implements, opens a DRAFT PR
   → /orca:verify     … evidence gate, machine-checked    ← GATE 2

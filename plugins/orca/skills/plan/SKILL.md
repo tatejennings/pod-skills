@@ -122,6 +122,13 @@ Where a real trade-off needs the user's call, use AskUserQuestion **before**
 finalizing. Where a conventional default exists, decide it and record it under
 Decisions.
 
+**Inside a wave** (`/orca:wave` started this context in its own terminal): **ask
+normally.** The whole point of a wave is that the user moves between contexts
+answering questions, so asking and waiting is correct here — do not adopt
+`--launch`'s defer-instead-of-asking posture just because the context was started
+programmatically. A question that waits costs the user one visit; a wrong guess
+costs an executor run.
+
 **Under `--launch`, do not ask** — and hold a high bar for deciding alone.
 Proceed on a fork only when one option is *overwhelmingly* recommended: the
 codebase's conventions, the requirements, and standard practice all agree, and
@@ -187,6 +194,24 @@ Fold real findings into the plan. Note what you dismissed and why — that is
 ammunition against re-litigation later.
 
 ## 5. Present
+
+**Save the plan to a file first**, so it outlives this context:
+
+```
+~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<issue-or-slug>.md
+```
+
+`<repo-name>` comes from the primary checkout, not the cwd basename. The path is
+deliberately **outside the repo** — a plan is not repo content, and a lane's new
+checkout cannot see another checkout's untracked files anyway.
+
+This matters beyond tidiness: a plan that exists only in conversation cannot be
+compared against another plan, handed to a later session, or re-read after this
+context closes. `/orca:wave --review` reads these files to check plans against
+each other, and `/orca:launch` can be pointed at one directly. **Never overwrite
+an existing plan file** — suffix the slug instead.
+
+Then:
 
 - Present the final plan via `ExitPlanMode` for approval.
 - If the review said split, **present the split as the plan**: ordered sub-plans,

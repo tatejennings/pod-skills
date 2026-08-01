@@ -3,6 +3,46 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.6.0 — 2026-08-01
+
+**New skill: `/orca:wave`** — plan several issues at once, one terminal each,
+then check the finished plans against each other before anything launches.
+
+The original review panel cut a fan-out skill on the grounds that it duplicated
+an automation and that Orca's `orchestration` doctrine forbids worktrees created
+merely for parallelism. **The second objection does not apply here**: planning
+writes no repo files, so every context shares the current checkout and no
+worktree is created. Only `/orca:launch` makes a lane.
+
+The value is not throughput. **Two issues that are independently ready can still
+edit the same file**, and `/orca:status` cannot see that — it knows dependency
+edges, not file overlap. Comparing finished plans is the only place a collision
+is detectable *before* work starts, which is why the skill stops after review
+rather than launching.
+
+- **Contexts are interactive by design.** Each runs `/orca:plan <n>` in its own
+  titled tab (`plan #84`), asks its own questions, and waits. The user visits
+  each and answers. `/orca:plan` now states this explicitly: inside a wave, ask
+  normally — do **not** adopt `--launch`'s defer-instead-of-asking posture just
+  because the context was started programmatically.
+- **The skill does not supervise.** It starts the contexts, reports the tab
+  titles, and stops. Polling them would waste context and risk acting on a
+  half-finished plan; they are talking to the user, not to it.
+- **`--review` then `--launch`**, as two deliberate steps. A collision is
+  reported as a *sequencing* problem — launch one, let it merge, re-plan the
+  other — not as a verdict that a plan is wrong.
+- Capped at ~4 per wave: past that the contexts sit idle waiting on a user who
+  cannot hold four planning conversations at once.
+- Excludes work already in flight, blocked, or `manual`, and flags issues with no
+  `### Done when` checklist as cheaper to fix in `/orca:triage` first.
+
+**Fixed a real gap this exposed:** `/orca:plan` never wrote a plan file — the
+plan lived in conversation, and only `/orca:launch` wrote anything to disk. That
+made a plan unreadable outside its own context, so `--review` would have had
+nothing to compare. `/orca:plan` now saves to
+`~/.claude/plans/<repo-name>/<date>-<issue>.md` before presenting, which also
+means a plan survives its session and can be handed to `/orca:launch` later.
+
 ## 1.5.0 — 2026-08-01
 
 **`/orca:handoff` is now `/orca:launch`.** Breaking, and worth it: the old name

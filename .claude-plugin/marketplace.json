@@ -8,7 +8,7 @@
     {
       "name": "orca",
       "source": "./plugins/orca",
-      "description": "Requires the Orca app. A GitHub-Issues backlog and planning layer over Orca's worktree/terminal CLI: migrate, triage, plan, launch, status, verify."
+      "description": "Requires the Orca app. A GitHub-Issues backlog and planning layer over Orca's worktree/terminal CLI: migrate, triage, plan, wave, launch, status, verify."
     }
   ]
 }
