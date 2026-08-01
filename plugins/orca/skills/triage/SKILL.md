@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Work through a batch of issues with you, one at a time, turning each into something plannable - asks what it actually means, what "done" looks like, how urgent it is, which milestone it belongs in, and what it depends on, then writes the "### Done when" checklist, sets the milestone and labels, and records real dependency edges. Given no arguments it audits the whole open backlog first, catching both never-triaged issues and ones that have drifted since - a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading, an issue filed by hand on GitHub that never got a milestone. Use when the user says "/orca:triage", "triage the backlog", "audit the issues", "go through these issues", "check the backlog for drift", "let's prioritize", "clean up the backlog", "groom the backlog", "schedule these", "are the tickets up to date", "what's in the backlog", or hands over a pile of bugs, features, or research items to sort out. This grooms individual issues; migrating a repo's whole tracking model or auditing it structurally is /orca:migrate, and planning the implementation of one issue is /orca:plan.
+description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Done when" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/orca:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This creates and grooms individual issues; migrating a repo's whole tracking model is /orca:migrate, and planning the implementation of one issue is /orca:plan.
 ---
 
 # Triage
@@ -39,11 +39,52 @@ anything. Wrong account ⇒ stop.
 
 ## 1. Assemble the batch — up front, in one pass
 
-`$ARGUMENTS` may be issue numbers (`84 91 95`), a filter, or empty. Resolve to a
-concrete list **before asking anything**, so the user knows the size of what they
-are agreeing to.
+Resolve to a concrete list **before asking anything**, so the user knows the size
+of what they are agreeing to. There are three input shapes, and the first is the
+most common:
 
-Default when `$ARGUMENTS` is empty — everything that looks untriaged:
+### 1a. A pasted list of raw items — nothing is in GitHub yet
+
+The usual case. The user dumps a pile of bugs, ideas, and research questions —
+bullet points, a paragraph each, a wishlist off the top of their head:
+
+```
+- crash when rotating the device mid-run
+- would be nice if the workshop remembered your last tab
+- figure out whether we still need Firebase at all
+- the splash wordmark should be the logo, not text
+```
+
+**None of these are issues yet, and filing them is this skill's job.** The user
+should not have to create GitHub issues by hand before triaging — that is the
+work being delegated.
+
+Parse each line or paragraph into one batch item. Then:
+
+- **Do not file them all up front.** An item is created in §3 *as part of
+  triaging it*, so an item the user drops mid-pass was never filed, and the
+  questions shape the body rather than being patched on afterwards.
+- **Check for duplicates first** — search open issues for each item before
+  proposing it as new. A backlog dump often repeats something already filed:
+
+  ```bash
+  gh issue list --state all --search "<distinctive words>" --json number,title,state
+  ```
+
+  A likely match ⇒ show it and ask: same thing, or genuinely separate?
+- Keep the user's own words as the seed. Their phrasing is the requirement;
+  §2 sharpens it into a title and criteria rather than replacing it.
+
+### 1b. Issue numbers — groom what already exists
+
+```bash
+gh issue view <n> --json number,title,body,milestone,labels,assignees,blockedBy
+```
+
+Use this when the user names specific issues (`/orca:triage 101 103 107`), or
+after an audit surfaces a subset worth working through.
+
+### 1c. Nothing — audit the whole open backlog
 
 ```bash
 gh issue list --state open --limit 200 \
@@ -98,7 +139,20 @@ or a wishlist that are not yet issues, treat each as a batch item and file it in
 §3 as part of triaging it. Do not create every issue up front and then triage
 them; an item the user drops mid-pass should never have been filed.
 
-**Report the batch and get a go-ahead:**
+**Report the batch and get a go-ahead.** For a pasted list (§1a):
+
+```
+4 items to file · none exist as issues yet
+
+  1. crash when rotating the device mid-run              looks like a bug
+  2. workshop remembers your last tab                    feature
+  3. do we still need Firebase                           research
+  4. splash wordmark → logo                              possible dup of #107
+
+Work through these one at a time? Each becomes an issue as we go.
+```
+
+For existing issues (§1b/§1c):
 
 ```
 17 open issues · 8 need attention
@@ -135,10 +189,20 @@ For each item in the batch, in order. **Never batch the questions across
 issues** — the user answers for one issue, it gets written, then the next. That
 is what keeps a long batch tolerable and lets them stop anywhere.
 
-Read what is already there, then ask **only what is genuinely missing.** An
-issue that already has a clear scope and criteria may need nothing but a
-milestone; asking six questions about it wastes the user's attention and trains
-them to skim.
+**A raw item and an existing issue need different passes.**
+
+For a **raw item** (§1a) there is no body to read — you are building the issue
+from one sentence, so most of the questions below apply. Start by playing back
+what you understood in one line and proposing a title; getting the title wrong is
+the cheapest error to catch and the most expensive to leave. For a bug, the
+reproduction is usually the first thing missing. For a research item, the real
+question is what a *finding* would look like — a written note, a decision, a
+number — because that is its acceptance criterion.
+
+For an **existing issue** (§1b/§1c), read what is already there and ask **only
+what is genuinely missing.** An issue with clear scope and criteria may need
+nothing but a milestone; asking six questions about it wastes the user's
+attention and trains them to skim.
 
 **A drifted issue usually needs one question, not the full pass.** It was
 triaged once; something changed underneath it. Ask about the drift and nothing
@@ -212,13 +276,32 @@ gh issue edit <n> --add-label "<label>"
 gh issue edit <n> --add-blocked-by <blocker>    # real edge, never a label alone
 ```
 
-For a batch item that is not yet an issue:
+**For a raw item (§1a), create it** — this is the main path, and everything the
+questions established goes in at creation rather than being patched on after:
 
 ```bash
-gh issue create --title "<t>" --body-file - <<'EOF'
-<body with ### Done when>
+gh issue create \
+  --title "<the sharpened title>" \
+  --milestone "<name>" \
+  --label "<scope>" --label "<kind>" \
+  --body-file - <<'EOF'
+<one-paragraph summary in the user's own framing>
+
+### Done when
+
+- [ ] <criteria established in §2>
 EOF
 ```
+
+Then, if the questions turned up a dependency, add the edge once both numbers
+exist:
+
+```bash
+gh issue edit <new-number> --add-blocked-by <blocker>
+```
+
+Print the new issue's number and URL as you go — the user is building a backlog
+and wants to see it accumulate.
 
 Rules that matter:
 
@@ -269,3 +352,12 @@ this skill is meant to be re-run periodically.
 - **Treating bugs, features, and research as different workflows.** They are
   not — the questions are the same, and only the label differs. A research
   item's "done" is a written finding.
+- **Expecting the user to file issues first.** A pasted list of raw thoughts is
+  the primary input; creating the issues is the work being delegated.
+- **Filing the whole pasted batch up front, then triaging.** Each item is created
+  as part of triaging it, so an abandoned item was never filed and the questions
+  shape the body rather than patching it afterwards.
+- **Filing a duplicate.** Search before proposing a raw item as new; a backlog
+  dump often repeats something already open.
+- **Replacing the user's phrasing** with your own. Their words are the
+  requirement; sharpen the title, keep the meaning.
