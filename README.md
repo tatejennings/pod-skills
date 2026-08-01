@@ -1,41 +1,61 @@
 # orca-skills
 
-A Claude Code **plugin marketplace** for skills that add a **GitHub-Issues
-backlog and planning layer** on top of [Orca](https://orca.computer) — migrate a
-repo's tracking onto a shared model, plan work adversarially, hand it off to a
-worktree agent, watch the lanes, and gate the finished branch against the issue's
-own acceptance checklist.
+A Claude Code **plugin** that adds a **GitHub-Issues backlog and planning layer**
+on top of [Orca](https://orca.computer): groom a backlog, plan work adversarially,
+launch it into worktree lanes with agents, watch those lanes, and gate the
+finished branch against the issue's own acceptance checklist.
 
 > **Requires Orca** — an app that manages git repositories as sets of worktrees,
 > each with its own terminals and agents. These skills drive it through its
-> `orca` CLI. Without it, the backlog half still works (it is pure `gh`), but
-> nothing can be handed off — the skills detect the absence and say so rather
-> than half-working.
+> `orca` CLI. Without Orca the backlog half still works (it is pure `gh`), but
+> nothing can be launched — the skills detect the absence and say so rather than
+> half-working.
 
-## What this is, and what it is not
+**Nothing in this pipeline ever merges.** Lanes end at a draft PR, the gate
+reports, you merge.
 
-**This is not a wrapper around the `orca` CLI.** Orca ships its own
-version-matched skills for that — `orca-cli` for worktrees, terminals, and the
-browser; `orchestration` for multi-agent coordination. Read those with
-`orca skills get <name>`. This plugin never restates them; it points at them.
+---
 
-What Orca does **not** have is a backlog. It tracks lanes — `linkedIssue`,
-`linkedPR`, `workspaceStatus`, lineage, liveness — but nothing about milestones,
-readiness, dependencies, or whether finished work actually satisfies what was
-asked. **That gap is what these skills fill.**
+## Contents
 
-The boundary, stated once: *Orca owns how the CLI works; this plugin owns what to
-hand off, what contract binds the executor, and what proves the result.*
+- [The idea in one minute](#the-idea-in-one-minute)
+- [Install](#install)
+- [The seven skills](#the-seven-skills)
+- [Flags, in full](#flags-in-full)
+- [Workflows](#workflows)
+- [The conventions the skills read](#the-conventions-the-skills-read)
+- [What this is not](#what-this-is-not)
+- [Docs](#docs)
 
-## Requirements
+---
 
-- **[Orca](https://orca.computer)**, with Claude Code running in one of its
-  terminals. The `orca` CLI ships inside the app.
-- **[Claude Code](https://claude.com/claude-code)** with plugin support.
-- **[`gh`](https://cli.github.com)** ≥ 2.94.0, authenticated — the release that
-  added `blocked-by`/`blocking`, sub-issues, and issue types. Everything here is
-  verified on 2.96.0. If several accounts are authenticated, note that the skills
-  check the **active** one before writing.
+## The idea in one minute
+
+Orca tracks **lanes** — a worktree, its branch, its linked issue and PR, whether
+an agent is alive in it. What Orca has no notion of is a **backlog**: milestones,
+readiness, dependencies, and whether finished work actually satisfies what was
+asked.
+
+These skills fill that gap, and add one thing neither side has: **an evidence
+gate**. Every issue carries a `### Done when` checklist written *before* the work
+starts; when a branch is done, `/orca:verify` checks the branch against that
+checklist — running the commands, grepping the diff, and refusing to guess at
+what only a human can judge.
+
+That is the whole design. A PR existing proves nothing about whether the work is
+right, so something has to ask.
+
+```
+       backlog                    lanes                   proof
+  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+  │ milestones       │    │ worktree         │    │ ### Done when    │
+  │ readiness        │ →  │ branch + agent   │ →  │ commands run     │
+  │ dependencies     │    │ draft PR         │    │ diff checked     │
+  └──────────────────┘    └──────────────────┘    └──────────────────┘
+      GitHub                    Orca                  /orca:verify
+```
+
+---
 
 ## Install
 
@@ -45,83 +65,334 @@ claude plugin marketplace add ./orca-skills
 claude plugin install orca@orca-skills
 ```
 
-(`claude plugin marketplace add` also accepts a GitHub `owner/repo` directly.
-Inside a session use `/plugin marketplace add …` and
-`/plugin install orca@orca-skills`, then `/reload-plugins` — new skills don't
-appear until the plugin reloads.)
+`claude plugin marketplace add` also accepts a GitHub `owner/repo` directly.
+Inside a running session use `/plugin marketplace add …` and
+`/plugin install orca@orca-skills`, then **`/reload-plugins`** — new skills do
+not appear until the plugin reloads.
 
-Then, in **each project** you point the skills at:
+**Requirements**
+
+| | |
+|---|---|
+| [Orca](https://orca.computer) | with Claude Code running in one of its terminals; the `orca` CLI ships inside the app |
+| [Claude Code](https://claude.com/claude-code) | with plugin support |
+| [`gh`](https://cli.github.com) ≥ 2.94.0 | authenticated. 2.94.0 added `blocked-by`/`blocking`; everything here is verified on 2.96.0 |
+
+If several GitHub accounts are authenticated, note that the skills check the
+**active** one before any write — `gh auth status`.
+
+**Then, once per project:**
 
 ```
 /orca:migrate
 ```
 
 Everything else assumes the tracking model it establishes. Skipping it works if
-your repo already keeps state in GitHub milestones and issues — but the failure
-mode is quiet, so run it at least as an audit.
+your repo already keeps state in GitHub milestones and issues, but the failure
+mode is quiet — an unmigrated repo returns empty lists that look like "nothing to
+do". Run it at least as an audit.
 
-**Re-run it after upgrading this plugin.** When a release changes what the skills
+Re-run it after upgrading this plugin: when a release changes what the skills
 expect of a repo, `/orca:migrate` is what moves your project onto the new
-contract — it records which schema version it applied, so it knows the difference
-between a repo that is current and one that merely was. It also catches drift the
-other direction, when practice slips away from the model.
+contract.
 
-## Skills
+---
 
-| Skill | What it does |
+## The seven skills
+
+Grouped by what you are trying to do.
+
+### Getting a repo ready
+
+#### `/orca:migrate`
+Brings a repo's tracking up to the model the other skills read. Inventories every
+tracking file, classifies each section (live state / finished / narrative /
+reference), and proposes milestones, issues, `### Done when` checklists,
+dependency edges, and the `AGENTS.md` block. **Writes nothing until you approve,
+and never commits** — the diff stays rejectable.
+
+Run it three times in a repo's life: to onboard it, after a plugin upgrade that
+changes the contract, and any time you want a drift audit. It records which
+schema version it applied, so a later run can tell a repo that *is* current from
+one that merely *was*.
+
+```
+/orca:migrate
+```
+
+#### `/orca:triage`
+Turns raw issues into plannable ones, **one at a time**, by asking: what does this
+actually mean, what would "done" look like, when, what does it depend on, can an
+agent even do it. Then writes the checklist, sets the milestone and scope label,
+and records real dependency edges.
+
+Give it a batch and it works through them individually. Give it nothing and it
+**audits the whole open backlog** — catching both never-triaged issues and ones
+that have *drifted*: a `blocked` label whose blocker already closed, a dependency
+written only in prose, criteria under the wrong heading.
+
+```
+/orca:triage              # audit everything, then walk the problems
+/orca:triage 101 103 107  # just these
+```
+
+### Deciding how to do the work
+
+#### `/orca:plan`
+Adversarial planning for one piece of work — an issue number, a milestone, or a
+free-form description. Researches with parallel agents, drafts an
+execution-ready plan, then hands it to a **cold-reader agent** to attack for
+completeness, holes, single-context feasibility, and blast radius.
+
+Writes the `### Done when` checklist onto the issue, because that is what makes
+the work gateable later. Saves the plan to `~/.claude/plans/<repo>/` so it
+survives the session.
+
+```
+/orca:plan 84                          # plan issue #84
+/orca:plan fix the vent double-tap bug # free-form
+/orca:plan 84 --launch                 # plan, then launch it as a lane
+```
+
+#### `/orca:wave`
+Plans **several issues at once**, each in its own terminal in the current
+worktree. You move between tabs answering each context's questions instead of
+planning one at a time. No worktrees are created — planning writes no repo files.
+
+Then the part that earns it: **checks the finished plans against each other for
+file collisions.** Two issues can be independently ready and still edit the same
+file; dependency edges cannot express that, so comparing plans is the only place
+it shows up before work starts.
+
+```
+/orca:wave 84 85 86 87   # four planning contexts, one tab each
+/orca:wave --review      # check the finished plans against each other
+/orca:wave --launch      # start the non-colliding ones as lanes
+```
+
+### Doing the work
+
+#### `/orca:launch`
+Turns an issue into a **lane**: a fresh Orca worktree with an agent already
+implementing it. Reads the issue and its acceptance criteria, refuses work that
+is already in flight or marked `manual`, writes an executor contract *outside*
+the repo, creates the worktree with the issue linked natively, starts one agent
+on it, and **stops**.
+
+The contract binds the executor: implement, self-review, open a **draft** PR with
+`Closes #<n>`, never merge, never mark its own PR ready.
+
+```
+/orca:launch 84
+```
+
+#### `/orca:status`
+The dashboard, and the join this plugin exists for. Milestone progress, a
+`READY NEXT` list of unblocked issues, a `YOUR TASKS` section for `manual` work,
+and every lane's branch, PR state, and session liveness.
+
+Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
+— safe to put on a loop.
+
+```
+/orca:status                    # the dashboard, + regenerate ROADMAP.md
+/orca:status --no-roadmap       # dashboard only
+/orca:status --reap             # also delete provably-finished lanes
+/loop 15m /orca:status --reap   # keep it live
+```
+
+### Proving it was done
+
+#### `/orca:verify`
+**The evidence gate.** Checks a finished branch against its issue's own
+`### Done when` checklist: runs the criteria that are commands, greps *added
+lines* for the ones that are diff assertions, and **refuses to guess** at the
+ones only a human can judge.
+
+Evidence comes from the branch and the commands — never from the executor's
+report of them. Never merges, never closes an issue, never marks a PR ready.
+
+```
+/orca:verify 84       # by issue
+/orca:verify          # the current worktree's lane
+```
+
+| Verdict | Meaning |
 |---|---|
-| `/orca:migrate` | Brings a repo's tracking up to the model the other skills read — milestones and issues for state, `docs/specs/` for narrative, a `### Done when` checklist on every issue. Run it to onboard a project, again after a plugin upgrade that changes what the skills expect, and any time to audit for drift. Writes nothing until you approve. |
-| `/orca:triage` | Works through a batch of raw issues with you, one at a time — what does this mean, what would "done" look like, when, what does it depend on — then writes the `### Done when` checklist, sets the milestone, and records real dependency edges. Turns captured thoughts into something `/orca:plan` can consume. |
-| `/orca:launch` | Turns "start #84" into a verified lane: reads the issue and its acceptance criteria, refuses work already in flight or marked `manual`, writes the executor contract outside the repo, creates the worktree with the issue linked, starts one agent on it, and stops. |
-| `/orca:status` | The dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. Regenerates the gitignored `ROADMAP.md` every run so it never goes stale (`--no-roadmap` to skip); `--reap` deletes provably-finished lanes. Safe to loop. |
-| `/orca:verify` | The evidence gate. Checks a finished branch against its issue's own `### Done when` checklist — runs the commands, greps the diff, and refuses to guess at what only a human can judge. Never merges. |
-| `/orca:wave` | Plans several issues at once, each in its own terminal in the current worktree, so you move between them answering questions instead of planning one at a time. Then checks the finished plans against each other for file collisions — the one place an overlap between two independently-ready issues is visible before launch. |
-| `/orca:plan` | Adversarial implementation planning: research with parallel agents, draft, then have a cold reader attack the plan for holes, feasibility, and blast radius. With `--launch`, continues straight into `/orca:launch`. |
+| `pass` | every checkable criterion met, and there were no human ones |
+| `pass-with-review` | checkable criteria met, but ≥1 needs your judgement — **listed** |
+| `fail` | ≥1 checkable criterion failed — **every** failure named, with evidence |
 
-**Nothing in this pipeline ever merges.** Lanes end at a PR; the gate reports;
-you merge.
+---
 
-### Running it unattended
+## Flags, in full
 
-The pipeline can be driven on a schedule by an Orca automation, but this plugin
-**ships no enabled automation** and enabling one has real preconditions — chiefly
-that `/orca:verify` has been seen to *fail* on incomplete work, not just pass.
-The command, the precheck that carries the quotas, and the full precondition list
-are in `plugins/orca/skills/_shared/automation.md`.
+| Skill | Flag | Effect |
+|---|---|---|
+| `/orca:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, the work is already in flight, or Orca is unavailable. |
+| `/orca:wave` | `--review` | Check the finished plans against each other for file collisions. |
+| `/orca:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |
+| `/orca:status` | `--reap` | Delete provably-finished lanes. Every safety check must pass; ambiguity is always a skip, never a prompt. |
+| `/orca:status` | `--no-roadmap` | Skip regenerating `ROADMAP.md`. |
 
-The short version: a pipeline that can open PRs but cannot check them is a
-machine for generating confident wrong work.
+Everything else takes plain arguments: issue numbers, a milestone name, or a
+free-form description.
 
-## The pipeline
+---
+
+## Workflows
+
+### 1. Onboarding a repo
 
 ```
-/orca:migrate        … establishes the tracking model; re-run when it changes
-      ↓
-raw issues
-  → /orca:triage     … one at a time: what, when, done-when
-      ↓
-ready issue
-  → /orca:plan       … you approve the plan              ← GATE 1
-      (/orca:wave plans several at once, one terminal each,
-       then checks the plans against each other for collisions)
-  → /orca:launch     … one worktree, one agent, then stop
-  → executor implements, opens a DRAFT PR
-  → /orca:verify     … evidence gate, machine-checked    ← GATE 2
-  → you review and merge                                 ← GATE 3
+/orca:migrate     → proposes; you approve; nothing is committed
+                    review the diff, commit it yourself
+/orca:triage      → audit the backlog, fix what it finds
+/orca:status      → confirm it reads correctly
 ```
 
-Three gates, and a human at the first and last. The middle one is the point:
-a PR existing proves nothing about whether the work is right.
+You are done when `/orca:status` shows a milestone with progress and a
+`READY NEXT` list you believe.
 
-## The stateless roadmap
+### 2. One issue, start to finish
 
-`ROADMAP.md` is **generated and gitignored** — a rendering of GitHub state, never
-a source of truth. Regenerate it any time; delete it without losing anything. No
-lane writes to it, so it never conflicts, and it cannot drift from the issues
-because it *is* the issues.
+```
+/orca:status          → pick something from READY NEXT
+/orca:plan 84         → research, draft, adversarial review
+                        you approve                        ← GATE 1
+/orca:launch 84       → worktree + agent; this session is free
+                        …the agent implements, opens a DRAFT PR…
+/orca:status          → the lane shows `awaiting-gate`
+/orca:verify 84       → the evidence gate                  ← GATE 2
+                        pass → offer to mark it ready
+                        fail → stays draft, criteria commented on the PR
+you review and merge                                       ← GATE 3
+/orca:status --reap   → the finished lane is cleaned up
+```
 
-This is the same principle as the rest of the model: **truth is rebuilt, never
-stored.** See [TRACKING.md](TRACKING.md).
+### 3. Several issues in parallel
+
+```
+/orca:status             → READY NEXT: #84 #85 #86 #87
+/orca:wave 84 85 86 87   → four tabs: "plan #84" … "plan #87"
+                           visit each, answer its questions
+/orca:wave --review      → "3 ready; #86 collides with #85 in GameScene.swift"
+/orca:wave --launch      → the three non-colliding ones become lanes
+/orca:status             → watch all three
+```
+
+A collision is a **sequencing** problem, not a bad plan: launch one, let it
+merge, re-plan the other against the merged result.
+
+### 4. Fire and forget one issue
+
+```
+/orca:plan 84 --launch
+```
+
+Plans, reviews, and launches without stopping for approval — but only when the
+decisions are unambiguous. It **defers instead of guessing**: if the review says
+split, or any real fork lacked a clear answer, it stops and presents the plan
+with the open question named. A deferral costs one question; a wrong guess costs
+an entire executor run.
+
+### 5. Keeping the backlog honest
+
+```
+/loop 15m /orca:status --reap   # live dashboard, finished lanes cleaned up
+/orca:triage                    # periodically: drift audit + fix
+/orca:migrate                   # after upgrading this plugin
+```
+
+### 6. Capturing work mid-flight
+
+There is no capture skill — `gh issue create` is enough, and Claude will do it
+unprompted. File the thought with whatever detail you have; `/orca:triage` is
+what turns it into something plannable later.
+
+---
+
+## The conventions the skills read
+
+Four things live in your repo's GitHub, and every skill reads them the same way.
+
+**Milestones say *when*.** The active milestone is the open one with the nearest
+due date. Give exactly one a date and leave later ones dateless, or every run has
+to ask which is active.
+
+**An issue with no milestone is the unscheduled backlog.** That is a valid state,
+not a defect — assigning a milestone is what scheduling *means*. Do not create a
+"Backlog" milestone.
+
+**Blocking is a real dependency edge**, not a label:
+
+```bash
+gh issue edit <blocked> --add-blocked-by <blocker>
+```
+
+That edge is what readiness reads. A `blocked` label can mirror it for the issue
+list, but a label alone is decorative — every readiness query will call that
+issue ready, which is the honest reading of the data.
+
+**Every issue carries a `### Done when` checklist**, written when the issue is
+filed rather than after the work:
+
+```markdown
+### Done when
+
+- [ ] `./scripts/test.sh` exits 0
+- [ ] `parseManifest` appears in the diff
+- [ ] `docs/api.md` is modified
+- [ ] The importer handles a malformed header without crashing
+```
+
+The first three are machine-checkable; the fourth is not, and that is fine.
+`/orca:verify` sorts every criterion into **command**, **diff assertion**, or
+**human** — and it reports human criteria for your judgement rather than passing
+them. A gate that quietly passes what it cannot check is worse than no gate.
+
+**Two labels the skills understand:**
+
+| Label | Meaning |
+|---|---|
+| `manual` | Only a human can do this — account access, store configuration, a physical device. `/orca:launch` refuses it; `/orca:status` lists it under `YOUR TASKS`. |
+| scope labels (`sound`, `board ui`, …) | Which part of the system the work touches. Reuse an existing one; create one named for the area if none fits. |
+
+`manual` means the **whole task** is human. An issue with a few human *criteria*
+is still agent work — that belongs in the checklist, not the label.
+
+**`ROADMAP.md` is generated and gitignored.** `/orca:status` rewrites it every
+run. It is a rendering of GitHub state, never a source — delete it and regenerate
+without losing anything. That is the same principle as the rest of the model:
+truth is rebuilt, never stored. See **[TRACKING.md](TRACKING.md)**.
+
+---
+
+## What this is not
+
+**Not a wrapper around the `orca` CLI.** Orca ships its own version-matched
+skills — `orca-cli` for worktrees, terminals, and the browser; `orchestration`
+for supervised multi-agent coordination. Read them with `orca skills get <name>`.
+This plugin points at them rather than restating them.
+
+The boundary, stated once: **Orca owns how the CLI works; this plugin owns what
+becomes a lane, what contract binds the executor, and what proves the result.**
+
+**No merge automation.** Lanes end at an open draft PR and a human merges. Since
+the merge is the only state transition in the model, automating it would automate
+the one decision worth keeping.
+
+**No enabled automation.** The pipeline *can* be driven on a schedule by an Orca
+automation, but this plugin ships none enabled, and turning one on has real
+preconditions — chiefly that `/orca:verify` has been seen to **fail** on
+incomplete work, not just pass. The command, the precheck that carries the
+quotas, and the full list are in
+[`_shared/automation.md`](plugins/orca/skills/_shared/automation.md).
+
+A pipeline that can open PRs but cannot check them is a machine for generating
+confident wrong work.
+
+---
 
 ## Docs
 
@@ -130,3 +401,5 @@ stored.** See [TRACKING.md](TRACKING.md).
   under parallel lanes.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — adding skills, the after-edit
   checklist, and how *this* repo works (it commits straight to `main`).
+- **[CHANGELOG.md](CHANGELOG.md)** — what changed, and the field findings behind
+  each change.

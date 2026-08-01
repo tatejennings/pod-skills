@@ -3,6 +3,34 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.6.1 — 2026-08-01
+
+**README rewritten** as usable documentation rather than a description of the
+design.
+
+- **Every skill gets its own section** with a plain statement of what it does and
+  copy-pasteable invocations, grouped by intent: getting a repo ready, deciding
+  how to do the work, doing it, proving it was done.
+- **A complete flag table.** Five flags across three skills — `--launch`,
+  `--review`, `--reap`, `--no-roadmap` — each with what it actually does,
+  including `/orca:plan --launch`'s four disqualifiers.
+- **Six workflows** end to end: onboarding a repo, one issue start to finish,
+  several in parallel, fire-and-forget, keeping the backlog honest, and capturing
+  work mid-flight (which needs no skill).
+- **"The conventions the skills read"** — milestones, no-milestone as the
+  unscheduled backlog, dependency edges over labels, the `### Done when`
+  checklist with its three criterion buckets, and the two labels the skills
+  understand (`manual` and scope labels). Previously these were scattered across
+  `TRACKING.md` and individual skills; a user had no single place to learn what
+  the skills expect of their repo.
+- `/orca:verify`'s three verdicts are stated in the README, since
+  `pass-with-review` is the distinction most likely to be misread as a weaker
+  `pass`.
+
+Also corrects `/orca:plan`'s description, which still described `--launch` in
+pre-rename terms and did not mention that it saves a plan file or that
+`/orca:wave` exists for planning several issues at once.
+
 ## 1.6.0 — 2026-08-01
 
 **New skill: `/orca:wave`** — plan several issues at once, one terminal each,
