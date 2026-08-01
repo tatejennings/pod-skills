@@ -1,6 +1,6 @@
 ---
 name: wave
-description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue titled with its number, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
+description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue titled with its number, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
 ---
 
 # Wave
@@ -47,8 +47,10 @@ attention.
 
 Exclude, and say why:
 
-- **Already in flight** — an open PR, an assignee, or a live lane
-  (`orca worktree ps --json`, `linkedIssue`).
+- **Already in flight** — an open PR, an assignee, or a live lane. `worktree ps`
+  spans **all repos** and has no `--repo` flag, so filter on `repoId` +
+  `linkedIssue` + `isMainWorktree == false`; `linkedIssue` alone matches
+  unrelated repos (`../_shared/orca-lanes.md`).
 - **Blocked** — any blocker still `OPEN` in `blockedBy.nodes[].state`.
 - **`manual`** — no agent can do it, so a plan is wasted
   (`../_shared/issue-schema.md`).

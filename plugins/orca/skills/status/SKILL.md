@@ -72,11 +72,20 @@ Take the `repoId` from that result. Everything in §2 filters on it.
 ## 2. Lanes — one call
 
 ```bash
-orca worktree ps --json
+orca worktree ps --limit 200 --json
 ```
 
-Keep worktrees where `repoId` matches **and `isMainWorktree` is false**. Never
-use a path prefix (`../_shared/orca-lanes.md`).
+**Pass `--limit` explicitly.** The default row cap is unspecified, and a silent
+truncation would under-report lanes *and* drop the primary checkout this step
+needs below.
+
+**Before filtering, record the primary checkout's path** — the entry for this
+`repoId` with `isMainWorktree: true`. You cannot read it afterwards, because the
+lane filter removes it, and `orca worktree current` returns the *lane's* path
+when this skill runs from inside one.
+
+Then keep worktrees where `repoId` matches **and `isMainWorktree` is false**.
+Never use a path prefix (`../_shared/orca-lanes.md`).
 
 **That pair is necessary but not sufficient.** A repo registered as
 `kind: folder` can hold a workspace entry with `isMainWorktree: false` whose
@@ -111,8 +120,19 @@ whole repo and join locally by branch:
 
 ```bash
 gh pr list --state all --limit 100 \
-  --json number,state,isDraft,headRefName,headRefOid,mergedAt,url,closingIssuesReferences
+  --json number,state,isDraft,headRefName,headRefOid,mergedAt,url,\
+closingIssuesReferences,mergeable,mergeStateStatus,statusCheckRollup,updatedAt
 ```
+
+The last four cost nothing extra — they come back in the same request — and each
+answers a question the dashboard otherwise cannot:
+
+- **`mergeable: CONFLICTING`** ⇒ the lane will not land as-is. Report it; a
+  conflicted PR that looks healthy is how a lane sits for a week.
+- **`statusCheckRollup`** ⇒ CI state. **This gate is not CI**, and a `pass` from
+  `/orca:verify` says nothing about it — showing both side by side is what stops
+  someone reading a passing gate as a green light.
+- **`updatedAt`** ⇒ how long a PR has been waiting on a human.
 
 `closingIssuesReferences` costs nothing extra here and gives each lane its issue
 without a per-lane query — which is what keeps this skill safe under `/loop 15m`.
@@ -220,13 +240,41 @@ last activity · verdict. Then one line per **non-`working`** lane saying the ne
 action:
 
 - `awaiting-gate` → "draft PR open, no agent running — run `/orca:verify <n>`"
+- `pr-open` → **"gate passed, awaiting your review and merge"**, with the PR's
+  age from `updatedAt`. This is the one lane state that is healthy *and* blocked
+  on a human, so it needs an action line even though nothing is wrong. Past about
+  a week, say so — a ready PR nobody merged is a real stall the verdict table
+  otherwise calls fine.
+- **`mergeable: CONFLICTING` on any open PR** → "will not merge as-is — rebase
+  needed", regardless of verdict. Evidence gathered before a conflicting rebase
+  is stale by definition.
+- **failing `statusCheckRollup`** → "CI failing", stated alongside the gate
+  verdict rather than instead of it. A passing gate and red CI can coexist:
+  `/orca:verify` checks the issue's criteria against the branch; it is not CI and
+  does not supersede it.
 - `merged-reapable` → "run `/orca:status --reap` to clean it up" (or reap now if
   `--reap` was passed)
 - `merged-live` → "merged — close its terminals, then it can be reaped"
-- `stalled` → "session gone with unmerged work — reopen a session or remove it"
+- `stalled` → "session gone with unmerged work" — and **name both exits**, since
+  neither is obvious:
+  - **Resume it.** The executor contract still exists at
+    `~/.claude/plans/<repo>/<date>-<slug>.prompt.md` and is exactly what a
+    resumed session should read. Start one with `orca terminal create --worktree
+    <selector> --command "claude"`, then point it at that file. Tell the resumed
+    agent the branch already exists so it does not try to create one.
+  - **Abandon it.** Close the PR if there is one, then run the full pre-deletion
+    checklist in `../_shared/orca-lanes.md` — **especially the dirty-tree check**,
+    because unmerged work is exactly what is at risk here — and only then
+    `orca worktree rm`. Decide separately what happens to the issue: unassign it,
+    or drop its milestone back to unscheduled. `--reap` will never do any of this
+    for you; it only touches provably-merged lanes.
 - `needs-attention` → the exact contradiction found
 - **merged PR that closed no issue** → "merged without `Closes #n` — the issue is
-  still open", which is a malformed PR body, not a state to fix by hand
+  still open." The PR body was malformed; the merge cannot be undone. **The
+  remedy is for the human to close the issue with a comment naming the merged
+  PR.** The "never close an issue by hand" rule binds skills and executors, not a
+  person repairing a malformed merge — say so, or this lane is reported forever
+  and the backlog stays permanently wrong.
 
 ## 7. The roadmap — regenerated every run
 
@@ -280,9 +328,11 @@ Say it is gitignored, so it is not committed and cannot conflict.
 ## 8. `--reap` — delete provably-finished lanes
 
 Only `merged-reapable` lanes are candidates. **Every check in
-`../_shared/orca-lanes.md`'s pre-deletion checklist must pass**, and checks 1, 3
-and 4 must be re-run immediately before the delete — a dirty file or reopened
-terminal can appear in the seconds since the scan.
+`../_shared/orca-lanes.md`'s pre-deletion checklist must pass**, and checks 1, 3,
+4 and 5 must be re-run immediately before the delete — a dirty file, a reopened
+terminal, or a new commit can appear in the seconds since the scan. Check 5
+(`HEAD == headRefOid`) is what stops a post-merge commit being lost, so a cached
+value defeats its purpose.
 
 The check whose failure is unrecoverable is the primary-checkout proof:
 

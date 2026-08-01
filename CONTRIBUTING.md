@@ -3,7 +3,7 @@
 ## How this repo works — it commits straight to `main`
 
 **No branches, no PRs, no lanes.** This repo is markdown and JSON with no
-runtime, no tests, and no parallel work. The plan → handoff → verify → merge lane
+runtime, no tests, and no parallel work. The plan → launch → verify → merge lane
 workflow these skills describe is for the *consuming* projects they are pointed
 at, not for the plugin itself.
 
@@ -76,6 +76,20 @@ claude --plugin-dir ./plugins/orca   # overrides the installed copy for that ses
    ```
 
    Changes apply to new sessions; existing ones need `/reload-plugins`.
+
+## After an Orca upgrade
+
+`/audit-orca` — a project-level skill in `.claude/skills/`. Every `orca` CLI fact
+in the skills was verified against one version on one day, and Orca updates
+independently: flags get added, argument styles change, bundled skill
+descriptions get rewritten. Nothing else in this repo would notice until a user
+hit a broken command.
+
+It re-checks every referenced command and flag against live `--help`, compares
+Orca's bundled skill triggers against ours for new collisions, reports new CLI
+surface worth adopting, and updates the version stamp in
+`_shared/orca-lanes.md` — but **only on a run that found no breaks**, since the
+stamp asserts the facts were verified.
 
 ## Releasing
 
