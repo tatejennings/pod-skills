@@ -3,6 +3,51 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.2.0 — 2026-08-01
+
+Three findings from running the suite against a real, partially-migrated repo,
+folded back into the skills. **No schema bump** — none of these change what a
+migrated repo must look like; they make `/orca:migrate` better at *finding*
+problems, which is detection, not contract.
+
+**Dependencies hide in prose, and that is usually where the real ones are.**
+`/orca:migrate` now greps issue bodies for `**Prereqs:**` lines, "after X lands",
+"requires Y" and similar, then proposes real edges. In the repo this was tested
+against, three issues carried precise ordering in prose with **no** GitHub edge —
+invisible to every readiness query, so all three reported ready. Converting only
+`blocked` *labels* would have missed all of it. Prose that names work by a
+project-local id (`W1`, `E2`) is resolved by title, and anything unresolvable is
+listed rather than guessed: a wrong edge hides available work, which is worse
+than a missing one. The prose stays in place — it carries reasoning the edge
+cannot ("W1, parallel-safe with W2").
+
+**Two dateless milestones mean nothing resolves as active.** Previously a note;
+now a proposed fix, because the consequence is concrete — `/orca:status` has to
+ask on every run, which makes it interactive and breaks `/loop`. Later milestones
+stay deliberately dateless so they cannot win the nearest-due-date rule.
+
+**Two things get called "the roadmap".** `TRACKING.md` gains a table separating
+the **plan** (narrative, tracked, changes when a decision changes) from the
+**tracker** (`ROADMAP.md`, generated, changes every run). A planning doc that
+carries no status is the narrative half working correctly, **not** a violation —
+so `/orca:migrate` proposes only a header line naming the distinction, never a
+migration of the doc. The test is whether it records *progress*: "F2 depends on
+E1" is a plan; "F2 — in progress" is state.
+
+**Also**
+
+- `/orca:migrate` checks for acceptance *criteria*, not the literal `### Done
+  when` heading. An issue may state them in prose or under another heading, in
+  which case the fix is a rename — not authoring new criteria, which would risk
+  fabricating a gate.
+- "No milestone" is documented as the **unscheduled backlog** and a valid state.
+  `/orca:migrate` explicitly does not propose a "Backlog" milestone: a permanent
+  bucket makes its progress count meaningless and adds another candidate for
+  "active".
+- The `AGENTS.md` fragment gains three rules — planning docs are not status
+  boards, blocking is an edge rather than a label, and no-milestone means
+  unscheduled.
+
 ## 1.1.0 — 2026-08-01
 
 **`ROADMAP.md` is now regenerated on every `/orca:status` run**, not only behind

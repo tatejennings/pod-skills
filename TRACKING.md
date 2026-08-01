@@ -88,6 +88,35 @@ Why generated-and-ignored rather than committed:
 A committed roadmap would reintroduce the conflict surface; the generated file
 gets the readability without the state.
 
+### Two things get called "the roadmap" — keep them apart
+
+The most common confusion in a repo using this model, and worth naming directly:
+
+| | The **plan** | The **tracker** |
+|---|---|---|
+| Example | `docs/roadmap.md`, a design record | `ROADMAP.md` (generated) |
+| Holds | What the work *is*, why, in what order, what it depends on | What is done, in flight, next |
+| Changes when | **A decision changes** | **Every run** |
+| Written by | You | `/orca:status` |
+| Tracked in git | Yes — it is narrative | No — gitignored |
+
+Both are legitimate and a mature repo has both. What breaks is when one file
+tries to be both — that is the tracked-progress-file problem at the top of this
+document.
+
+A planning doc that carries no status is **not** a violation of this model; it is
+the narrative half working correctly. The test is whether it records *progress*.
+"Task F2 depends on E1 and G2" is a plan. "Task F2 — in progress" is state that
+belongs in the issue.
+
+Worth stating in the planning doc's own header, so nobody has to infer it:
+
+```markdown
+> **This is the plan, not a status board.** It changes when a decision changes —
+> not when work progresses. Live state is GitHub Issues; `ROADMAP.md`
+> (generated, gitignored) renders that state.
+```
+
 ### The narrative/state split
 
 Roadmap bloat comes from mixing design thinking into a tracker, so keep them
@@ -162,7 +191,13 @@ exists at all). The canonical copy — the one the skill transcribes — is
   merge did not close its issue, the PR body was malformed; report that.
 - Progress notes go in issue comments, not files.
 - Design and rationale go in `docs/specs/<slug>.md`. Issue bodies link to the
-  spec; they do not restate it.
+  spec; they do not restate it. A planning doc is the plan, never a status
+  board — it changes when a decision changes, not when work progresses.
+- Blocking is a real dependency, not a label or a prose line:
+  `gh issue edit <blocked> --add-blocked-by <blocker>`. That edge is what
+  readiness reads; a label mirrors it and can go stale.
+- An issue with **no milestone** is the unscheduled backlog. Assigning a
+  milestone is what scheduling means.
 - Every issue carries a `### Done when` checklist of acceptance criteria —
   that checklist is what gates the work, and it is written when the issue is
   filed, not after the work is done.
