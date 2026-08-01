@@ -161,7 +161,7 @@ Releases qualify, which is why they are the obvious example — but so do "Phase
 - **`/orca:plan`** accepts an issue number, milestone, or description, writes the
   `### Done when` checklist when it drafts, and never emits a step that writes
   progress to a tracked file.
-- **`/orca:handoff`** links the issue natively on the worktree and requires
+- **`/orca:launch`** links the issue natively on the worktree and requires
   `Closes #<n>` in the executor's PR body — the transition the model rests on.
 - **`/orca:status`** shows milestone progress, lane state, and a `READY NEXT`
   list of unblocked work — the read-only answer to "what should I work on next".

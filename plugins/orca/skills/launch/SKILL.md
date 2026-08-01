@@ -1,12 +1,19 @@
 ---
-name: handoff
-description: Hand a GitHub issue or an agreed plan off to a fresh agent in its own Orca worktree, so implementation happens in a separate lane instead of this session - reads the issue and its "### Done when" criteria, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, launches one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:handoff", "hand off #84", "hand this off", "run this in a new worktree", "spin up a session to build this", "give this to another agent", "launch a lane for issue N", or "package this plan for another context". This skill owns what gets handed off and what contract binds the executor; the mechanics of the Orca CLI belong to Orca's bundled orca-cli skill, and supervised multi-agent coordination with waits and decision gates belongs to its orchestration skill - use those directly when the request is about the CLI or about watching workers rather than handing over ownership.
+name: launch
+description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Done when" acceptance criteria, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:launch", "/orca:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", or "put this in its own lane". This skill decides what work becomes a lane and what contract binds the executor; the Orca CLI's own mechanics belong to Orca's bundled orca-cli skill, and supervised multi-agent coordination with waits and decision gates belongs to its orchestration skill.
 ---
 
-# Handoff
+# Launch
 
-Package a piece of work and give it to a fresh agent in its own worktree. **You
-are the handing-off context: you do not implement anything here.**
+Turn a piece of work into a **lane**: a fresh worktree with an agent already
+implementing it. **You are the launching context — you do not implement anything
+here.**
+
+> **On naming:** "hand off", "handover", and "give this to another agent" are
+> trigger phrases owned by Orca's bundled `orca-cli` skill, which performs the
+> CLI-level handover. This skill is the layer above it — it decides *what*
+> becomes a lane and *what contract binds the executor*. If the user's request is
+> really about driving the CLI, that skill is the right one.
 
 The launch mechanics — the exact command, its flags, and why each one — are in
 `../_shared/orca-lanes.md` under "The handoff invocation". Read that rather than

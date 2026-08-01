@@ -2,7 +2,7 @@
 
 One shape, six consumers. `/orca:migrate` establishes it, `/orca:triage` and
 `/orca:plan` write it,
-`/orca:handoff` binds an executor to it, `/orca:status` reads readiness from it,
+`/orca:launch` binds an executor to it, `/orca:status` reads readiness from it,
 and `/orca:verify` mechanically checks it. **Point at this file; do not restate
 the schema inside a skill.**
 
@@ -155,7 +155,7 @@ How the skills read it:
 - **`/orca:status`** lists `manual` issues in their own section rather than under
   `READY NEXT` — they are ready, but they are yours. Hiding them would lose work;
   mixing them in would suggest they can be launched.
-- **`/orca:handoff`** refuses to launch a lane for one and says why. This is the
+- **`/orca:launch`** refuses to launch a lane for one and says why. This is the
   payoff: it stops an agent being handed something it structurally cannot finish.
 - **`/orca:triage`** asks when it is not obvious from the issue.
 
@@ -175,7 +175,7 @@ string, and say which label you matched. Do not rename a repo's existing label t
 
 - `/orca:status` reads readiness from milestones and dependency edges, not from
   the checklist. It works on any repo.
-- `/orca:handoff` binds the executor to the checklist when one exists, and hands
+- `/orca:launch` binds the executor to the checklist when one exists, and hands
   off fine when it does not — it notes the absence in the contract.
 - `/orca:triage` **writes** the checklist by asking the user what "done" looks
   like. This is the main ongoing source of conforming issues.

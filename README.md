@@ -72,10 +72,10 @@ other direction, when practice slips away from the model.
 |---|---|
 | `/orca:migrate` | Brings a repo's tracking up to the model the other skills read — milestones and issues for state, `docs/specs/` for narrative, a `### Done when` checklist on every issue. Run it to onboard a project, again after a plugin upgrade that changes what the skills expect, and any time to audit for drift. Writes nothing until you approve. |
 | `/orca:triage` | Works through a batch of raw issues with you, one at a time — what does this mean, what would "done" look like, when, what does it depend on — then writes the `### Done when` checklist, sets the milestone, and records real dependency edges. Turns captured thoughts into something `/orca:plan` can consume. |
-| `/orca:handoff` | Turns "hand off #84" into a verified one-command lane launch: reads the issue, derives the slug, writes the executor contract outside the repo, links the issue natively, reports the lane, and stops. |
+| `/orca:launch` | Turns "start #84" into a verified lane: reads the issue and its acceptance criteria, refuses work already in flight or marked `manual`, writes the executor contract outside the repo, creates the worktree with the issue linked, starts one agent on it, and stops. |
 | `/orca:status` | The dashboard: milestone progress, a `READY NEXT` list of unblocked issues, and every lane's branch/PR/session state — the backlog join Orca has no notion of. Regenerates the gitignored `ROADMAP.md` every run so it never goes stale (`--no-roadmap` to skip); `--reap` deletes provably-finished lanes. Safe to loop. |
 | `/orca:verify` | The evidence gate. Checks a finished branch against its issue's own `### Done when` checklist — runs the commands, greps the diff, and refuses to guess at what only a human can judge. Never merges. |
-| `/orca:plan` | Adversarial implementation planning: research with parallel agents, draft, then have a cold reader attack the plan for holes, feasibility, and blast radius. With `--launch`, continues straight into `/orca:handoff`. |
+| `/orca:plan` | Adversarial implementation planning: research with parallel agents, draft, then have a cold reader attack the plan for holes, feasibility, and blast radius. With `--launch`, continues straight into `/orca:launch`. |
 
 **Nothing in this pipeline ever merges.** Lanes end at a PR; the gate reports;
 you merge.
@@ -101,7 +101,7 @@ raw issues
       ↓
 ready issue
   → /orca:plan       … you approve the plan              ← GATE 1
-  → /orca:handoff    … one worktree, one agent, then stop
+  → /orca:launch     … one worktree, one agent, then stop
   → executor implements, opens a DRAFT PR
   → /orca:verify     … evidence gate, machine-checked    ← GATE 2
   → you review and merge                                 ← GATE 3
