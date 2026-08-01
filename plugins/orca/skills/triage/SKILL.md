@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Done when" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/orca:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This creates and grooms individual issues; migrating a repo's whole tracking model is /orca:migrate, and planning the implementation of one issue is /orca:plan.
+description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Done when" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/orca:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This works issue by issue. If the repo has tracking FILES - a ROADMAP.md, a TODO.md, a status table - or has never been set up for these skills, run /orca:migrate first; this skill assumes milestones and issues are already the source of truth. For a read-only answer to "what should I work on next" with no questions asked, use /orca:status. Planning the implementation of one issue is /orca:plan.
 ---
 
 # Triage
@@ -36,6 +36,13 @@ gh repo view --json nameWithOwner -q .nameWithOwner
 
 Confirm the **active** account can write to the resolved repo before touching
 anything. Wrong account ⇒ stop.
+
+**Is this repo on the tracking model at all?** If `AGENTS.md`/`CLAUDE.md` has no
+`orca-skills tracking model` marker, *and* the repo has no milestones and no
+issues, say so and offer `/orca:migrate` first. This skill assumes milestones and
+issues are already the source of truth; on an unmigrated repo it would report
+"nothing to do" over an empty backlog while the real work sits in a `ROADMAP.md`.
+A repo with issues but no marker is fine — just triage it.
 
 ## 1. Assemble the batch — up front, in one pass
 
@@ -133,11 +140,6 @@ Flag an issue when any of these hold:
 Report drift and never-triaged separately in the batch summary — they need
 different questions. A drifted issue usually needs one confirmation; a raw one
 needs the full pass.
-
-Also accept a **pasted list** — if the user drops in bullet points, bug reports,
-or a wishlist that are not yet issues, treat each as a batch item and file it in
-§3 as part of triaging it. Do not create every issue up front and then triage
-them; an item the user drops mid-pass should never have been filed.
 
 **Report the batch and get a go-ahead.** For a pasted list (§1a):
 
@@ -307,6 +309,12 @@ Rules that matter:
 
 - **Preserve the existing body.** Read it, add or replace only the checklist
   section, write it back through stdin. Never `--body "…"` — quoting eats it.
+- **Never edit the `### Done when` checklist of an issue with a live lane or an
+  open PR.** The executor was bound to those criteria and the gate will apply
+  them; changing them mid-flight silently invalidates both. Check
+  `orca worktree ps` (`repoId` + `linkedIssue`) and `gh pr list` first. If the
+  criteria are genuinely wrong, say so and let the user decide — that is a
+  re-scope, not a triage edit.
 - **Blocking is an edge, not a label.** A `blocked` label may mirror it for the
   issue list, but the edge is what readiness reads
   (`../_shared/github-backlog.md`).

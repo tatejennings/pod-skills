@@ -177,7 +177,9 @@ return neither.
 
 ### What Orca tracks natively — do not reconstruct it
 
-`worktree ps --json` returns, per worktree, in **one call**:
+`orca worktree ps --limit 200 --json` returns, per worktree, in one call
+(**it spans every repo Orca knows about and has no `--repo` flag** — filter on
+`repoId` yourself, and pass `--limit` since the default cap is unspecified):
 
 | Field | Use |
 |---|---|
@@ -221,8 +223,9 @@ move`/`repair`, or the user reorganizing a checkout mid-run, is rare but real.
 
 ### The full pre-deletion checklist
 
-Every one must pass, and 1/3/4 must be re-run **immediately before** the delete —
-a dirty file or a reopened terminal can appear in the seconds since a scan:
+Every one must pass, and **1, 3, 4 and 5 must be re-run immediately before the
+delete** — a dirty file, a reopened terminal, or a new commit can all appear in
+the seconds since a scan. Only 2 (a merged PR's state) is settled and reusable:
 
 1. **Linked worktree** — the `--git-dir` ≠ `--git-common-dir` proof above.
 2. **PR merged** — from `gh`, not from `linkedPR` (which is only a number).

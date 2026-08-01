@@ -1,6 +1,6 @@
 # Issue body schema — the contract every skill in this plugin reads
 
-One shape, six consumers. `/orca:migrate` establishes it, `/orca:triage` and
+One shape, seven consumers. `/orca:migrate` establishes it, `/orca:triage` and
 `/orca:plan` write it,
 `/orca:launch` binds an executor to it, `/orca:status` reads readiness from it,
 and `/orca:verify` mechanically checks it. **Point at this file; do not restate

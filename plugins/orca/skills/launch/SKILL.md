@@ -1,6 +1,6 @@
 ---
 name: launch
-description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Done when" acceptance criteria, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:launch", "/orca:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", or "put this in its own lane". This skill decides what work becomes a lane and what contract binds the executor; the Orca CLI's own mechanics belong to Orca's bundled orca-cli skill, and supervised multi-agent coordination with waits and decision gates belongs to its orchestration skill.
+description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Done when" acceptance criteria, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:launch", "/orca:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", "put this in its own lane", or "hand off #84" / "hand this off" / "give this to another agent" WHEN the work is a GitHub issue or a plan agreed in this repo - this skill adds the issue's acceptance criteria, the in-flight and manual-label checks, and the executor contract on top of a raw handover. Deciding WHAT to build, or an issue with no acceptance criteria yet, is /orca:plan; launching several planned issues at once is /orca:wave --launch, which checks their plans for collisions first. For a handover with no issue and no plan behind it, or raw worktree and terminal mechanics, use Orca's bundled orca-cli skill; for supervised coordination with waits and decision gates, its orchestration skill.
 ---
 
 # Launch
@@ -45,9 +45,14 @@ Then resolve the repo — **by path, never by name** (`displayName` is
 user-editable and frequently does not match the directory):
 
 ```bash
-orca worktree current --json     # resolves cwd to a path: selector
-orca repo list --json            # find this repo's "kind"
+orca worktree current --json     # → result.worktree.repoId, and the path
+orca repo list --json            # all registered repos
 ```
+
+**Join them by id**, never by name: take `result.worktree.repoId` from
+`worktree current`, then find the `repo list` row whose `id` equals it. Matching
+on `displayName` is the exact failure `../_shared/orca-lanes.md` warns about —
+it is user-editable and frequently does not match the directory.
 
 **Check `kind` before doing any work.** A repo registered as `kind: folder`
 cannot produce a git worktree — `worktree create` returns `ok: true` while
@@ -99,19 +104,73 @@ Then check three things, and **report rather than silently proceeding** on any:
   worktree with `linkedIssue == <n>`:
 
   ```bash
-  orca worktree ps --json      # filter: linkedIssue == n, isMainWorktree false
+  orca worktree ps --limit 200 --json
   gh pr list --state open --json number,title,headRefName,closingIssuesReferences
   ```
+
+  **`worktree ps` returns every worktree Orca knows about, across all repos** —
+  there is no `--repo` flag. Filter on **all three** of `repoId == <this repo>`,
+  `linkedIssue == <n>`, and `isMainWorktree == false`. `linkedIssue` is a bare
+  integer with no repo qualifier, so filtering on it alone means a lane on issue
+  #84 in an unrelated repo blocks this launch. Take `repoId` from §0's
+  `orca worktree current --json` (`result.worktree.repoId`).
 
   A live lane already on this issue ⇒ **stop and report it**, with its worktree
   and branch. Launching a second lane on one issue is how two agents open two
   competing PRs.
 
+  **Exception — rework after a failed gate.** An existing lane or draft PR is
+  *not* a refusal when the user is coming back from `/orca:verify` with a `fail`.
+  That is the most common reason to start an agent, and blocking it would leave
+  the failure path with no owner. Go to §1a instead.
+
 **Read the `### Done when` checklist** from the body (`../_shared/issue-schema.md`).
 It goes into the contract verbatim — it is what `/orca:verify` will check, and
-the executor must see the same criteria the gate will apply. **No checklist** ⇒
-say so, hand off anyway, and state in the contract that acceptance criteria are
-undefined so the executor knows to establish them rather than assume.
+the executor must see the same criteria the gate will apply.
+
+**No checklist** ⇒ **offer `/orca:plan <n>` or `/orca:triage <n>` first.**
+Launching criteria-less work guarantees a branch `/orca:verify` will refuse to
+gate — the executor cannot know when it is done, and neither can the gate. If the
+user declines, hand off anyway and state in the contract that acceptance criteria
+are undefined so the executor establishes them rather than assuming.
+
+### 1a. Rework — relaunching a lane whose gate failed
+
+Entered when `/orca:verify` returned `fail` and the work needs another pass. The
+target is **the existing lane**, not a new one.
+
+The contract differs from a fresh launch in four ways, and getting them wrong
+produces an executor that opens a second PR against its own branch:
+
+| | Fresh launch | Rework |
+|---|---|---|
+| Worktree | created | **already exists — reuse it** |
+| Branch | Orca derives it | **already checked out** |
+| PR | open a draft one | **push to the existing draft PR** |
+| Scope | the whole issue | **only the failed criteria** |
+
+Steps:
+
+1. **Find the lane** — `orca worktree ps --json`, filtered on `linkedIssue`. Gone
+   (reaped, or deleted by hand) ⇒ this is a fresh launch after all; say so, since
+   the branch still exists on the remote and the executor must check it out
+   rather than branching anew.
+2. **Write a rework contract** to a new file beside the original (do not
+   overwrite it — the original records what was originally asked). It carries:
+   - the **failed criteria verbatim**, with the gate's evidence for each — that
+     evidence is the whole input, and making the executor re-derive it wastes the
+     run;
+   - which criteria **passed**, so they are not re-litigated or broken;
+   - the four differences above, stated plainly.
+3. **Start an agent in the existing lane** — `orca terminal create --worktree
+   <selector> --command "claude"`, then `terminal wait --for tui-idle` before
+   sending the pointer sentence (`../_shared/orca-lanes.md`). **Not**
+   `worktree create`, which would make a second checkout of the same work.
+4. **Report and stop**, as §5.
+
+Never silently convert a rework into a fresh lane, and never launch rework into a
+worktree whose tree is dirty with someone else's uncommitted work — report that
+instead.
 
 ### Without an issue number
 

@@ -8,7 +8,13 @@ build step.
 
 - New skills: `plugins/orca/skills/<skill-name>/SKILL.md` (folder + one file).
 - Skills about maintaining *this repo* (not shipped to users) live in
-  `.claude/skills/` — e.g. `/ship`, which cuts a GitHub release.
+  `.claude/skills/`:
+  - **`/ship`** — cuts a GitHub release.
+  - **`/audit-orca`** — re-verifies every `orca` CLI fact against the installed
+    binary, checks whether Orca's bundled skills have started claiming trigger
+    phrases that collide with `/orca:*`, and updates the version stamp. **Run it
+    after every Orca upgrade** — the CLI moves independently, and nothing else
+    here would notice a flag that vanished.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/orca/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/orca:<skill-name>`.
@@ -38,14 +44,14 @@ build step.
 
 ## Shared specs live in `_shared/`, not in copies
 
-Five files are read by several skills and are dangerous when they drift. Change
+Six files are read by several skills and are dangerous when they drift. Change
 the shared file, not a skill's restatement of it:
 
 - `_shared/github-backlog.md` — milestone resolution, the readiness query, `gh`
   constraints. *(app-agnostic: GitHub only, nothing Orca-specific)*
 - `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a consuming
   repo's `AGENTS.md`. *(app-agnostic)*
-- `_shared/issue-schema.md` — the `### Done when` contract all five skills read.
+- `_shared/issue-schema.md` — the `### Done when` contract every skill reads.
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff
   invocation.
 - `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion.

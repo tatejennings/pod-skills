@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later. Saves the plan to a file so it survives the session, and writes the "### Done when" checklist onto the issue. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", or "plan and launch this". This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
+description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
 ---
 
 # Plan
@@ -13,7 +13,7 @@ The plan will likely be handed to a fresh agent in its own worktree
 (`/orca:launch`), so it must be self-contained: an executor sees the plan and
 the issue, not this conversation.
 
-Scale to the work. A milestone-sized chunk gets the full treatment; a small bug
+Scale to the work. A milestone-sized piece of work gets the full treatment; a small bug
 gets the same *structure* with lighter research and a quicker review — **never
 skip the review**.
 
@@ -57,7 +57,7 @@ acceptance criteria: what behavior changes, and how you would observe it.
 
 **Any input:** check whether the work is already in flight before planning it
 from scratch — an assignee, an open PR, a live lane (`orca worktree ps --json`,
-`linkedIssue`), recent commits. Prefer those signals over any status file.
+filtered on `repoId` **and** `linkedIssue` — it spans all repos), recent commits. Prefer those signals over any status file.
 
 ### 1a. A pre-written plan? Adopt it rather than re-planning
 
@@ -157,6 +157,12 @@ Rules that matter more than completeness:
   bucket exists for exactly this.
 - **Never fabricate criteria** to look thorough. A criterion nobody can verify,
   or one that does not follow from the requirements, is worse than a short list.
+- **An existing `### Done when` section is not yours to replace.** It was written
+  before this planning pass — by `/orca:triage` with the user, or by an earlier
+  run — and criteria written earlier are the stronger gate. Show the existing
+  criteria beside the ones you would have written and **ask**. Silently
+  overwriting negotiated acceptance criteria is exactly the corruption this model
+  exists to prevent.
 - Preserve the rest of the body. Read it, add or replace only the checklist
   section, and write it back through stdin.
 - No issue (free-form work) ⇒ put the criteria in the plan's Verification

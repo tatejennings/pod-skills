@@ -3,6 +3,135 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.8.0 — 2026-08-01
+
+**Four independent reviewers audited the suite** — correctness, triggering,
+workflow gaps, and internal consistency. Everything below came from that pass.
+
+### A real bug: `worktree ps` spans every repo
+
+`orca worktree ps` returns **every worktree Orca knows about, across all repos**,
+and has no `--repo` flag. `/orca:launch` and `/orca:wave` filtered only on
+`linkedIssue` — a bare integer with no repo qualifier — so **a lane on issue #84
+in an unrelated repo would falsely block a launch here.** Verified live: one
+response, five repos. All three call sites now filter on `repoId` +
+`linkedIssue` + `isMainWorktree`, and `_shared/orca-lanes.md` states the scope.
+
+Two related fixes: `--limit 200` is now passed explicitly (the default cap is
+unspecified, and a truncation would silently under-report lanes), and
+`/orca:status` records the primary checkout's path **before** the lane filter
+removes it — the non-isolation guard was comparing against a value it could never
+have read when run from inside a lane.
+
+### The rework loop had no owner
+
+The most common event in this system is `/orca:verify` returning `fail` — and
+nothing handled it. The gate's fail path terminated in *"comment the criteria so
+the next session can act"* without saying how that session comes to exist, while
+`/orca:launch` **actively refused** to start one ("already in flight"). The one
+skill that starts agents blocked the most common reason to start one.
+
+`/orca:launch` gains a **rework path**: an existing lane or draft PR is no longer
+a refusal when coming back from a failed gate. It reuses the lane rather than
+creating one, carries the failed criteria *and their evidence* into a rework
+contract, and tells the executor to push to the existing draft PR — the four ways
+a rework contract differs from a fresh one are tabulated, because getting them
+wrong produces an executor that opens a second PR against its own branch.
+
+### A passing gate silently expired
+
+`/orca:verify` noted a moved base and did nothing with it. So: lane passes Monday
+night, another lane merges Tuesday, the evidence was computed against a tree that
+no longer exists — and `/orca:status` still showed a healthy `pr-open` lane ready
+to merge. The plugin's central claim quietly stopped holding for every lane that
+was not merged first.
+
+Now a moved base **annotates the verdict** ("evidence computed against a base N
+commits behind; re-run after rebasing"), and a branch that no longer merges
+cleanly is a **fail** — no criterion about it is meaningful until it can land.
+`/orca:status` reads `mergeable`, `mergeStateStatus`, `statusCheckRollup`, and
+`updatedAt` from the PR call it already makes, so a conflicted or CI-failing lane
+stops reading as healthy. **The gate is not CI**, and the two are now shown side
+by side rather than leaving the wrong inference available.
+
+### The dead zone after a pass
+
+`pr-open` was the one lane state with no next-action line — gated, ready, blocked
+on a human, and silent. It now says so, with the PR's age, and flags one that has
+sat past about a week.
+
+### Lane recovery, and the malformed-merge repair
+
+`stalled` said "reopen a session or remove it" and both halves were dead ends.
+Now: **resume** names the contract file that survives at
+`~/.claude/plans/…prompt.md` and is exactly what a resumed session reads;
+**abandon** names the full pre-deletion checklist, especially the dirty-tree
+check, since unmerged work is what is at risk.
+
+A merged PR that closed no issue now states the remedy: **the human closes it
+with a comment naming the PR.** "Never close an issue by hand" binds skills and
+executors, not a person repairing a malformed merge — without that, the lane is
+reported forever and the backlog stays wrong.
+
+### Triggering
+
+- **`/orca:launch` was conceding phrases it should win.** `orca-cli` claims "hand
+  off"/"handover", and the disambiguation lived in the body — invisible before
+  routing. It now claims those phrases *when the work is a GitHub issue or an
+  agreed plan*, and names `orca-cli` for a handover with neither behind it.
+- **`/orca:plan` matched only phrasings containing the word "plan."** Added the
+  ones people actually type: "how should we approach #84", "what would it take to
+  add X", "scope out #84", "think this through before we build it".
+- **`/orca:verify` now names `/code-review`** rather than gesturing at "a code
+  review", and says it is not CI.
+- **`/orca:triage` vs `/orca:migrate`** were separated by one word each ("clean up
+  the backlog" vs "clean up how we track tasks"). Triage now states the altitude
+  test in its description and **guards on it**: an unmigrated repo gets pointed at
+  `/orca:migrate` instead of a confusing "nothing to do" over an empty backlog.
+- **`/orca:wave`'s description never mentioned `--launch`** while the body
+  implements it. Both flags are now trigger surface.
+
+### Two data-integrity guards
+
+- **`/orca:plan` no longer overwrites an existing `### Done when` checklist.**
+  Criteria written earlier — by `/orca:triage`, with the user — are the stronger
+  gate. It shows both and asks.
+- **`/orca:triage` refuses to edit criteria on an issue with a live lane or open
+  PR.** The executor is bound to those criteria and the gate will apply them;
+  changing them mid-flight invalidates both silently.
+
+### Consistency
+
+Stale counts ("six consumers", "five skills", "Five files"), a surviving "chunk"
+in `/orca:plan`, a pre-rename "plan → handoff → verify" in `CONTRIBUTING.md`, and
+a **factual error in `_shared/automation.md`** — `show`/`edit`/`run` accept a
+positional id *or* `--id`; only `runs` is `--id`-only.
+
+The `--reap` pre-delete re-check list now includes check 5 (`HEAD ==
+headRefOid`). It guards against losing post-merge commits, and a commit landing
+between scan and delete is exactly as plausible as the dirty file check 3
+already re-runs for.
+
+**README and `GUIDE.html`**: the `--launch` flag table listed **four**
+disqualifiers where the skill defines five — the adopted-plan case was missing
+from both, and 1.6.1's changelog entry then asserted "four", laundering the
+undercount into the record. Also added to the guide: the schema-version
+mechanism, the `gh` multi-account warning, the path to `automation.md`, and the
+`CONTRIBUTING.md` link.
+
+### New: `/audit-orca`
+
+A repo-maintenance skill in `.claude/skills/`, not shipped. Every `orca` CLI fact
+here was verified against one version on one day; Orca updates independently and
+nothing would notice a vanished flag until a user hit it. It re-checks every
+referenced command and flag against live `--help`, compares Orca's bundled skill
+triggers against ours for new collisions, reports new CLI surface worth adopting,
+and updates the version stamp — **only on a run that found no breaks**, since the
+stamp asserts the facts were verified.
+
+Orca was already at 1.4.163 while the stamp said 1.4.162, which is the drift it
+exists to catch.
+
 ## 1.7.0 — 2026-08-01
 
 **`/orca:triage` now leads with its primary input: a pasted list of raw items

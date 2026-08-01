@@ -54,9 +54,9 @@ Flags that carry the weight:
 | `--provider claude` | Valid ids include `codex`, `claude`, `gemini`. |
 | `--trigger` | `hourly`, `daily`, `weekdays`, `weekly`, a 5-field cron, or an RRULE. |
 
-Enable later, once the preconditions hold. **Note the argument style differs
-from the rest of the CLI** — automation subcommands take a positional `<id>`,
-not a `--automation` selector:
+Enable later, once the preconditions hold. **Automation subcommands take a
+positional `<id>`, not a `--worktree`-style selector** (see the note below on
+which also accept `--id`):
 
 ```bash
 orca automations list --json                  # find the id
@@ -126,8 +126,8 @@ orca automations runs --id <id> --json         # note: --id, not positional
 orca automations run <id> --json               # run once, now
 ```
 
-The argument styles are genuinely inconsistent — `show`, `edit`, and `run` take a
-positional id while `runs` takes `--id`. Verified at 1.4.162; re-check with
+Argument styles differ: `show`, `edit`, and `run` accept **either** a positional
+id or `--id`; `runs` accepts **only** `--id`. Verified at 1.4.162 — re-check with
 `--help` rather than assuming symmetry.
 
 `automations run` is the right way to test: it runs the automation immediately

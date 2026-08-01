@@ -1,7 +1,7 @@
 {
   "name": "orca",
   "description": "Requires the Orca app. Adds a GitHub-Issues backlog and planning layer on top of Orca's own worktree/terminal CLI: migrate a repo's tracking onto the model, triage raw issues into plannable ones, plan work adversarially (one issue or a whole wave in parallel), launch it as a lane with an agent already working, watch lane state, and gate finished branches against the issue's own acceptance checklist. Orca's bundled skills (orca-cli, orchestration) own the CLI itself \u2014 these skills point at them rather than restating them.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "author": {
     "name": "Tate Jennings"
   }
