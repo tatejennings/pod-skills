@@ -3,6 +3,53 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.10.0 — 2026-08-01
+
+**Lanes now open normal PRs, not drafts, and the executor opens them on its own.**
+Automated review tooling skips draft PRs — so a draft meant *no review happened
+at all*, which is a worse failure than the one draft-mode was guarding against.
+
+Draft status was load-bearing in exactly one way, and it is worth naming rather
+than quietly dropping: it was the mechanism that made merge-before-gate
+structurally impossible. With PRs opening ready, **the gate is advisory rather
+than structural** — nothing but the user's own sequencing stands between an open
+PR and a merge. That is an acceptable trade when the alternative is unreviewed
+code, but it is a real change in what the pipeline guarantees.
+
+- **The executor opens the PR unprompted** once the criteria are met, the tests
+  pass, and its own diff review is clean — and **stops and says so if they are
+  not**. An honest "blocked on X" beats a PR it would not defend, and the gate
+  would find the gap anyway.
+- **It still never merges.** That was always the one prohibition that mattered.
+
+### The verdict is now a PR comment, on pass as well as fail
+
+This follows directly. `isDraft` used to tell `/orca:status` whether the gate had
+run; with every PR opening ready, that signal is gone. So `/orca:verify` now
+**posts its verdict as a PR comment on every outcome**, not only on failure.
+
+Three things that buys:
+
+- **`/orca:status` can distinguish a gated PR from an ungated one** — the new
+  `awaiting-gate` (PR open, no verdict) vs `pr-open` (verdict posted) split.
+- **A reviewer on GitHub sees the evidence** at the moment they decide to merge,
+  which is where they actually are.
+- **The verdict outlives its session.** Previously a `pass` existed only in a
+  transcript.
+
+Under `pass-with-review`, the human criteria are listed **first** in the comment —
+burying them under a green verdict is how an unverified claim gets read as a
+verified one.
+
+### Everywhere else
+
+`_shared/evidence-gates.md` and `_shared/automation.md` updated to match. The
+automation's precondition 3 changes from "draft PRs only" to "no merge authority
+anywhere", and says plainly that with the gate now advisory, only the precheck
+and a human stand between an opened PR and a merge under an automation.
+
+README, `GUIDE.html`, and the pipeline diagram no longer say DRAFT.
+
 ## 1.9.1 — 2026-08-01
 
 **Fixed: a second wave re-proposed the first wave's issues.** Found in real use.

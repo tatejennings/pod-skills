@@ -119,7 +119,7 @@ Then check three things, and **report rather than silently proceeding** on any:
   and branch. Launching a second lane on one issue is how two agents open two
   competing PRs.
 
-  **Exception — rework after a failed gate.** An existing lane or draft PR is
+  **Exception — rework after a failed gate.** An existing lane or PR is
   *not* a refusal when the user is coming back from `/orca:verify` with a `fail`.
   That is the most common reason to start an agent, and blocking it would leave
   the failure path with no owner. Go to §1a instead.
@@ -146,7 +146,7 @@ produces an executor that opens a second PR against its own branch:
 |---|---|---|
 | Worktree | created | **already exists — reuse it** |
 | Branch | Orca derives it | **already checked out** |
-| PR | open a draft one | **push to the existing draft PR** |
+| PR | open one | **push to the existing PR** |
 | Scope | the whole issue | **only the failed criteria** |
 
 Steps:
@@ -302,13 +302,21 @@ issue — do not assume." >
 7. Save durable learnings to memory BEFORE opening the PR — conventions or traps
    the next session would otherwise rediscover. Once this lane is finished it
    becomes eligible for cleanup, and anything unsaved goes with it.
-8. Then: fetch and rebase onto the latest default branch, push, and open a
-   **draft** PR. The body MUST contain `Closes #<n>` — that line is what records
-   completion when it merges; nothing else does, and nobody closes the issue by
-   hand. (Omit if this work has no issue.)
-9. **Never merge the PR, and never mark it ready for review yourself.** It stays
-   draft until the evidence gate passes and a human decides. Never write progress
-   into a tracked file — no roadmap row, no status-board cell, no "mark done".
+8. Then, **on your own — do not wait to be told**: fetch and rebase onto the
+   latest default branch, push, and open a PR. **A normal PR, not a draft**, so
+   automated review tooling picks it up. The body MUST contain `Closes #<n>` —
+   that line is what records completion when it merges; nothing else does, and
+   nobody closes the issue by hand. (Omit if this work has no issue.)
+
+   Open it when steps 5 and 6 are genuinely satisfied: the criteria are met, the
+   tests pass, and your own review of the diff is clean. **If they are not, say
+   so and stop** — an honest "blocked on X" beats a PR you would not defend, and
+   the gate will find the gap anyway.
+9. **Never merge the PR.** A merge is the user's decision, always. The evidence
+   gate (`/orca:verify`) runs against the PR after you open it, so state in your
+   final summary that the work is awaiting that gate — a ready PR is not a claim
+   that it passed. Never write progress into a tracked file — no roadmap row, no
+   status-board cell, no "mark done".
 
 ## Out of scope
 

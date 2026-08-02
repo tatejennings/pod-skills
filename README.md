@@ -11,7 +11,7 @@ finished branch against the issue's own acceptance checklist.
 > nothing can be launched — the skills detect the absence and say so rather than
 > half-working.
 
-**Nothing in this pipeline ever merges.** Lanes end at a draft PR, the gate
+**Nothing in this pipeline ever merges.** Lanes end at an open PR, the gate
 reports, you merge.
 
 ---
@@ -50,7 +50,7 @@ right, so something has to ask.
   ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
   │ milestones       │    │ worktree         │    │ ### Done when    │
   │ readiness        │ →  │ branch + agent   │ →  │ commands run     │
-  │ dependencies     │    │ draft PR         │    │ diff checked     │
+  │ dependencies     │    │ opens a PR       │    │ diff checked     │
   └──────────────────┘    └──────────────────┘    └──────────────────┘
       GitHub                    Orca                  /orca:verify
 ```
@@ -214,8 +214,9 @@ is already in flight or marked `manual`, writes an executor contract *outside*
 the repo, creates the worktree with the issue linked natively, starts one agent
 on it, and **stops**.
 
-The contract binds the executor: implement, self-review, open a **draft** PR with
-`Closes #<n>`, never merge, never mark its own PR ready.
+The contract binds the executor: implement, self-review, then **open a normal PR
+on its own** with `Closes #<n>` — not a draft, since review tooling skips those.
+It never merges; that stays yours.
 
 ```
 /orca:launch 84
@@ -296,11 +297,11 @@ You are done when `/orca:status` shows a milestone with progress and a
 /orca:plan 84         → research, draft, adversarial review
                         you approve                        ← GATE 1
 /orca:launch 84       → worktree + agent; this session is free
-                        …the agent implements, opens a DRAFT PR…
+                        …the agent implements and opens a PR on its own…
 /orca:status          → the lane shows `awaiting-gate`
 /orca:verify 84       → the evidence gate                  ← GATE 2
                         pass → offer to mark it ready
-                        fail → stays draft, criteria commented on the PR
+                        fail → criteria commented on the PR; /orca:launch 84 reworks it
 you review and merge                                       ← GATE 3
 /orca:status --reap   → the finished lane is cleaned up
 ```
@@ -427,7 +428,7 @@ This plugin points at them rather than restating them.
 The boundary, stated once: **Orca owns how the CLI works; this plugin owns what
 becomes a lane, what contract binds the executor, and what proves the result.**
 
-**No merge automation.** Lanes end at an open draft PR and a human merges. Since
+**No merge automation.** Lanes end at an open PR and a human merges. Since
 the merge is the only state transition in the model, automating it would automate
 the one decision worth keeping.
 

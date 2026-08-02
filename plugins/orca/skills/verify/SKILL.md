@@ -1,6 +1,6 @@
 ---
 name: verify
-description: The evidence gate - check a finished branch or PR against its issue's own "### Done when" acceptance checklist, mechanically. Runs the criteria that are commands, greps the branch diff for the criteria that are diff assertions, and refuses to guess at the ones only a human can judge, then reports pass / pass-with-review / fail with the evidence for each. Verifies the branch and the commands, never the executor's report of them. Never merges, never marks a PR ready by itself, never closes an issue. Use when the user says "/orca:verify", "/orca:verify 84", "verify this branch", "check the acceptance criteria", "did this actually satisfy the issue", "gate this PR", "is this PR ready", or after a lane opens a draft PR. Also use for "did the agent actually finish this", "check the lane's work", "prove this is done", or "does this meet the criteria". Not for reviewing code quality or finding bugs - that is a code review, use /code-review or /review instead; this checks only whether the issue's stated criteria are met, and it is not CI.
+description: The evidence gate - check a finished branch or PR against its issue's own "### Done when" acceptance checklist, mechanically. Runs the criteria that are commands, greps the branch diff for the criteria that are diff assertions, and refuses to guess at the ones only a human can judge, then reports pass / pass-with-review / fail with the evidence for each. Verifies the branch and the commands, never the executor's report of them. Posts the verdict as a PR comment, which is the durable record that a branch was gated. Never merges and never closes an issue. Use when the user says "/orca:verify", "/orca:verify 84", "verify this branch", "check the acceptance criteria", "did this actually satisfy the issue", "gate this PR", "is this PR ready", or after a lane opens a PR. Also use for "did the agent actually finish this", "check the lane's work", "prove this is done", or "does this meet the criteria". Not for reviewing code quality or finding bugs - that is a code review, use /code-review or /review instead; this checks only whether the issue's stated criteria are met, and it is not CI.
 ---
 
 # Verify — the evidence gate
@@ -161,7 +161,7 @@ not check launders an unverified claim into a verified one.
 Lead with the verdict, then every criterion with its evidence:
 
 ```
-FAIL — 2 of 5 criteria unmet          #84 · branch tate/audio-enum · PR #91 (draft)
+FAIL — 2 of 5 criteria unmet          #84 · branch feat/audio-enum · PR #91
 
 ✗ `./scripts/test.sh` exits 0
     exited 1 — 2 failing tests:
@@ -183,19 +183,24 @@ trip each time.
 
 What may be done with a verdict:
 
-- **`fail`** ⇒ the PR stays draft. Comment the unmet criteria and their evidence
+- **`fail`** ⇒ comment the unmet criteria and their evidence
   on the PR — that is the durable record. Never mark it ready.
 
   **Then name the next action, because a comment is not one.** Offer
   `/orca:launch <n>`, which has a rework path (§1a there): it reuses the existing
   lane, carries these failed criteria and their evidence into the contract, and
-  tells the executor to push to the existing draft PR rather than opening a
-  second. Say that explicitly — otherwise the user re-derives all of it by hand
+  tells the executor to push to the existing PR rather than opening a second. Say that explicitly — otherwise the user re-derives all of it by hand
   in a fresh session and loses every constraint the contract encodes.
-- **`pass` / `pass-with-review`** ⇒ report it. Marking a draft PR ready for
-  review is reasonable to **offer**, and only with the user's say-so — under
-  `pass-with-review`, list the human criteria first so they decide knowing what
-  is unverified.
+- **`pass` / `pass-with-review`** ⇒ report it, **and post the verdict as a PR
+  comment.** Not just on fail: the comment is the only durable record that this
+  branch was gated. Without it the verdict lives in a session transcript, a
+  reviewer on GitHub cannot see the evidence at the moment they decide to merge,
+  and `/orca:status` cannot tell a gated PR from an ungated one — they look
+  identical.
+
+  Under `pass-with-review`, **list the human criteria first**, in the comment and
+  in the report. They are what a reviewer should look at, and burying them under
+  a green verdict is how an unverified claim gets read as a verified one.
 
 **Never merge. Never close an issue by hand. Never mark a PR ready
 unprompted.** Merging is the human's decision; closing happens through

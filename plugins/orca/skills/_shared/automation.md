@@ -25,7 +25,7 @@ any unattended run. A pipeline that can open PRs but cannot check them is a
 machine for generating confident wrong work.
 
 The responsible shape is not "no automation" but: **human-approved issue →
-supervised implementation → evidence-gated draft PR → human review and merge.**
+supervised implementation → evidence-gated PR → human review and merge.**
 The automation may drive the first leg. It must never drive the last.
 
 ## The command
@@ -95,8 +95,11 @@ are provided by installing this plugin.
    returned `pass` is untested.
 2. **Issues carry real `### Done when` checklists** — not fabricated ones. The
    gate is only as good as the criteria.
-3. **Draft PRs only.** The executor contract already forbids marking a PR ready;
-   confirm nothing else does it.
+3. **No merge authority anywhere.** The executor contract forbids merging;
+   confirm nothing else does it. PRs open ready for review (drafts are skipped by
+   review tooling), so the gate is advisory rather than structural — under an
+   automation, nothing but the precheck and a human stands between an opened PR
+   and a merge.
 4. **Atomic claiming.** Assign the issue before launching, and re-validate it is
    still open and assigned to this run immediately before opening the PR.
 5. **Quotas wired into the precheck** — concurrency, daily PRs, and a spend
