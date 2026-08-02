@@ -1,6 +1,6 @@
 ---
 name: wave
-description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue in its own tab, titled with the issue number and a two-word topic so you can tell them apart at a glance, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
+description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue in its own tab, titled with the issue number and a two-word topic so you can tell them apart at a glance, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review, which takes the same issue numbers and skips any that already have a lane), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
 ---
 
 # Wave
@@ -139,8 +139,12 @@ Report the tab titles and issue numbers so they can be found:
   #84 balance tuning   #85 overlay fixes   #86 instrumentation   #87 cloud sync
 
 Visit each tab and answer its questions. When they are all done, run
-/orca:wave --review to check the plans against each other.
+/orca:wave --review 84 85 86 87 to check the plans against each other.
 ```
+
+**Include the issue numbers in that instruction.** The plans directory
+accumulates across waves, and a bare `--review` in a fresh context has to guess
+which plans belong to this one (§4).
 
 **Do not poll the terminals, read their output, or wait on them.** They are
 talking to the user, not to you. Reading their output to "check progress" both
@@ -150,9 +154,45 @@ wastes context and risks acting on a half-finished plan.
 
 Run when the user says the plans are done.
 
-Collect each plan. `/orca:plan` writes to `~/.claude/plans/<repo-name>/`, so read
-the files for the issues in this wave; if a plan is missing, say which and treat
-that issue as not ready.
+### Which plans belong to this wave
+
+`/orca:plan` writes to `~/.claude/plans/<repo-name>/`, and **that directory
+accumulates every plan ever written for the repo** — including ones that already
+became lanes, and ones from waves weeks ago. A fresh context has no memory of
+which issues *this* wave planned, so reading the directory is not the same as
+reading the wave.
+
+Scope it, in this order:
+
+1. **Issue numbers in `$ARGUMENTS`** — `/orca:wave --review 84 85 86 87`. The
+   unambiguous form; prefer it and say so when the user omits them.
+2. **The wave started in this conversation**, if there was one.
+3. **Otherwise, infer and confirm.** Take the most recent plan files, exclude
+   anything already in flight (below), present what you propose to review, and
+   **ask before proceeding**. Never silently adopt every plan on disk.
+
+### Exclude plans that already became lanes — always
+
+**Before reviewing anything, drop plans whose work is already running.** This is
+the step that stops a second wave re-proposing the first wave's issues:
+
+```bash
+orca worktree ps --limit 200 --json      # spans all repos — filter on repoId
+gh pr list --state open --json number,headRefName,closingIssuesReferences
+```
+
+A plan is **not** a candidate when its issue has a live lane (`linkedIssue`
+matching, `isMainWorktree == false`, same `repoId`), an open PR, or an assignee.
+Say which plans were excluded and why — *"#84–#87 already have lanes; reviewing
+the remaining 3"* — rather than dropping them silently, so the user can tell the
+difference between "excluded" and "never found".
+
+**Nothing left after exclusion** ⇒ say that plainly: every plan on disk is
+already in flight, and there is nothing to review. That is a normal outcome
+between waves, not an error.
+
+If a plan is missing for an issue that *is* in scope, say which and treat that
+issue as not ready.
 
 Then check **every pair** for real overlap:
 
@@ -189,6 +229,17 @@ asking the user to pick a winner.
 Only after §4, and only for plans with no unresolved collision. For each, invoke
 the `orca:launch` skill via the Skill tool with that issue number.
 
+**Re-check in-flight immediately before each launch**, not once at the top. §4's
+exclusion may be minutes old, and in that time another wave, another session, or
+the user by hand could have started a lane on the same issue. Skip anything that
+gained a lane, PR, or assignee since — and say so, rather than launching a second
+agent onto work already running.
+
+`/orca:launch` refuses in-flight work itself, so this is a second net rather than
+the only one. Two nets are right here: a duplicate lane means two agents opening
+two competing PRs for one issue, which is expensive to notice and annoying to
+unpick.
+
 **Launch them one at a time, checking each result** — a failed launch (a
 `kind: folder` repo, a name collision, an issue that went in-flight since §1)
 must not silently take the rest of the wave with it. Report per issue: launched
@@ -199,6 +250,12 @@ being told what the overlap is.
 
 ## Failure modes to avoid
 
+- **Treating every plan on disk as this wave's.** The plans directory accumulates
+  across every wave the repo has ever run. Scope by issue number, and always
+  exclude work that already has a lane — otherwise a second wave re-proposes the
+  first wave's issues, which is the most likely way this skill wastes a run.
+- **Checking in-flight once, at the top.** Re-check immediately before each
+  launch; a lane can appear in the minutes between.
 - **Fanning out over a whole milestone unasked.** Present and confirm; cap at ~4.
 - **Creating worktrees for planning.** Planning writes no repo files; contexts
   share the checkout.

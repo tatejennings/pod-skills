@@ -3,6 +3,44 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.9.1 — 2026-08-01
+
+**Fixed: a second wave re-proposed the first wave's issues.** Found in real use.
+
+`/orca:wave --review` read plan files from `~/.claude/plans/<repo-name>/` and
+treated every one it found as a candidate. That directory **accumulates every
+plan ever written for the repo**, including ones that already became lanes — so
+after launching four lanes, starting a fresh wave in a new context offered those
+same four plans back for launching.
+
+Two defects, one symptom:
+
+- **"the files for the issues in this wave" was never defined across sessions.**
+  A fresh context has no memory of which issues it planned, so it globbed the
+  directory. `--review` now scopes in a stated order: issue numbers in
+  `$ARGUMENTS` first (the unambiguous form, and it now asks for them), then the
+  wave started in this conversation, and only then an inferred set it **presents
+  and confirms** rather than silently adopting.
+- **`--review` and `--launch` had no in-flight check**, though bare `/orca:wave`
+  has had one since 1.6.0. So the *selection* step would correctly exclude a
+  launched issue while the *review* step picked it straight back off disk. Both
+  now exclude any plan whose issue has a live lane, an open PR, or an assignee —
+  and say which were excluded and why, so "excluded" is distinguishable from
+  "never found".
+
+`--launch` additionally **re-checks immediately before each launch** rather than
+trusting §4's exclusion, which may be minutes old. `/orca:launch` refuses
+in-flight work itself, so this is a second net — worth having, because a
+duplicate lane means two agents opening two competing PRs for one issue.
+
+The handback text now tells you to run `--review 84 85 86 87` with the numbers,
+which is what would have prevented this. Docs and `GUIDE.html` show the numbered
+form throughout.
+
+**Nothing left after exclusion is a normal outcome**, not an error — it means
+every plan on disk is already in flight, which is exactly the state that produced
+this report.
+
 ## 1.9.0 — 2026-08-01
 
 **Lane branches get a type prefix instead of your username.** Orca names a new
