@@ -3,6 +3,48 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.11.0 — 2026-08-01
+
+**`/orca:wave --auto`** — each planning context runs unattended and stops only if
+a genuine fork comes up.
+
+The default wave has one speed: every context waits for you, including the ones
+with nothing to ask. A small bug with an obvious fix does not need a
+conversation, and making you visit its tab anyway is pure cost.
+
+**Nothing pre-filters which issues are eligible — the plan decides.** An issue
+with an obvious fix plans clean; one with a real trade-off stops and asks,
+regardless of size or labels. The mechanism already existed: the wave sends
+`/orca:plan <n> --auto`, which proceeds alone only when the codebase's
+conventions, the requirements, and standard practice all agree *and* being wrong
+would be cheap to reverse. Otherwise it defers and names the question.
+
+```
+4 planned · 3 clean, 1 needs you
+
+  #84  planned clean
+  #85  planned clean
+  #87  planned clean
+  #86  QUESTION — which overlay owns the marker tray after G1?
+       tab: #86 overlay fixes
+```
+
+**`--auto` never launches.** Clean plans finish and wait; the cross-plan
+collision check still gates every lane. That check is the only thing that can
+catch two independently-ready issues editing the same file, and skipping it is
+the mistake this skill exists to prevent — so the fast path stops exactly where
+the slow one does.
+
+A context that stopped is reported as a **question, not a failure**, with the tab
+to visit — the answer should be one click away rather than a hunt.
+
+**Reconciled a rule that would otherwise have contradicted itself.**
+`/orca:plan` says "inside a wave, ask normally" (1.6.0) because a plain wave is
+built around the user answering questions. That is now qualified: with `--auto`
+also present, defer with a named question instead. The wave collects those and
+says which tabs to visit, so a deferral costs one visit — while a wrong guess
+still costs a whole executor run.
+
 ## 1.10.0 — 2026-08-01
 
 **Lanes now open normal PRs, not drafts, and the executor opens them on its own.**

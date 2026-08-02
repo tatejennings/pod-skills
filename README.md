@@ -200,9 +200,10 @@ file; dependency edges cannot express that, so comparing plans is the only place
 it shows up before work starts.
 
 ```
-/orca:wave 84 85 86 87   # four planning contexts, one tab each
+/orca:wave 84 85 86 87            # four planning contexts, one tab each
+/orca:wave 84 85 86 87 --auto     # …but only stop where a real question comes up
 /orca:wave --review 84 85 86 87   # check those plans against each other
-/orca:wave --launch 84 85 86 87   # start the non-colliding ones as lanes
+/orca:wave --launch 84 85 87      # start the non-colliding ones as lanes
 ```
 
 ### Doing the work
@@ -266,6 +267,7 @@ report of them. Never merges, never closes an issue, never marks a PR ready.
 | Skill | Flag | Effect |
 |---|---|---|
 | `/orca:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, **a review finding would change an adopted plan's approach**, the work is already in flight, or Orca is unavailable. |
+| `/orca:wave` | `--auto` | Each planning context runs unattended and stops only if a real fork comes up. Does **not** launch — the collision review still gates every lane. |
 | `/orca:wave` | `--review` | Check the finished plans against each other for file collisions. |
 | `/orca:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |
 | `/orca:status` | `--reap` | Delete provably-finished lanes. Every safety check must pass; ambiguity is always a skip, never a prompt. |
