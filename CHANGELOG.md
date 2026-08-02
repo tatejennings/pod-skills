@@ -3,6 +3,40 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.12.0 — 2026-08-01
+
+**The executor now runs a cold-reader scope check before pushing.** One fresh
+subagent — not a fork — gets the `### Done when` criteria, the contract's Steps,
+and the branch diff, and answers one question:
+
+> Does this diff implement what was asked — no more, no less? Name anything in
+> the diff that no criterion or step called for, and anything called for that the
+> diff does not do.
+
+**This is the one check the executor cannot do itself.** Its own review shares
+every assumption that produced the code, so it catches typos and regressions but
+not *"I built something coherent that is not what was asked"* — the author is the
+last person who would notice that. A cold reader comparing the diff against the
+criteria catches exactly that class.
+
+Deliberately **one reviewer on one axis**, not a panel. Several agents reading
+the same diff with the same question is redundancy without diversity — they share
+blind spots and mostly re-find each other's findings. Scope is the axis chosen
+because the other two are already covered: the self-review handles bugs and
+regressions, and code quality is reviewed on the PR by whatever tooling the repo
+runs (which is why PRs now open ready rather than draft, in 1.10.0).
+
+Findings are acted on rather than reported: missing work gets done, scope creep
+gets removed or called out in the PR body as deliberate. An unresolvable
+off-plan finding **stops the run** instead of producing a PR the executor would
+have to defend.
+
+**The rework contract carries it too**, with the question narrowed — *does this
+diff address the failed criteria without touching what already passed?* Scope
+creep is a bigger risk on a rework than a fresh build: the executor is reading a
+whole branch it did not write, and the temptation to improve things nobody asked
+about is real.
+
 ## 1.11.0 — 2026-08-01
 
 **`/orca:wave --auto`** — each planning context runs unattended and stops only if

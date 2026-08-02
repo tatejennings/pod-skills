@@ -161,7 +161,12 @@ Steps:
      evidence is the whole input, and making the executor re-derive it wastes the
      run;
    - which criteria **passed**, so they are not re-litigated or broken;
-   - the four differences above, stated plainly.
+   - the four differences above, stated plainly;
+   - the same **scope check** the fresh contract carries (step 6), with its
+     question narrowed to the rework: *does this diff address the failed criteria
+     without touching what already passed?* Scope creep is a bigger risk on a
+     rework than a fresh build — the executor is looking at a whole branch it did
+     not write and will be tempted to improve things nobody asked about.
 3. **Start an agent in the existing lane** — `orca terminal create --worktree
    <selector> --command "claude"`, then `terminal wait --for tui-idle` before
    sending the pointer sentence (`../_shared/orca-lanes.md`). **Not**
@@ -299,6 +304,25 @@ issue — do not assume." >
    they will be surfaced to a human reviewer.
 6. Review your own full branch diff for bugs and regressions before pushing.
    Fix what is real, commit the fixes, re-run the tests.
+
+   Then **spawn one fresh subagent for a scope check** — a cold reader, not a
+   fork, so it does not inherit your assumptions. Give it three things: the
+   "Done when" criteria above, the Steps from this contract, and the branch diff
+   (`git diff <merge-base>...HEAD`). Ask it one question:
+
+   > Does this diff implement what was asked — no more, no less? Name anything
+   > in the diff that no criterion or step called for, and anything called for
+   > that the diff does not do.
+
+   This is the one check you cannot do yourself. Your own review shares every
+   assumption that produced the code, so it catches typos and regressions but
+   **not "I built something coherent that is not what was asked."** A cold
+   reader comparing the diff against the criteria catches exactly that.
+
+   Act on what it returns: work that is missing gets done, and scope that crept
+   in gets removed or called out in the PR body as a deliberate addition. If it
+   reports the diff is off-plan in a way you cannot resolve, **stop and report**
+   rather than opening a PR you would have to defend.
 7. Save durable learnings to memory BEFORE opening the PR — conventions or traps
    the next session would otherwise rediscover. Once this lane is finished it
    becomes eligible for cleanup, and anything unsaved goes with it.
