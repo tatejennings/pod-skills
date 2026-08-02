@@ -153,8 +153,23 @@ user-prefixed and derived from the worktree name. The username comes from Orca's
 per-repo `gitUsername`, which is **not** necessarily the GitHub account you
 expect, so predicting the full ref is unwise even when the pattern holds.
 
+- **There is no branch-name flag.** Verified against `worktree create --help`:
+  `--base-branch` sets what you branch *from*, not what the new branch is called.
+  The name is always `<gitUsername>/<name>`.
 - **Never pass a hand-built `<type>/<slug>` branch and assume it took.**
 - **Read `branch` back** from the create response and use that value downstream.
+
+**Renaming after creation works, and `ps` follows it.** A fresh worktree has no
+commits, so `git -C <path> branch -m <new-name>` is safe, and
+`orca worktree ps` reports the new name. **`orca worktree show` does not** — it
+caches the original and goes stale. Two consequences:
+
+- Prefer `ps` over `show` when a branch may have been renamed.
+- Resolve worktrees by `path:` or `id:` rather than `branch:` afterwards.
+
+The prefix itself is settable per repo — `orca project setup-update --setup <id>
+--git-username <name>` — but it is one fixed string for every branch in that
+repo, so it cannot express a per-issue type. Renaming is the finer instrument.
 - **Never report an empty `branch` as though it were real.** It comes back empty
   for `kind: folder` repos, and the primary worktree also reports `branch: ""` in
   `worktree list`. Fall back to `git -C <path> branch --show-current`, and if
