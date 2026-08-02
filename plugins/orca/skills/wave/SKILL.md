@@ -1,6 +1,6 @@
 ---
 name: wave
-description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue titled with its number, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
+description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue in its own tab, titled with the issue number and a two-word topic so you can tell them apart at a glance, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/orca:wave", "/orca:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /orca:launch creates a lane. For planning a single issue, use /orca:plan directly.
 ---
 
 # Wave
@@ -80,9 +80,29 @@ For each issue, in **one message** so they start together:
 
 ```bash
 orca terminal create --worktree <selector> \
-  --title "plan #<n>" \
+  --title "#<n> <2-3 word topic>" \
   --command "claude" --json
 ```
+
+**The title is how you tell the tabs apart**, so it carries a short topic as well
+as the number — a tab bar is scanned, not read:
+
+| Issue title | Tab title |
+|---|---|
+| `E1 · Balance tuning pass` | `#84 balance tuning` |
+| `G2 · Board-window overlay fixes: marker tray + weapon plate` | `#85 overlay fixes` |
+| `K1 · CloudSyncService + meta/archive sync` | `#87 cloud sync` |
+
+Rules for deriving it:
+
+- **Two or three words, ~20 characters total.** Tabs truncate, and a title that
+  clips mid-word is worse than a short one — the number must always survive.
+- **Take the distinctive words**, not the first ones. Drop a leading task id
+  (`E1 ·`), and drop anything after a colon or dash — that is usually the
+  qualifier, not the subject.
+- **Reuse the scope label when it fits** (`cloud sync`, `board ui`) — it is
+  already the short name for that area of the system.
+- Lowercase reads better at tab size than title case.
 
 Read `result.terminal.handle` from each. Then, per context, **wait for the TUI
 to be ready before sending anything** — a prompt sent into a booting TUI is
@@ -96,8 +116,9 @@ orca terminal send --terminal <handle> \
 
 Notes that matter:
 
-- **`--title "plan #<n>"`** is how you tell the tabs apart. Without it they are
-  indistinguishable and the whole flow falls apart.
+- **The title is not optional.** Untitled tabs are indistinguishable and the
+  whole flow falls apart — you cannot answer four contexts you cannot tell
+  apart.
 - **Terminal handles are routing metadata** — do not cache them across
   operations; re-resolve with `orca terminal list --worktree <selector> --json`
   (`../_shared/orca-lanes.md`).
@@ -115,7 +136,7 @@ Report the tab titles and issue numbers so they can be found:
 ```
 4 planning contexts started, one tab each:
 
-  plan #84   plan #85   plan #86   plan #87
+  #84 balance tuning   #85 overlay fixes   #86 instrumentation   #87 cloud sync
 
 Visit each tab and answer its questions. When they are all done, run
 /orca:wave --review to check the plans against each other.
