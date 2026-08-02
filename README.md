@@ -309,7 +309,7 @@ you review and merge                                       ← GATE 3
 
 ```
 /orca:status             → READY NEXT: #84 #85 #86 #87
-/orca:wave 84 85 86 87   → four tabs: "plan #84" … "plan #87"
+/orca:wave 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
                            visit each, answer its questions
 /orca:wave --review      → "3 ready; #86 collides with #85 in GameScene.swift"
 /orca:wave --launch      → the three non-colliding ones become lanes

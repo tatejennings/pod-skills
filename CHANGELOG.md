@@ -3,6 +3,26 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.8.2 — 2026-08-01
+
+**Wave tabs carry a topic, not just a number.** `plan #84` said which ticket but
+not what it was, and a tab bar is scanned rather than read. Tabs are now
+`#84 balance tuning`, `#85 overlay fixes`, `#87 cloud sync`.
+
+The rules matter more than the format, because an Orca tab truncates at roughly
+20–25 characters and a title that clips mid-word is worse than a short one:
+two or three words, take the *distinctive* ones rather than the first (drop a
+leading task id, drop everything after a colon — that is usually the qualifier,
+not the subject), reuse the scope label where it fits since it is already the
+short name for that area, and lowercase, which reads better at tab size.
+
+**The number always survives truncation** — that is the one part that must never
+be lost.
+
+`/orca:launch`'s worktree naming is deliberately unchanged: a sidebar entry has
+different constraints from a tab, and kebab-case under ~30 characters already
+suits it.
+
 ## 1.8.1 — 2026-08-01
 
 **Install docs lead with the GitHub form.** `claude plugin marketplace add
