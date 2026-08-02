@@ -162,11 +162,13 @@ Steps:
      run;
    - which criteria **passed**, so they are not re-litigated or broken;
    - the four differences above, stated plainly;
-   - the same **scope check** the fresh contract carries (step 6), with its
-     question narrowed to the rework: *does this diff address the failed criteria
-     without touching what already passed?* Scope creep is a bigger risk on a
-     rework than a fresh build — the executor is looking at a whole branch it did
-     not write and will be tempted to improve things nobody asked about.
+   - the same **cold-reader review** the fresh contract carries (step 6), with
+     its scope question narrowed to the rework: *does this diff address the
+     failed criteria without touching what already passed?* Scope creep is a
+     bigger risk here than on a fresh build — the executor is reading a whole
+     branch it did not write, so the durability question must apply **only to
+     lines this rework changed.** Pre-existing structure is out of bounds; it
+     passed the gate once and is not this run's to relitigate.
 3. **Start an agent in the existing lane** — `orca terminal create --worktree
    <selector> --command "claude"`, then `terminal wait --for tui-idle` before
    sending the pointer sentence (`../_shared/orca-lanes.md`). **Not**
@@ -305,23 +307,60 @@ issue — do not assume." >
 6. Review your own full branch diff for bugs and regressions before pushing.
    Fix what is real, commit the fixes, re-run the tests.
 
-   Then **spawn one fresh subagent for a scope check** — a cold reader, not a
+   Then **spawn one fresh subagent to review the diff** — a cold reader, not a
    fork, so it does not inherit your assumptions. Give it three things: the
    "Done when" criteria above, the Steps from this contract, and the branch diff
-   (`git diff <merge-base>...HEAD`). Ask it one question:
+   (`git diff <merge-base>...HEAD`). Ask it two questions:
 
-   > Does this diff implement what was asked — no more, no less? Name anything
-   > in the diff that no criterion or step called for, and anything called for
-   > that the diff does not do.
+   > **1. Scope.** Does this diff implement what was asked — no more, no less?
+   > Name anything in the diff that no criterion or step called for, and anything
+   > called for that the diff does not do.
+   >
+   > **2. Durability.** Will this be hard to change later, or is it likely to
+   > cause a bug? Judge against the conventions *this codebase already uses* —
+   > not a style guide. Specifically: duplicated logic that will drift, a
+   > function or type doing several unrelated jobs, a new hard-coded dependency
+   > where the surrounding code injects, a change that forces edits in several
+   > places whenever one thing changes, swallowed errors, missing edge cases at a
+   > boundary the diff introduces.
+   >
+   > **Report only what you would block a PR over.** Skip naming, formatting,
+   > and preferences between two reasonable structures. If you find nothing that
+   > meets that bar, say so plainly — "no blockers" is a useful answer and the
+   > expected one on most diffs. A long list of small findings is worse than a
+   > short list of real ones, because it buries the real ones.
 
-   This is the one check you cannot do yourself. Your own review shares every
-   assumption that produced the code, so it catches typos and regressions but
-   **not "I built something coherent that is not what was asked."** A cold
-   reader comparing the diff against the criteria catches exactly that.
+   Question 1 is the one you cannot do yourself: your own review shares every
+   assumption that produced the code, so it catches typos but **not "I built
+   something coherent that is not what was asked."**
 
-   Act on what it returns: work that is missing gets done, and scope that crept
-   in gets removed or called out in the PR body as a deliberate addition. If it
-   reports the diff is off-plan in a way you cannot resolve, **stop and report**
+   **Then act on the findings, with a hard bar on what you change:**
+
+   - **Fix** anything that is a real defect or a genuine blocker — a bug, a
+     swallowed error, an unhandled boundary, logic duplicated in a way that will
+     silently drift.
+   - **Fix** a structural problem *your own diff introduced* where the fix is
+     local and obvious — extracting a second responsibility you just created,
+     injecting a dependency you just hard-coded.
+   - **Report, do not fix**, anything that would refactor code you did not write,
+     or that trades working code for a principle. Put it in the PR body as a
+     note, or file it as a follow-up issue. **A reviewer's opinion is not a
+     mandate to rewrite** — scope creep justified by "best practice" is still
+     scope creep, and it is exactly what question 1 exists to catch.
+
+   Judge severity by consequence, not by rule: *would this cause a bug, or make
+   the next change to this area meaningfully harder?* **If neither, it is a
+   note.** Naming, formatting, a preference between two reasonable structures, a
+   principle applied for its own sake — all notes. The default is to leave
+   working code alone.
+
+   **Run the reviewer once.** Do not re-review after fixing: a fresh read of the
+   changed diff will always find something new, and that loop has no natural end.
+   Fix what the one pass found, re-run the tests, and push. If a fix was large
+   enough that you genuinely doubt it, that is a reason to **stop and report**,
+   not to start another round.
+
+   If the diff is off-plan in a way you cannot resolve, **stop and report**
    rather than opening a PR you would have to defend.
 7. Save durable learnings to memory BEFORE opening the PR — conventions or traps
    the next session would otherwise rediscover. Once this lane is finished it

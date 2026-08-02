@@ -216,9 +216,13 @@ the repo, creates the worktree with the issue linked natively, starts one agent
 on it, and **stops**.
 
 The contract binds the executor: implement, self-review, run a **cold-reader
-scope check** — one subagent comparing the diff against the criteria, asking only
-*"does this implement what was asked, no more and no less?"* — then **open a
-normal PR on its own** with `Closes #<n>`. It never merges; that stays yours.
+review** — one subagent asking two questions of the diff: *does this implement
+what was asked, no more and no less?* and *will this be hard to change later, or
+cause a bug?* — then **open a normal PR on its own** with `Closes #<n>`.
+
+Real defects and blockers get fixed. Anything that would refactor code the
+executor did not write gets **reported, not fixed** — a reviewer's opinion is not
+a mandate to rewrite. It never merges; that stays yours.
 
 ```
 /orca:launch 84
