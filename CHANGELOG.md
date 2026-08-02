@@ -3,6 +3,48 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.9.0 — 2026-08-01
+
+**Lane branches get a type prefix instead of your username.** Orca names a new
+branch `<gitUsername>/<name>` — `tatejennings/caption-crossfade`. That says *who*
+made the branch, which nobody needs (the author is in every commit) and which
+tells a branch list, a PR list, and a changelog generator nothing.
+
+`worktree create` has **no branch-name flag** — verified: `--base-branch` sets
+what you branch *from*, not what the new branch is called. So `/orca:launch` now
+renames immediately after creating, while the branch is fresh and has no commits:
+
+```bash
+git -C <worktree-path> branch -m <type>/<slug>
+```
+
+`<type>` comes from the issue's labels and title — `fix`, `feat`, `docs`,
+`chore`, `spike` — but **the repo's own convention wins**: read recent branch
+names first, since a repo using `feature/` should not suddenly get `feat/`.
+
+**Verified safe, and the verification found a quirk worth knowing.**
+`orca worktree ps` reports the renamed branch correctly, so `/orca:status` and
+every other skill keep working — but **`orca worktree show` caches the original
+and goes stale.** Two rules follow, now in `_shared/orca-lanes.md`: prefer `ps`
+over `show` where a rename is possible, and resolve worktrees by `path:` or
+`id:` rather than `branch:` afterwards.
+
+A failed rename never stops a launch — a branch name is cosmetic, the lane is the
+point.
+
+*(The prefix is also settable per repo via `orca project setup-update
+--git-username`, but that is one fixed string for every branch in the repo and
+cannot express a per-issue type. Renaming is the finer instrument.)*
+
+**`/orca:launch` now says the planning session can be closed.** Nothing about a
+lane depends on it: the plan is on disk, the contract is a file the executor
+already read, the issue link is in Orca's worktree record, and the criteria are
+on the issue — which is exactly why the contract is written to a file rather than
+passed inline. The one thing closing loses is the conversation that produced the
+plan, so the skill flags it when **Decisions already made** looks thin: that
+reasoning exists only in the transcript, and adding a line to the plan file now
+is cheaper than reconstructing it later.
+
 ## 1.8.2 — 2026-08-01
 
 **Wave tabs carry a topic, not just a number.** `plan #84` said which ticket but

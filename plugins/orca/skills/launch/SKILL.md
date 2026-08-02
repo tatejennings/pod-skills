@@ -183,7 +183,7 @@ the lane visible to `/orca:status`, and `Closes #<n>` is the only thing that
 records completion. Work with genuinely no issue is fine; just do not fabricate a
 number.
 
-## 2. Derive the worktree name
+## 2. Derive the worktree name and branch
 
 A short kebab-case slug from the issue title or the work: `fix-vent-retap`,
 `audio-device-enum`. Rules:
@@ -191,6 +191,51 @@ A short kebab-case slug from the issue title or the work: `fix-vent-retap`,
 - **Orca derives the branch itself** as `refs/heads/<git-username>/<name>` — do
   **not** hand-build a `<type>/<slug>` branch and assume it took. Read `branch`
   back from the create response (`../_shared/orca-lanes.md`).
+
+### 2a. Rename the branch to a type prefix
+
+`<git-username>/<slug>` says *who* made the branch, which nobody needs — the
+author is in every commit. **`<type>/<slug>` says what the work is**, which is
+what a branch list, a PR list, and a changelog generator all want.
+
+`worktree create` has **no branch-name flag** (verified: `--base-branch` sets
+what you branch *from*, not what the new branch is called), so rename it
+immediately after creating, while the branch is fresh and has no commits:
+
+```bash
+git -C <worktree-path> branch -m <type>/<slug>
+```
+
+Pick `<type>` from the issue's labels and title:
+
+| Signal | Type |
+|---|---|
+| a `bug` label, or the title describes broken behavior | `fix` |
+| a new capability | `feat` |
+| docs-only work | `docs` |
+| tooling, deps, config, cleanup | `chore` |
+| a research or investigation issue | `spike` |
+
+**Match the repo's own convention first** — read a few recent branch names
+(`git branch -r --sort=-committerdate | head -20`) and use the prefixes already
+in use. A repo using `feature/` should not suddenly get `feat/`.
+
+Then **read the branch back from git**, not from the create response, since the
+response predates the rename:
+
+```bash
+git -C <worktree-path> branch --show-current
+```
+
+Report that value, and use it everywhere downstream.
+
+**Verified safe:** `orca worktree ps` reports the renamed branch correctly, so
+`/orca:status` and every other skill keep working. (`orca worktree show` caches
+the original and goes stale — a cosmetic Orca quirk, and a reason to resolve
+worktrees by `path:` or `id:` rather than `branch:` after a rename.)
+
+If the rename fails, **do not stop the launch** — report the branch Orca gave
+you and carry on. A branch name is cosmetic; the lane is the point.
 - **Collision guard.** Check existing worktrees before creating; a name in use
   gets a `-2` suffix. Compare against the worktree *name*, not a path prefix.
 - Keep it under ~30 characters and recognizable in a sidebar.
@@ -358,6 +403,17 @@ Report:
 
 Then **stop.** Do not monitor the lane, do not read its terminal, do not wait on
 it, do not open the PR yourself. The executor reports to the user directly.
+
+**Say that this session can be closed.** Nothing about the lane depends on it —
+the plan is on disk, the contract is a file the executor already read, the issue
+link lives in Orca's worktree record, and the criteria are on the issue. That
+independence is why the contract is written to a file rather than passed inline.
+
+The one thing closing loses is the *conversation* that produced the plan. If the
+plan's **Decisions already made** section captured the trade-offs and the
+rejected options, it costs nothing. If it did not, say so — that reasoning exists
+only in the transcript, and it is cheaper to add a line to the plan file now than
+to reconstruct it later.
 
 Point at what comes next: `/orca:status` to watch lanes, `/orca:verify <n>` to
 gate the branch once a PR exists.
