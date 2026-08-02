@@ -201,8 +201,8 @@ it shows up before work starts.
 
 ```
 /orca:wave 84 85 86 87   # four planning contexts, one tab each
-/orca:wave --review      # check the finished plans against each other
-/orca:wave --launch      # start the non-colliding ones as lanes
+/orca:wave --review 84 85 86 87   # check those plans against each other
+/orca:wave --launch 84 85 86 87   # start the non-colliding ones as lanes
 ```
 
 ### Doing the work
@@ -311,8 +311,10 @@ you review and merge                                       ← GATE 3
 /orca:status             → READY NEXT: #84 #85 #86 #87
 /orca:wave 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
                            visit each, answer its questions
-/orca:wave --review      → "3 ready; #86 collides with #85 in GameScene.swift"
-/orca:wave --launch      → the three non-colliding ones become lanes
+/orca:wave --review 84 85 86 87
+                         → "3 ready; #86 collides with #85 in GameScene.swift"
+/orca:wave --launch 84 85 87
+                         → the three non-colliding ones become lanes
 /orca:status             → watch all three
 ```
 
