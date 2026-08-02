@@ -215,9 +215,10 @@ is already in flight or marked `manual`, writes an executor contract *outside*
 the repo, creates the worktree with the issue linked natively, starts one agent
 on it, and **stops**.
 
-The contract binds the executor: implement, self-review, then **open a normal PR
-on its own** with `Closes #<n>` — not a draft, since review tooling skips those.
-It never merges; that stays yours.
+The contract binds the executor: implement, self-review, run a **cold-reader
+scope check** — one subagent comparing the diff against the criteria, asking only
+*"does this implement what was asked, no more and no less?"* — then **open a
+normal PR on its own** with `Closes #<n>`. It never merges; that stays yours.
 
 ```
 /orca:launch 84
