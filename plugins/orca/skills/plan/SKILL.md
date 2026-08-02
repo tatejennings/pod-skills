@@ -123,11 +123,16 @@ finalizing. Where a conventional default exists, decide it and record it under
 Decisions.
 
 **Inside a wave** (`/orca:wave` started this context in its own terminal): **ask
-normally.** The whole point of a wave is that the user moves between contexts
-answering questions, so asking and waiting is correct here — do not adopt
-`--launch`'s defer-instead-of-asking posture just because the context was started
-programmatically. A question that waits costs the user one visit; a wrong guess
-costs an executor run.
+normally** — unless `--auto` was also passed. The point of a plain wave is that
+the user moves between contexts answering questions, so asking and waiting is
+correct there; do not adopt a defer-instead-of-asking posture just because the
+context was started programmatically.
+
+**With `--auto` in a wave**, hold the bar below: plan alone where the choice is
+overwhelming, and **defer with a named question where it is not.** The wave
+collects those questions and tells the user which tabs to visit, so a deferral
+is one visit rather than a blocked wave — and a wrong guess is still a whole
+executor run.
 
 **Under `--launch`, do not ask** — and hold a high bar for deciding alone.
 Proceed on a fork only when one option is *overwhelmingly* recommended: the
