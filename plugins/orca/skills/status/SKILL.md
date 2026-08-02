@@ -139,8 +139,20 @@ without a per-lane query — which is what keeps this skill safe under `/loop 15
 
 If a branch has several PRs, prefer the open one, else the most recently updated.
 
-`isDraft` matters for this pipeline: a draft PR means the evidence gate has not
-passed yet, and that is the normal state, not a problem.
+**Lanes open normal PRs, not drafts** — automated review tooling skips drafts,
+so a draft PR would mean no review happens at all. `isDraft` therefore no longer
+tells you whether the gate has run.
+
+**The gate verdict is a PR comment**, so read comments for open PRs only — one
+extra call, and only for the handful of lanes that have an open PR:
+
+```bash
+gh pr view <n> --json comments --jq '[.comments[].body] | map(select(test("orca:verify|PASS|PASS-WITH-REVIEW|FAIL")))| last'
+```
+
+A PR with no verdict comment is **ungated**, however ready it looks. That is the
+distinction `isDraft` used to carry, and it is now the only one — an open PR
+proves work was pushed, nothing more.
 
 ## 4. Verdicts
 
@@ -148,9 +160,9 @@ Exactly one per lane:
 
 | Verdict | Condition |
 |---|---|
-| `working` | agents active or terminals live; PR absent or draft |
-| `pr-open` | a non-draft PR is open |
-| `awaiting-gate` | a **draft** PR exists and no agent is active — ready for `/orca:verify` |
+| `working` | agents active or terminals live; PR absent |
+| `awaiting-gate` | a PR is open, no agent is active, and no gate verdict is on it — ready for `/orca:verify` |
+| `pr-open` | a PR is open and a gate verdict has been posted |
 | `merged-reapable` | PR merged + clean + `HEAD == headRefOid` + no live terminals |
 | `merged-live` | PR merged + clean + `HEAD == headRefOid` + terminals still live |
 | `stalled` | no live terminals, no open PR |
@@ -235,11 +247,11 @@ edge; readiness below treats them as ready."*
 
 ## 6. Output
 
-One compact table: lane · issue · branch · PR (# / state / draft) · session ·
+One compact table: lane · issue · branch · PR (# / state / gated?) · session ·
 last activity · verdict. Then one line per **non-`working`** lane saying the next
 action:
 
-- `awaiting-gate` → "draft PR open, no agent running — run `/orca:verify <n>`"
+- `awaiting-gate` → "PR open, no agent running, not yet gated — run `/orca:verify <n>`"
 - `pr-open` → **"gate passed, awaiting your review and merge"**, with the PR's
   age from `updatedAt`. This is the one lane state that is healthy *and* blocked
   on a human, so it needs an action line even though nothing is wrong. Past about
@@ -370,4 +382,5 @@ the remote or the PR.
   line of report, never an error.
 - **Reaping on a cached `isMainWorktree`** instead of the live git proof.
 - **Prompting during `--reap`.** Ambiguity is always a skip.
-- **Treating a draft PR as a problem.** It is the expected state before the gate.
+- **Treating an open PR as gated.** Lanes open normal PRs, so an open PR proves
+  only that work was pushed. The gate verdict comment is the signal.

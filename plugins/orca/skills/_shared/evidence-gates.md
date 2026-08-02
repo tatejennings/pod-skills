@@ -139,10 +139,12 @@ Exactly three, and the distinction between the first two is load-bearing:
 
 What the gate does with a verdict:
 
-- `pass` / `pass-with-review` ⇒ report it. Marking a draft PR ready for review is
-  a reasonable action to *offer*; the human criteria in `pass-with-review` are
-  exactly what a reviewer should look at first.
-- `fail` ⇒ the PR stays draft. Comment the unmet criterion and its evidence on
+- `pass` / `pass-with-review` ⇒ report it, **and post the verdict as a PR
+  comment** — that comment is the only durable record that the branch was gated,
+  and the only thing distinguishing a gated PR from an ungated one. The human
+  criteria in `pass-with-review` go first; they are what a reviewer should look
+  at.
+- `fail` ⇒ comment the unmet criterion and its evidence on
   the PR so the executor (or the next session) can act on it.
 
 **The gate never merges, and never closes an issue by hand.** Merging is the
