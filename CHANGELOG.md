@@ -3,6 +3,65 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.13.1 — 2026-08-01
+
+**Raised the bar on the cold-reader review, at both ends.** A reviewer that
+reports twenty small findings produces a rewrite loop, which costs more than the
+defects it prevents.
+
+- **The reviewer is told to report only what it would block a PR over**, and that
+  **"no blockers" is the expected answer on most diffs.** A long list of small
+  findings is worse than a short list of real ones, because it buries the real
+  ones.
+- **The executor's default is to leave working code alone.** Naming, formatting,
+  and preferences between two reasonable structures are notes, never fixes.
+- **The reviewer runs once.** No re-review after fixing — a fresh read of a
+  changed diff will always find something new, and that loop has no natural end.
+  A fix large enough to genuinely doubt is a reason to stop and report, not to
+  start another round.
+
+## 1.13.0 — 2026-08-01
+
+**The cold-reader review gained a second question: durability.** Alongside scope,
+it now asks whether the diff will be hard to change later or is likely to cause a
+bug — duplicated logic that will drift, a function doing several unrelated jobs, a
+hard-coded dependency where the surrounding code injects, a change that forces
+edits in several places whenever one thing changes, swallowed errors, unhandled
+boundaries the diff introduces.
+
+**Judged against the conventions the codebase already uses, not a style guide.**
+A principle applied against a codebase's grain produces churn, not quality.
+
+### The bar on what gets fixed is the real design
+
+Without one, a reviewer's opinion becomes a mandate to rewrite — which is scope
+creep wearing a nicer hat, and precisely what question 1 exists to catch. So:
+
+- **Fix** real defects and genuine blockers: a bug, a swallowed error, an
+  unhandled boundary, logic duplicated in a way that will silently drift.
+- **Fix** a structural problem *your own diff introduced*, where the fix is local
+  and obvious — extracting a second responsibility you just created, injecting a
+  dependency you just hard-coded.
+- **Report, never fix**, anything that would refactor code you did not write or
+  trade working code for a principle. It goes in the PR body or a follow-up
+  issue.
+
+Severity is judged by consequence, not by rule: *would this cause a bug, or make
+the next change to this area meaningfully harder?* If neither, it is a note.
+
+### On the overlap with PR review tooling
+
+This does duplicate what a PR reviewer covers, and that is deliberate:
+**pre-push is cheaper than post-push.** Fixing a defect before the PR exists
+beats a review comment, a rework cycle, and a force-push — and "this will be hard
+to change later" is exactly the finding that rarely survives a review round-trip,
+because nobody wants to relitigate structure on a PR that otherwise works.
+
+**On a rework, the durability question applies only to lines that rework
+changed.** Pre-existing structure is out of bounds — it passed the gate once and
+is not that run's to relitigate. The executor is reading a whole branch it did
+not write, so this bound matters more there than on a fresh build.
+
 ## 1.12.0 — 2026-08-01
 
 **The executor now runs a cold-reader scope check before pushing.** One fresh
