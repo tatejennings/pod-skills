@@ -391,8 +391,18 @@ Branch name, PR link, what was implemented, deviations and why, test results,
 review findings and how they were resolved, and anything left for follow-up.
 ```
 
-Two rules about this file:
+Three rules about this file:
 
+- **A contract is a snapshot, not a link.** It is written once and read by the
+  executor; **updating this skill does not reach a lane already launched.** A
+  contract written last week still binds its lane to last week's rules — which
+  is correct (a running executor should not have the ground shift under it) but
+  means a behavioral change here applies only to *future* launches.
+
+  When a rule changes in a way that matters for work already in flight — the
+  draft-PR change in 1.10.0 was one — the existing `.prompt.md` files under
+  `~/.claude/plans/<repo>/` have to be edited directly, or their lanes will keep
+  following the old instruction. Say so when reporting such a change.
 - **Never overwrite an existing contract** — suffix the slug instead. An
   overwritten contract silently changes what a running lane was told to do.
 - The launch prompt stays a **single short pointer sentence**. Everything
