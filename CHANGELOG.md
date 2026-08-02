@@ -3,6 +3,24 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.13.2 — 2026-08-02
+
+**Agents were still opening draft PRs after 1.10.0, and the skill was not the
+bug.** An executor contract is a **file written at launch time** — the skill
+change reached future launches, but every lane already running was still reading
+a `.prompt.md` that said "open a **draft** PR".
+
+That is correct behavior in the general case: a running executor should not have
+its instructions change underneath it. But it means **a behavioral change here
+applies only to future launches**, and anything in flight has to be updated on
+disk or it keeps following the old rule.
+
+`/orca:launch` now says this explicitly, so the next such change is reported with
+its migration rather than looking like it took effect everywhere.
+
+*(Repaired in passing: eight contracts under `~/.claude/plans/` were rewritten to
+the current rule, and two draft PRs marked ready.)*
+
 ## 1.13.1 — 2026-08-01
 
 **Raised the bar on the cold-reader review, at both ends.** A reviewer that
