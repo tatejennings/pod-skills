@@ -3,6 +3,73 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.15.0 — 2026-08-04
+
+**Two lanes could share one worktree, and merging one destroyed the other.**
+Reported from real use, and it is the most damaging bug found so far because the
+user does nothing wrong to trigger it: a PR is finished, they merge it, the
+worktree is freed — and the other work living in that same checkout loses the
+ground under it.
+
+### The invariant, now stated
+
+**One lane is one issue, one worktree, one branch, one PR.** Every skill depends
+on it and all of them break together when it does not hold:
+
+- `/orca:status` maps a lane to its work through `linkedIssue`, a single integer
+- `/orca:verify` gates a branch against **one** issue's criteria
+- `Closes #<n>` is the only completion record, and merging frees the worktree
+- `--reap` deletes a worktree once its PR merges
+
+`_shared/orca-lanes.md` now carries this as a named invariant with the failure
+spelled out.
+
+### Where it came from
+
+`/orca:plan` said a split produces *"ordered sub-plans, each independently
+handoff-able"* — one line, and it never said each part needs **its own issue**.
+The natural reading is "three plans, one lane", which is exactly what happened.
+
+Now (§5a): a split is **not done until each part is its own issue**, with its own
+`### Done when`, real `--add-blocked-by` edges recording the order, and an
+explicit decision about what happens to the original issue — one left carrying
+the *whole* criteria set will fail its gate forever, since no single part
+satisfies it.
+
+**`/orca:launch` refuses to launch part of an issue.** A contract saying "part 1
+of 3", or one whose PR would say `Refs #<n>` rather than `Closes #<n>`, stops
+with what is needed instead.
+
+**`/orca:status` reports the broken state** — two lanes on one worktree path, two
+open PRs from one branch, or an open PR whose body says `Refs` — under
+`needs-attention`, because that is the state that turns a routine merge into lost
+work.
+
+### And the splitting bar goes up again
+
+The deeper fix: this only bites when work is split that did not need splitting.
+1.14.0 raised the bar; this raises it further now that each part costs a whole
+issue and lane.
+
+- **Repetitive same-shape edits: "hundreds, not dozens"**, and **try to script it
+  first** — a mechanical transformation applied uniformly is one step, not a
+  hundred. (Was `>~40`, which is what justified splitting a 112-edit task into
+  three lanes.)
+- **Volume is explicitly not a reason to split.** Step, file, and line counts are
+  weak signals usable only to support a split already justified — never to cause
+  one. *"Thirty files implementing one decision is easier than five files
+  implementing four."*
+- **More than one architectural decision is named as the strongest reason**, and
+  often the only real one.
+- The reviewer is told a split is *"the strongest claim you can make, and usually
+  the wrong one"*, that parts cannot share a lane, and that **size alone is never
+  sufficient** — agents handle large coherent efforts well.
+
+**If parts genuinely cannot be separated** — shared uncommitted state, or part B
+unverifiable without part A in the same tree — **that is not a split.** It is one
+lane doing one larger piece of work, and "three parts in one worktree" is not an
+available shape.
+
 ## 1.14.0 — 2026-08-04
 
 **`/orca:plan` split far too eagerly.** Reported from real use, and the rule was

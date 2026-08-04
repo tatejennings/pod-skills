@@ -128,6 +128,18 @@ Then check three things, and **report rather than silently proceeding** on any:
 It goes into the contract verbatim — it is what `/orca:verify` will check, and
 the executor must see the same criteria the gate will apply.
 
+**Refuse to launch part of an issue.** A lane is one issue, one worktree, one
+branch, one PR (`../_shared/orca-lanes.md`). If the work you were handed is
+*part* of an issue — a contract saying "part 1 of 3", a PR body that would say
+`Refs #<n>` rather than `Closes #<n>`, criteria the lane cannot fully satisfy —
+**stop.**
+
+The failure is delayed and expensive: part A merges, its PR closes, its worktree
+becomes reapable, and the later parts sharing that checkout lose it. Say what is
+needed instead — an issue per part, with dependency edges recording the order
+(`/orca:plan` §5a) — and launch once those exist. Each part is then an ordinary
+lane closing its own issue.
+
 **No checklist** ⇒ **offer `/orca:plan <n>` or `/orca:triage <n>` first.**
 Launching criteria-less work guarantees a branch `/orca:verify` will refuse to
 gate — the executor cannot know when it is done, and neither can the gate. If the

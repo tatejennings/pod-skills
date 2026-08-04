@@ -217,6 +217,38 @@ What Orca does *not* have — and what this plugin adds — is the backlog half:
 milestones, readiness, dependencies, git dirty state, and PR *state*
 (`linkedPR` is a number, not a status; resolving it needs `gh`).
 
+## The lane invariant — one lane, one worktree, one PR, one issue
+
+**A lane is a 1:1:1:1 relationship.** One issue, one worktree, one branch, one
+PR. Every skill here depends on it, and breaking it breaks them all at once:
+
+- `/orca:status` maps a lane to its work through `linkedIssue` — a single
+  integer, so a worktree serving two issues can only report one.
+- `/orca:verify` gates a branch against **one** issue's criteria.
+- `Closes #<n>` on merge is the only completion record, and a merge closes the
+  PR and frees the worktree.
+- `--reap` deletes a worktree once its PR merges.
+
+**Never put two units of work in one worktree.** The failure is specific and
+expensive: part A merges, its PR closes, the worktree becomes reapable — and
+parts B and C, which were living in that same checkout, lose the ground under
+them. The user did nothing wrong by merging a finished PR; the arrangement was
+wrong.
+
+So when work is split into sequential parts, **each part is its own issue with
+its own lane**:
+
+| | Correct | Broken |
+|---|---|---|
+| Issues | one per part | one issue, three parts |
+| Worktrees | one per part | one shared |
+| PRs | one per part, each `Closes` its own issue | three PRs from one worktree |
+| Merging part A | frees only part A's lane | destroys B and C's checkout |
+
+If parts genuinely cannot be separated — they share uncommitted state, or part B
+is unverifiable without part A in the same tree — **that is not a split.** It is
+one lane doing one larger piece of work, and the plan should say so.
+
 ## Safety rules
 
 ### Never delete a primary checkout
