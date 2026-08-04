@@ -183,10 +183,14 @@ source, and have it attack on four axes.
 
 > Report only findings that would change what the executor does. A plan you
 > would let run as-is is a valid outcome and the common one — say so plainly
-> rather than manufacturing concerns. In particular, **"split it" is a strong
-> claim**: it costs a lane, a PR, and a review each time, and it is wrong far
-> more often than it is right. Recommend it only against the criteria in axis 3,
-> and name the seam and the cost when you do.
+> rather than manufacturing concerns.
+>
+> **"Split it" is the strongest claim you can make, and usually the wrong one.**
+> Each part needs its own issue, worktree, PR, and review; parts cannot share a
+> lane. Size alone is never sufficient — agents handle large coherent efforts
+> well. Recommend a split only against the criteria in axis 3, and when you do,
+> name the seam, the cost in lanes, and why one context genuinely cannot hold
+> the work.
 
 1. **Completeness** — is every requirement covered by a step? Does every step
    have a verification? Is every `### Done when` criterion actually produced by
@@ -196,18 +200,25 @@ source, and have it attack on four axes.
 3. **Single-context feasibility** — can ONE agent execute this end to end?
 
    **Default to one lane. Splitting is the exception, and it must be argued
-   for.** A split is not the safe answer — it costs a lane, a PR, and a review
-   each time, forces sequencing between them, and makes every later lane re-read
-   context the earlier one already had. A plan that is merely *large* is still
-   one plan.
+   for.** Agents handle large efforts well; what they handle badly is work
+   fragmented across contexts that each have to rebuild the same understanding.
+
+   **A split is expensive, and more expensive than it looks.** Each part needs
+   its own issue, its own worktree, its own PR, and its own review (§5a — parts
+   cannot share a lane). It forces sequencing, and every later part re-reads
+   context the earlier one already had. **A plan that is merely large is still
+   one plan** — prefer one substantial lane over three coordinated ones.
 
    **Split only when one of these is true** — not on a count of soft limits:
 
-   - **Repetitive same-shape edits beyond ~40 by hand.** The classic case: an
-     enum with dozens of call sites. Script it, or split by natural group.
+   - **Repetitive same-shape edits at a scale where one context would lose
+     accuracy** — think hundreds, not dozens. First try to **script it**: a
+     mechanical transformation applied uniformly is one step, not one hundred.
+     Split by natural group only if it genuinely cannot be scripted.
    - **More than one new subsystem or major architectural decision.** Two
      irreversible choices in one lane means the second is made while the first is
-     still unproven.
+     still unproven. This is the strongest reason to split, and often the only
+     real one.
    - **An open-ended tuning or measurement loop.** Anything where "done" is found
      by iterating — balance passes, performance work — gets its own context,
      because the cycle count is unknowable up front.
@@ -216,13 +227,14 @@ source, and have it attack on four axes.
    - **A hard sequencing dependency inside the work** — step 7 cannot be verified
      until step 4 is merged and observed in the real world.
 
-   **These are signals to weigh, never triggers on their own:** ~10+ ordered
-   steps, ~15+ modified files, ~1,500+ changed lines. A feature that touches 20
-   files coherently is one lane. Reach for these only to support a split already
-   justified above — *"and it is also 30 files"* — never as the reason.
+   **Volume is not a reason to split.** Step counts, file counts, and line counts
+   are weak signals at most — usable to support a split already justified above
+   (*"and it is also 40 files"*), never as the reason for one. A feature touching
+   30 files coherently is one lane.
 
-   The limits measure **decisions held simultaneously**, not volume. Twenty files
-   implementing one decision is easier than five files implementing four.
+   What matters is **decisions held simultaneously**, not volume. Thirty files
+   implementing one decision is easier than five files implementing four — and
+   the second case is the one worth splitting.
 
    **If you recommend a split, say what it costs** — how many lanes, what must
    merge before what — and confirm each part is independently *verifiable*, not
@@ -257,12 +269,46 @@ an existing plan file** — suffix the slug instead.
 Then:
 
 - Present the final plan via `ExitPlanMode` for approval.
-- If the review said split, **present the split as the plan**: ordered sub-plans,
-  each independently handoff-able.
+- If the review said split, **present the split as the plan** — and see §5a,
+  because a split is not done until each part is its own issue.
 - Close by noting `/orca:launch` can start it in its own lane — but do
   not run it unasked; the user may execute inline.
 
-## 6. `--launch` — hand off directly
+### 5a. A split means new issues — not sub-plans of one issue
+
+**One lane is one issue, one worktree, one branch, one PR**
+(`../_shared/orca-lanes.md`). A split that leaves three parts pointing at *one*
+issue violates that, and the failure is expensive and delayed: part A merges,
+its PR closes, its worktree becomes reapable — and parts B and C, sharing that
+checkout, lose the ground under them. The user did nothing wrong by merging a
+finished PR.
+
+So before any part is launched:
+
+1. **File an issue per part.** Each gets its own `### Done when` checklist,
+   covering only that part. `/orca:triage <n>` is the natural way, or file them
+   directly per `../_shared/issue-schema.md`.
+2. **Record the order as real dependency edges** — part B blocked by part A:
+
+   ```bash
+   gh issue edit <part-B> --add-blocked-by <part-A>
+   ```
+
+   This is what makes `/orca:status` show B as blocked and stops
+   `/orca:launch` starting it early. Prose ordering in a plan is invisible to
+   every readiness query.
+3. **Decide what happens to the original issue.** Either it becomes the first
+   part (keep it, narrow its criteria) or it stays as a tracking issue with the
+   parts blocking it. Say which — an original issue left with the *whole* set of
+   criteria will fail its gate forever, since no single part satisfies it.
+4. **One plan file per part**, so each lane's contract carries only its own work.
+
+Then each part launches as an ordinary lane when its blockers close.
+
+**If the parts cannot be separated this way** — they share uncommitted state, or
+part B is unverifiable without part A in the same tree — **it is not a split.**
+Say so and plan it as one lane. "Three parts in one worktree" is not an
+available shape.
 
 After folding in review findings, invoke the `orca:launch` skill via the Skill
 tool. It writes the executor contract, creates the worktree, launches the agent,

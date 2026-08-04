@@ -281,6 +281,15 @@ action:
     or drop its milestone back to unscheduled. `--reap` will never do any of this
     for you; it only touches provably-merged lanes.
 - `needs-attention` → the exact contradiction found
+- **two lanes sharing one worktree path, or two open PRs from one branch** →
+  **"lane invariant broken"**, and say why it matters: merging either PR frees
+  the worktree the other still needs. One lane is one issue, one worktree, one
+  branch, one PR (`../_shared/orca-lanes.md`). Report it under
+  `needs-attention` — this is the state that turns a routine merge into lost
+  work, and the user has no way to see it coming otherwise.
+- **an open PR whose body says `Refs #n` rather than `Closes #n`** → flag it:
+  that PR will merge without closing its issue, which usually means the lane is
+  doing part of a larger effort that should have been its own issue.
 - **merged PR that closed no issue** → "merged without `Closes #n` — the issue is
   still open." The PR body was malformed; the merge cannot be undone. **The
   remedy is for the human to close the issue with a comment naming the merged
