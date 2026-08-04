@@ -3,6 +3,57 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.14.0 — 2026-08-04
+
+**`/orca:plan` split far too eagerly.** Reported from real use, and the rule was
+wrong in three compounding ways.
+
+**1. "One limit badly broken, or any two at once ⇒ split" was the main culprit.**
+Seven soft limits, and a moderately-sized feature trips two almost by
+construction — 12 files *and* 1,200 lines is one normal feature, not two contexts
+of work.
+
+**2. The numbers were inherited, not measured.** `~15 files` and `~1,500 lines`
+came from an older suite predating current context windows, and were never
+re-derived.
+
+**3. The reviewer had no reason to say no.** Asked to *attack* a plan on four
+axes, "split it" always sounds like the careful answer — and nothing told the
+reviewer that a wrong split has a cost.
+
+### The rule now
+
+**Default to one lane; splitting is the exception and must be argued for.** A
+split costs a lane, a PR, and a review each time, forces sequencing, and makes
+every later lane re-read context the earlier one already had. A plan that is
+merely *large* is still one plan.
+
+Split only on a **named structural reason**, not a count:
+
+- repetitive same-shape edits beyond **~40** by hand (was ~25)
+- **more than one** new subsystem or major architectural decision
+- an open-ended tuning or measurement loop, where the cycle count is unknowable
+- a persisted-format migration alongside feature work
+- a hard sequencing dependency — step 7 unverifiable until step 4 has merged
+
+Steps, files, and line counts are **demoted to signals**: usable to support a
+split already justified, never to trigger one. *"Twenty files implementing one
+decision is easier than five files implementing four."*
+
+**A recommended split must now state its cost** — how many lanes, what merges
+before what — and confirm each part is independently **verifiable**, not merely
+smaller. A part nobody can gate on its own has made things worse. **Failure to
+name a clean seam is evidence it is one lane.**
+
+### The reviewer is told the bar
+
+> Report only findings that would change what the executor does. A plan you would
+> let run as-is is a valid outcome and the common one. **"Split it" is a strong
+> claim** — it is wrong far more often than it is right.
+
+An adversarial reviewer with no stated bar manufactures concerns to justify
+itself; this is the same lesson as 1.13.1's fix to the executor's code reviewer.
+
 ## 1.13.2 — 2026-08-02
 
 **Agents were still opening draft PRs after 1.10.0, and the skill was not the

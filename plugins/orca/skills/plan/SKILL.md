@@ -177,26 +177,58 @@ Rules that matter more than completeness:
 
 Spawn a **fresh** general-purpose agent — a cold reader, not a fork, so it does
 not inherit your drafting bias. Give it the full plan and the requirements
-source, and have it attack on four axes:
+source, and have it attack on four axes.
+
+**Tell it the bar explicitly**, or it will find fault to justify its existence:
+
+> Report only findings that would change what the executor does. A plan you
+> would let run as-is is a valid outcome and the common one — say so plainly
+> rather than manufacturing concerns. In particular, **"split it" is a strong
+> claim**: it costs a lane, a PR, and a review each time, and it is wrong far
+> more often than it is right. Recommend it only against the criteria in axis 3,
+> and name the seam and the cost when you do.
 
 1. **Completeness** — is every requirement covered by a step? Does every step
    have a verification? Is every `### Done when` criterion actually produced by
    some step?
 2. **Holes** — unstated assumptions, missing edge cases, migrations or format
    changes glossed over, test debt, doc obligations skipped.
-3. **Single-context feasibility** — can ONE agent execute this end to end? One
-   limit badly broken, or any two at once ⇒ split:
-   - ≤ ~10 ordered steps
-   - ≤ ~15 modified files (reads unlimited)
-   - ≤ ~1,500 lines of new/changed code
-   - at most ONE new subsystem or major architectural decision
-   - repetitive same-shape edits: > ~25 by hand ⇒ script it or split it
-   - expensive verify loops (> ~5 min/cycle): ≤ ~3 cycles; open-ended tuning
-     always gets its own context
-   - migrations of persisted formats count DOUBLE their file count
+3. **Single-context feasibility** — can ONE agent execute this end to end?
 
-   The limits measure decisions held simultaneously, not raw file count. Failing
-   ⇒ the finding is "split it", with proposed seams.
+   **Default to one lane. Splitting is the exception, and it must be argued
+   for.** A split is not the safe answer — it costs a lane, a PR, and a review
+   each time, forces sequencing between them, and makes every later lane re-read
+   context the earlier one already had. A plan that is merely *large* is still
+   one plan.
+
+   **Split only when one of these is true** — not on a count of soft limits:
+
+   - **Repetitive same-shape edits beyond ~40 by hand.** The classic case: an
+     enum with dozens of call sites. Script it, or split by natural group.
+   - **More than one new subsystem or major architectural decision.** Two
+     irreversible choices in one lane means the second is made while the first is
+     still unproven.
+   - **An open-ended tuning or measurement loop.** Anything where "done" is found
+     by iterating — balance passes, performance work — gets its own context,
+     because the cycle count is unknowable up front.
+   - **A migration of a persisted format** alongside feature work. The migration
+     is irreversible and deserves to land and be verified alone.
+   - **A hard sequencing dependency inside the work** — step 7 cannot be verified
+     until step 4 is merged and observed in the real world.
+
+   **These are signals to weigh, never triggers on their own:** ~10+ ordered
+   steps, ~15+ modified files, ~1,500+ changed lines. A feature that touches 20
+   files coherently is one lane. Reach for these only to support a split already
+   justified above — *"and it is also 30 files"* — never as the reason.
+
+   The limits measure **decisions held simultaneously**, not volume. Twenty files
+   implementing one decision is easier than five files implementing four.
+
+   **If you recommend a split, say what it costs** — how many lanes, what must
+   merge before what — and confirm each part is independently *verifiable*, not
+   merely smaller. A split that produces a part nobody can gate on its own has
+   made things worse. If you cannot name a clean seam, that is evidence it is one
+   lane.
 4. **Blast radius** — shared types, data formats, serialized content, test
    baselines, in-flight parallel work that could collide. Flag anything that
    makes the change hard to revert.
