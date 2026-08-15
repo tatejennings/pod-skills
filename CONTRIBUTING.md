@@ -13,7 +13,7 @@ skills: there is nothing to build, nothing to verify, and one author.
 
 ## Adding or editing a skill
 
-Each skill is a folder with one file: `plugins/orca/skills/<name>/SKILL.md`, with
+Each skill is a folder with one file: `plugins/pod/skills/<name>/SKILL.md`, with
 `name` + `description` frontmatter. The description is the triggering mechanism —
 every "when to use" phrase belongs there, not in the body.
 
@@ -24,10 +24,11 @@ memory and never from a plan document. This has caught real defects. Worktree ID
 are `<repoId>::<absolute-path>` — and `worktree list` returns that under `id`
 while `worktree ps` returns it under `worktreeId`.
 
-**Say what the skill is NOT for.** The `/orca:*` namespace collides semantically
-with Orca's bundled `orca-cli` and `orchestration` skills. Every description
-names the bundled skill that owns the case it declines, the way Orca's own skills
-disambiguate each other.
+**Say what the skill is NOT for.** These skills sit on top of the Orca app, so
+their subject overlaps with Orca's bundled `orca-cli` and `orchestration` skills
+(and until 2.0.0 the plugin was itself named `orca`, so the namespace collided
+too). Every description names the bundled skill that owns the case it declines,
+the way Orca's own skills disambiguate each other.
 
 **Stay project-agnostic.** No skill references a specific project, game,
 milestone name, label, or acceptance criterion. Those belong to the consuming
@@ -37,10 +38,10 @@ argument.
 ## Shared specs live in `_shared/`, not in copies
 
 - `_shared/github-backlog.md` — milestone resolution, readiness, `gh` constraints
-- `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a repo
+- `_shared/agents-fragment.md` — the block `/pod:migrate` appends to a repo
 - `_shared/issue-schema.md` — the `### Done when` contract
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety, the handoff command
-- `_shared/evidence-gates.md` — how `/orca:verify` checks a criterion
+- `_shared/evidence-gates.md` — how `/pod:verify` checks a criterion
 - `_shared/automation.md` — the disabled-by-default scheduled automation
 
 Change the shared file, not a skill's restatement of it.
@@ -54,13 +55,13 @@ keep the two in sync rather than letting them diverge silently.
 ## Testing a change without installing
 
 ```bash
-claude --plugin-dir ./plugins/orca   # overrides the installed copy for that session
+claude --plugin-dir ./plugins/pod   # overrides the installed copy for that session
 ```
 
 ## After any skill edit
 
 1. `claude plugin validate .` from the repo root.
-2. Bump `version` in `plugins/orca/.claude-plugin/plugin.json`.
+2. Bump `version` in `plugins/pod/.claude-plugin/plugin.json`.
 3. Add a `CHANGELOG.md` entry under that version.
 4. Check `README.md` (skills table, flag table, pipeline) for drift.
 5. **Regenerate `GUIDE.html` if `README.md` changed** — the visual guide is
@@ -71,8 +72,8 @@ claude --plugin-dir ./plugins/orca   # overrides the installed copy for that ses
    command alone does **not** update the installed copy:
 
    ```bash
-   claude plugin marketplace update orca-skills
-   claude plugin update orca@orca-skills
+   claude plugin marketplace update pod-skills
+   claude plugin update pod@pod-skills
    ```
 
    Changes apply to new sessions; existing ones need `/reload-plugins`.

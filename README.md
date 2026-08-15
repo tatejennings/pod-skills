@@ -1,4 +1,4 @@
-# orca-skills
+# pod-skills
 
 A Claude Code **plugin** that adds a **GitHub-Issues backlog and planning layer**
 on top of [Orca](https://orca.computer): groom a backlog, plan work adversarially,
@@ -10,6 +10,11 @@ finished branch against the issue's own acceptance checklist.
 > `orca` CLI. Without Orca the backlog half still works (it is pure `gh`), but
 > nothing can be launched — the skills detect the absence and say so rather than
 > half-working.
+
+> **Not made by the Orca team.** The plugin is `pod` — a pod being what a group
+> of orcas is called — and its skills are invoked as `/pod:<skill>`. Orca's own
+> skills (`orca-cli`, `orchestration`) are separate; this plugin points at them.
+> Before 2.0.0 the plugin was named `orca`; see the CHANGELOG for the move.
 
 **Nothing in this pipeline ever merges.** Lanes end at an open PR, the gate
 reports, you merge.
@@ -53,9 +58,9 @@ right, so something has to ask — and it has to ask without being remembered.
   │ dependencies     │    │ gates itself     │    │ diff checked     │
   │                  │    │ opens a PR       │    │ verdict on the PR│
   └──────────────────┘    └──────────────────┘    └──────────────────┘
-      GitHub                    Orca              in-lane · /orca:verify
+      GitHub                    Orca              in-lane · /pod:verify
 
-  └──────────────────── /orca:tech-lead ─────────────────────┘   →   you
+  └──────────────────── /pod:tech-lead ─────────────────────┘   →   you
       drives all three, and stops here                            merge
 ```
 
@@ -66,24 +71,24 @@ right, so something has to ask — and it has to ask without being remembered.
 **From GitHub** — the usual way:
 
 ```bash
-claude plugin marketplace add tatejennings/orca-skills
-claude plugin install orca@orca-skills
+claude plugin marketplace add tatejennings/pod-skills
+claude plugin install pod@pod-skills
 ```
 
 **From a local clone** — if you want to read or modify the skills:
 
 ```bash
-git clone git@github.com:tatejennings/orca-skills.git
-claude plugin marketplace add ./orca-skills
-claude plugin install orca@orca-skills
+git clone git@github.com:tatejennings/pod-skills.git
+claude plugin marketplace add ./pod-skills
+claude plugin install pod@pod-skills
 ```
 
 Either way, **inside a running session** use the slash-command equivalents and
 then reload, since new skills do not appear until the plugin does:
 
 ```
-/plugin marketplace add tatejennings/orca-skills
-/plugin install orca@orca-skills
+/plugin marketplace add tatejennings/pod-skills
+/plugin install pod@pod-skills
 /reload-plugins
 ```
 
@@ -91,9 +96,24 @@ then reload, since new skills do not appear until the plugin does:
 the catalog alone does **not** update the installed copy — run both:
 
 ```bash
-claude plugin marketplace update orca-skills
-claude plugin update orca@orca-skills
+claude plugin marketplace update pod-skills
+claude plugin update pod@pod-skills
 ```
+
+**Upgrading from `orca@orca-skills` (before 2.0.0).** The plugin and marketplace
+were renamed; there is no in-place upgrade path across a name change, so remove
+the old and add the new:
+
+```bash
+claude plugin uninstall orca@orca-skills
+claude plugin marketplace remove orca-skills
+claude plugin marketplace add tatejennings/pod-skills
+claude plugin install pod@pod-skills
+```
+
+Consuming repos need nothing: the `AGENTS.md` block, its tracking-model marker,
+and the `orca:verify` verdict tag on existing PRs are all unchanged. Only prose
+in your own `CLAUDE.md` that spells out `/orca:<skill>` needs a hand edit.
 
 **Requirements**
 
@@ -109,7 +129,7 @@ If several GitHub accounts are authenticated, note that the skills check the
 **Then, once per project:**
 
 ```
-/orca:migrate
+/pod:migrate
 ```
 
 Everything else assumes the tracking model it establishes. Skipping it works if
@@ -118,7 +138,7 @@ mode is quiet — an unmigrated repo returns empty lists that look like "nothing
 do". Run it at least as an audit.
 
 Re-run it after upgrading this plugin: when a release changes what the skills
-expect of a repo, `/orca:migrate` is what moves your project onto the new
+expect of a repo, `/pod:migrate` is what moves your project onto the new
 contract.
 
 ---
@@ -129,7 +149,7 @@ Grouped by what you are trying to do.
 
 ### Getting a repo ready
 
-#### `/orca:migrate`
+#### `/pod:migrate`
 Brings a repo's tracking up to the model the other skills read. Inventories every
 tracking file, classifies each section (live state / finished / narrative /
 reference), and proposes milestones, issues, `### Acceptance criteria` checklists,
@@ -142,10 +162,10 @@ schema version it applied, so a later run can tell a repo that *is* current from
 one that merely *was*.
 
 ```
-/orca:migrate
+/pod:migrate
 ```
 
-#### `/orca:triage`
+#### `/pod:triage`
 **Paste in a pile of raw bugs, features, and research items — it files them as
 proper GitHub issues, one at a time.** Nothing needs to exist in GitHub first;
 creating the issues *is* the work being delegated.
@@ -157,7 +177,7 @@ edges. It checks for duplicates before filing, and each item is created as it is
 triaged, so an item you drop mid-pass was never filed.
 
 ```
-/orca:triage
+/pod:triage
   crash when rotating the device mid-run
   workshop should remember your last tab
   do we still need Firebase at all
@@ -167,8 +187,8 @@ triaged, so an item you drop mid-pass was never filed.
 It also works on issues that already exist:
 
 ```
-/orca:triage 101 103 107  # groom these specific ones
-/orca:triage              # audit the whole backlog
+/pod:triage 101 103 107  # groom these specific ones
+/pod:triage              # audit the whole backlog
 ```
 
 With no arguments it **audits everything** — catching both never-triaged issues
@@ -177,7 +197,7 @@ dependency written only in prose, criteria under the wrong heading.
 
 ### Deciding how to do the work
 
-#### `/orca:plan`
+#### `/pod:plan`
 Adversarial planning for one piece of work — an issue number, a milestone, or a
 free-form description. Researches with parallel agents, drafts an
 execution-ready plan, then hands it to a **cold-reader agent** to attack for
@@ -188,12 +208,12 @@ the work gateable later. Saves the plan to `~/.claude/plans/<repo>/` so it
 survives the session.
 
 ```
-/orca:plan 84                          # plan issue #84
-/orca:plan fix the vent double-tap bug # free-form
-/orca:plan 84 --launch                 # plan, then launch it as a lane
+/pod:plan 84                          # plan issue #84
+/pod:plan fix the vent double-tap bug # free-form
+/pod:plan 84 --launch                 # plan, then launch it as a lane
 ```
 
-#### `/orca:wave`
+#### `/pod:wave`
 Plans **several issues at once**, each in its own terminal in the current
 worktree. You move between tabs answering each context's questions instead of
 planning one at a time. No worktrees are created — planning writes no repo files.
@@ -204,15 +224,15 @@ file; dependency edges cannot express that, so comparing plans is the only place
 it shows up before work starts.
 
 ```
-/orca:wave 84 85 86 87            # four planning contexts, one tab each
-/orca:wave 84 85 86 87 --auto     # …but only stop where a real question comes up
-/orca:wave --review 84 85 86 87   # check those plans against each other
-/orca:wave --launch 84 85 87      # start the non-colliding ones as lanes
+/pod:wave 84 85 86 87            # four planning contexts, one tab each
+/pod:wave 84 85 86 87 --auto     # …but only stop where a real question comes up
+/pod:wave --review 84 85 86 87   # check those plans against each other
+/pod:wave --launch 84 85 87      # start the non-colliding ones as lanes
 ```
 
 ### Doing the work
 
-#### `/orca:launch`
+#### `/pod:launch`
 Turns an issue into a **lane**: a fresh Orca worktree with an agent already
 implementing it. Reads the issue and its acceptance criteria, refuses work that
 is already in flight or marked `manual`, writes an executor contract *outside*
@@ -232,10 +252,10 @@ a mandate to rewrite. A failed gate buys exactly **one** narrow rework pass, the
 the PR opens blocked rather than looping. It never merges; that stays yours.
 
 ```
-/orca:launch 84
+/pod:launch 84
 ```
 
-#### `/orca:status`
+#### `/pod:status`
 The dashboard, and the join this plugin exists for. Milestone progress, a
 `READY NEXT` list of unblocked issues, a `YOUR TASKS` section for `manual` work,
 and every lane's branch, PR state, session liveness, **and gate verdict**.
@@ -249,10 +269,10 @@ Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 — safe to put on a loop.
 
 ```
-/orca:status                    # the dashboard, + regenerate ROADMAP.md
-/orca:status --no-roadmap       # dashboard only
-/orca:status --reap             # also delete provably-finished lanes
-/loop 15m /orca:status --reap   # keep it live
+/pod:status                    # the dashboard, + regenerate ROADMAP.md
+/pod:status --no-roadmap       # dashboard only
+/pod:status --reap             # also delete provably-finished lanes
+/loop 15m /pod:status --reap   # keep it live
 ```
 
 ### Proving it was done
@@ -287,24 +307,24 @@ The three passing verdicts say *proven*, *someone looked and thinks so*, and
 can only ever make the gate stricter: its "met" never produces a plain `pass`,
 its "not met" blocks, and unsure means `pass-with-review`.
 
-#### `/orca:verify` — the re-gate
+#### `/pod:verify` — the re-gate
 Runs the same gate on demand. Since lanes gate themselves, this is usually a
 *second* opinion: use it when the base has moved, when commits landed after the
-verdict, when a verdict looks wrong, or when `/orca:status` shows a PR as
+verdict, when a verdict looks wrong, or when `/pod:status` shows a PR as
 ungated. It re-derives everything and never reads the old verdict as input.
 
 Never merges, never closes an issue, never marks a PR ready.
 
 ```
-/orca:verify 84       # by issue
-/orca:verify          # the current worktree's lane
+/pod:verify 84       # by issue
+/pod:verify          # the current worktree's lane
 ```
 
 ### Running the whole thing
 
-#### `/orca:tech-lead`
-Every skill above stops on purpose: `/orca:plan` stops at a plan, `/orca:launch`
-stops at a running lane, `/orca:status` only reads. **You are what connects
+#### `/pod:tech-lead`
+Every skill above stops on purpose: `/pod:plan` stops at a plan, `/pod:launch`
+stops at a running lane, `/pod:status` only reads. **You are what connects
 them** — deciding what is next, keeping lanes fed, reacting to the review
 comments on the PRs they open, resolving the forks planning surfaces, and
 merging.
@@ -312,7 +332,7 @@ merging.
 This skill takes that seat, **except the merge**. It reads the backlog and the
 live lanes, proposes a slate, and — once you tell it to go — plans each issue
 with a panel of independent expert reviewers until the plan holds, launches it
-via `/orca:launch`, watches the lanes, dispatches fixes for the review comments
+via `/pod:launch`, watches the lanes, dispatches fixes for the review comments
 on the PRs they open, and decides the forks its experts agree on. It composes the
 other skills rather than reimplementing them, and never edits code itself.
 
@@ -327,11 +347,11 @@ Comment bodies reach that agent as fenced, explicitly-untrusted data.
 pause; an imperative gets the same slate and then action.
 
 ```
-/orca:tech-lead                      # propose a slate, wait
-/orca:tech-lead take the loop epic   # propose, then run it
-/orca:tech-lead handle the review comments on my PRs
-/orca:tech-lead cap 2                # steer a running one
-/orca:tech-lead resume               # pick up from the ledger
+/pod:tech-lead                      # propose a slate, wait
+/pod:tech-lead take the loop epic   # propose, then run it
+/pod:tech-lead handle the review comments on my PRs
+/pod:tech-lead cap 2                # steer a running one
+/pod:tech-lead resume               # pick up from the ledger
 ```
 
 It stops when everything left needs you, and says what. Bounds are built in:
@@ -339,7 +359,7 @@ three plan-review rounds, two fix rounds per PR, two owner-only ticks before it
 idles out, and an eight-hour hard cap. **It never merges a PR and never closes
 an issue** — that decision is the one this whole pipeline exists to keep yours.
 
-For a read-only answer to "what should I work on next", use `/orca:status`;
+For a read-only answer to "what should I work on next", use `/pod:status`;
 this skill is for when you want it acted on.
 
 ---
@@ -348,18 +368,18 @@ this skill is for when you want it acted on.
 
 | Skill | Flag | Effect |
 |---|---|---|
-| `/orca:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, **a review finding would change an adopted plan's approach**, the work is already in flight, or Orca is unavailable. |
-| `/orca:plan` | `--auto` | Plan unattended: never ask, never enter plan mode, defer any real fork into the plan file as a named question — then **stop at the finished plan**. What `/orca:wave --auto` and `/orca:tech-lead` send into a terminal nobody is watching. Does not launch; that is `--launch`. |
-| `/orca:wave` | `--auto` | Each planning context runs unattended and stops only if a real fork comes up. Does **not** launch — the collision review still gates every lane. |
-| `/orca:wave` | `--review` | Check the finished plans against each other for file collisions. |
-| `/orca:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |
-| `/orca:status` | `--reap` | Delete provably-finished lanes. Every safety check must pass; ambiguity is always a skip, never a prompt. |
-| `/orca:status` | `--no-roadmap` | Skip regenerating `ROADMAP.md`. |
+| `/pod:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, **a review finding would change an adopted plan's approach**, the work is already in flight, or Orca is unavailable. |
+| `/pod:plan` | `--auto` | Plan unattended: never ask, never enter plan mode, defer any real fork into the plan file as a named question — then **stop at the finished plan**. What `/pod:wave --auto` and `/pod:tech-lead` send into a terminal nobody is watching. Does not launch; that is `--launch`. |
+| `/pod:wave` | `--auto` | Each planning context runs unattended and stops only if a real fork comes up. Does **not** launch — the collision review still gates every lane. |
+| `/pod:wave` | `--review` | Check the finished plans against each other for file collisions. |
+| `/pod:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |
+| `/pod:status` | `--reap` | Delete provably-finished lanes. Every safety check must pass; ambiguity is always a skip, never a prompt. |
+| `/pod:status` | `--no-roadmap` | Skip regenerating `ROADMAP.md`. |
 
 Everything else takes plain arguments: issue numbers, a milestone name, or a
 free-form description.
 
-`/orca:tech-lead` has **no flags at all** — it reads plain language, and whether
+`/pod:tech-lead` has **no flags at all** — it reads plain language, and whether
 you asked or told it is what decides between proposing and acting. Scope
 (`the loop epic`, `#15 #16`, `my open PRs`), cap (`cap 2`, `one at a time`), and
 steering (`pause`, `stop`, `status`, `add #14`, `drop #16`, `only reviews for
@@ -372,30 +392,30 @@ now`, `resume`) are all just words.
 ### 1. Onboarding a repo
 
 ```
-/orca:migrate     → proposes; you approve; nothing is committed
+/pod:migrate     → proposes; you approve; nothing is committed
                     review the diff, commit it yourself
-/orca:triage      → audit the backlog, fix what it finds
-/orca:status      → confirm it reads correctly
+/pod:triage      → audit the backlog, fix what it finds
+/pod:status      → confirm it reads correctly
 ```
 
-You are done when `/orca:status` shows a milestone with progress and a
+You are done when `/pod:status` shows a milestone with progress and a
 `READY NEXT` list you believe.
 
 ### 2. One issue, start to finish
 
 ```
-/orca:status          → pick something from READY NEXT
-/orca:plan 84         → research, draft, adversarial review
+/pod:status          → pick something from READY NEXT
+/pod:plan 84         → research, draft, adversarial review
                         you approve                        ← GATE 1
-/orca:launch 84       → worktree + agent; this session is free
+/pod:launch 84       → worktree + agent; this session is free
                         …the agent implements…
                         …a cold agent gates the branch     ← GATE 2 (automatic)
                           fail → the lane reworks itself once, then re-gates
                           fail twice → PR opens blocked, carrying the evidence
                         …then it opens a PR with the verdict on it…
-/orca:status          → the lane shows `pr-open` + its verdict
+/pod:status          → the lane shows `pr-open` + its verdict
 you review and merge                                       ← GATE 3
-/orca:status --reap   → the finished lane is cleaned up
+/pod:status --reap   → the finished lane is cleaned up
 ```
 
 **GATE 2 no longer waits for you.** It used to be a command you ran between the
@@ -403,27 +423,27 @@ PR opening and merging it — which meant, in practice, that it did not run, and
 the PR merged ungated. Now the lane gates itself before the PR exists and the
 verdict is a comment on it, so the only thing left at GATE 3 is your decision.
 
-`/orca:verify 84` is still there to re-gate on demand, and `/orca:status` still
+`/pod:verify 84` is still there to re-gate on demand, and `/pod:status` still
 flags a PR that somehow arrived without a verdict as `awaiting-gate`.
 
 **A verdict is a claim about one commit.** It carries the head SHA and merge base
 it checked, and the author who produced it. So if anything lands after the gate
 runs — a fix, a rebase, your own commit — the verdict stops applying and
-`/orca:status` says `gated-stale` rather than showing a stale pass. And a
+`/pod:status` says `gated-stale` rather than showing a stale pass. And a
 `PASS`-shaped comment from someone who is not a trusted gate producer never
 counts, which matters on a public repo where anyone can comment.
 
 ### 3. Several issues in parallel
 
 ```
-/orca:status             → READY NEXT: #84 #85 #86 #87
-/orca:wave 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
+/pod:status             → READY NEXT: #84 #85 #86 #87
+/pod:wave 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
                            visit each, answer its questions
-/orca:wave --review 84 85 86 87
+/pod:wave --review 84 85 86 87
                          → "3 ready; #86 collides with #85 in GameScene.swift"
-/orca:wave --launch 84 85 87
+/pod:wave --launch 84 85 87
                          → the three non-colliding ones become lanes
-/orca:status             → watch all three
+/pod:status             → watch all three
 ```
 
 A collision is a **sequencing** problem, not a bad plan: launch one, let it
@@ -432,7 +452,7 @@ merge, re-plan the other against the merged result.
 ### 4. Fire and forget one issue
 
 ```
-/orca:plan 84 --launch
+/pod:plan 84 --launch
 ```
 
 Plans, reviews, and launches without stopping for approval — but only when the
@@ -444,7 +464,7 @@ an entire executor run.
 ### 5. Fire and forget a whole epic
 
 ```
-/orca:tech-lead take the loop epic, cap 2
+/pod:tech-lead take the loop epic, cap 2
 ```
 
 Workflow 2, repeated, without you in the middle of it. It prints the slate it
@@ -465,9 +485,9 @@ up from where it stopped.
 ### 6. Keeping the backlog honest
 
 ```
-/loop 15m /orca:status --reap   # live dashboard, finished lanes cleaned up
-/orca:triage                    # periodically: drift audit + fix
-/orca:migrate                   # after upgrading this plugin
+/loop 15m /pod:status --reap   # live dashboard, finished lanes cleaned up
+/pod:triage                    # periodically: drift audit + fix
+/pod:migrate                   # after upgrading this plugin
 ```
 
 ### 7. Emptying your head into the backlog
@@ -476,7 +496,7 @@ You have been keeping a list — in a notes app, in your head, in a scratch file
 Paste it:
 
 ```
-/orca:triage
+/pod:triage
   crash when rotating the device mid-run
   workshop should remember your last tab
   do we still need Firebase at all
@@ -529,7 +549,7 @@ gate sorts every criterion into **command**, **diff assertion**, or **human**.
 
 > **This section used to be called `### Done when`.** Both headings read, so a
 > repo written before the rename keeps working untouched — nothing to do unless
-> you want to. `/orca:migrate` rewrites the old heading in place as its v1 → v2
+> you want to. `/pod:migrate` rewrites the old heading in place as its v1 → v2
 > schema step, changing only that line and never the criteria under it.
 
 The first two are proven. For the third, an independent agent may render a
@@ -544,13 +564,13 @@ to the same thing.
 
 | Label | Meaning |
 |---|---|
-| `manual` | Only a human can do this — account access, store configuration, a physical device. `/orca:launch` refuses it; `/orca:status` lists it under `YOUR TASKS`. |
+| `manual` | Only a human can do this — account access, store configuration, a physical device. `/pod:launch` refuses it; `/pod:status` lists it under `YOUR TASKS`. |
 | scope labels (`sound`, `board ui`, …) | Which part of the system the work touches. Reuse an existing one; create one named for the area if none fits. |
 
 `manual` means the **whole task** is human. An issue with a few human *criteria*
 is still agent work — that belongs in the checklist, not the label.
 
-**`ROADMAP.md` is generated and gitignored.** `/orca:status` rewrites it every
+**`ROADMAP.md` is generated and gitignored.** `/pod:status` rewrites it every
 run. It is a rendering of GitHub state, never a source — delete it and regenerate
 without losing anything. That is the same principle as the rest of the model:
 truth is rebuilt, never stored. See **[TRACKING.md](TRACKING.md)**.
@@ -558,6 +578,10 @@ truth is rebuilt, never stored. See **[TRACKING.md](TRACKING.md)**.
 ---
 
 ## What this is not
+
+**Not Orca's.** The Orca app is by [orca.computer](https://orca.computer); this
+plugin is a third-party layer on top of it, which is why it is `pod` and not
+`orca` — a group of orcas, not the animal.
 
 **Not a wrapper around the `orca` CLI.** Orca ships its own version-matched
 skills — `orca-cli` for worktrees, terminals, and the browser; `orchestration`
@@ -576,7 +600,7 @@ which is the failure this whole plugin exists to prevent.
 
 **No merge automation.** Lanes end at an open PR and a human merges. Since
 the merge is the only state transition in the model, automating it would automate
-the one decision worth keeping. `/orca:tech-lead` runs the rest of the pipeline
+the one decision worth keeping. `/pod:tech-lead` runs the rest of the pipeline
 unattended and stops precisely there — it will tell you a PR is human-review-ready,
 and never act on it.
 
@@ -586,7 +610,7 @@ preconditions — chiefly that the gate has been seen to **fail** on incomplete
 work, not just pass. Lanes gating themselves does not change that; a pipeline
 whose only gate is one it spawns for itself is still a closed loop. The command,
 the precheck that carries the quotas, and the full list are in
-[`_shared/automation.md`](plugins/orca/skills/_shared/automation.md).
+[`_shared/automation.md`](plugins/pod/skills/_shared/automation.md).
 
 A pipeline that can open PRs but cannot check them is a machine for generating
 confident wrong work.
