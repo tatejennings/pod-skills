@@ -22,6 +22,14 @@ asking the author.
 So the gate's core discipline: **evidence comes from the branch and the
 commands, never from the executor's report of them.**
 
+**Where the gate runs does not change that discipline.** A lane runs this
+procedure on itself before opening its PR (`../launch/SKILL.md`), and
+`/orca:verify` runs it again on demand. Both are bound by every rule here — in
+particular, the lane's gate is performed by a **fresh agent that did not write
+the code**, because an executor checking its own work is precisely the report
+this file refuses to accept. A gate is defined by what it checks and what it
+refuses to assume, not by who invoked it.
+
 ## The three buckets
 
 Every `### Done when` item lands in exactly one (see `issue-schema.md` for the
@@ -77,10 +85,11 @@ git -C <path> diff <merge-base>...HEAD
   **Verified**: against a branch that touched neither, a naive "does the file
   exist" check passed while the correct check failed.
 
-### 3. Human criteria — report, never assert
+### 3. Human criteria — report, or have an independent agent judge them
 
-Prose that is neither of the above. These are surfaced verbatim, marked as
-requiring human judgement, and **never** counted as passed or failed.
+Prose that is neither of the above. A machine cannot check these, so the default
+is to surface them verbatim, marked as requiring human judgement, and **never**
+count them as passed or failed.
 
 This is the rule that keeps the gate honest, so it gets stated plainly:
 
@@ -91,6 +100,43 @@ This is the rule that keeps the gate honest, so it gets stated plainly:
 
 A verdict is never `pass` while human criteria are outstanding; it is
 `pass-with-review`, which is a different thing and must be reported as such.
+
+#### The one sanctioned exception — an independent agent's judgement
+
+A gate that returns `pass-with-review` on every branch stops being read. The
+outstanding criteria are the point of that verdict, and a verdict nobody opens is
+the same as no gate at all — which is the failure this whole file exists to
+prevent, arriving by a slower route.
+
+So prose criteria **may** be judged, under three conditions that are not
+negotiable:
+
+1. **By a context that did not write the code.** A fresh agent, not the executor
+   and not a fork of it. An implementer judging whether its own work satisfies a
+   criterion is the executor's report wearing a different hat.
+2. **Against the criterion verbatim and the branch diff** — the same inputs a
+   human reviewer would get, and nothing the executor summarised for it.
+3. **Recorded as judgement, never as evidence.** It is labelled as an opinion
+   everywhere it appears, and it never produces a plain `pass`. That is what
+   `pass-agent-judged` is for.
+
+**The asymmetry is the safety property, and it only works in one direction:**
+
+| The agent says | Weight | Effect |
+|---|---|---|
+| *criterion met* | An **opinion**. It never becomes evidence. | `pass-agent-judged` — merge-able, but visibly judged |
+| *criterion not met* | **Actionable** — it read the diff and found a gap | `fail`, exactly as a failed command |
+| *unsure* | Not a judgement at all | `pass-with-review` — hand it to a human |
+
+A judging agent can therefore only ever make the gate **stricter** than the
+machine checks alone, never more permissive: its `fail` blocks, and its `pass` is
+still flagged as unproven. **Uncertainty resolves to `pass-with-review`, never to
+`pass-agent-judged`** — an agent that is unsure and says "met" has laundered the
+claim, and the label is the only thing standing between this exception and the
+failure mode above.
+
+Judging is **optional**. A gate that skips it and reports `pass-with-review` is
+behaving correctly and always has been.
 
 ## Evidence rules
 
@@ -129,21 +175,39 @@ addition to the issue's own checklist:
 
 ## Verdicts
 
-Exactly three, and the distinction between the first two is load-bearing:
+Exactly four, and the distinctions between the first three are load-bearing:
 
 | Verdict | Meaning |
 |---|---|
 | `pass` | Every criterion checkable by machine passed, and there were **no** human criteria |
-| `pass-with-review` | Every checkable criterion passed, but ≥1 human criterion needs judgement — **list them** |
-| `fail` | ≥1 checkable criterion failed — **name which, with its evidence** |
+| `pass-agent-judged` | Every checkable criterion passed, and ≥1 human criterion was **judged met by an independent agent** — opinion, not evidence. **List what was judged** |
+| `pass-with-review` | Every checkable criterion passed, but ≥1 human criterion is **unjudged** and needs a person — **list them** |
+| `fail` | ≥1 checkable criterion failed, **or** an independent agent judged a human criterion unmet — **name which, with its evidence** |
+
+The three passing verdicts are not interchangeable, and collapsing them is the
+one change to this file that would break it. They say, in order: *proven*,
+*someone competent looked and thinks so*, and *nobody has checked this yet*.
+Reporting the second or third as the first launders an unverified claim into a
+verified one.
+
+**Every verdict comment must carry the literal `orca:verify` tag**, whatever the
+verdict. That tag — not the verdict word — is how `/orca:status` tells a gated PR
+from an ungated one (`../status/SKILL.md`). A verdict comment without it is
+invisible to the dashboard, which is indistinguishable from never having gated.
+
+**Verified**: matching on the verdict words instead is unsafe. `"CI FAILED on
+this branch"`, `"the tests PASS now"`, and `"I will PASS on reviewing this
+today"` all match a `PASS|FAIL`-style pattern, and any of them would make an
+ungated PR read as gated. Ordinary English in a PR thread contains these words;
+the `orca:verify` tag does not occur by accident.
 
 What the gate does with a verdict:
 
-- `pass` / `pass-with-review` ⇒ report it, **and post the verdict as a PR
-  comment** — that comment is the only durable record that the branch was gated,
-  and the only thing distinguishing a gated PR from an ungated one. The human
-  criteria in `pass-with-review` go first; they are what a reviewer should look
-  at.
+- Any passing verdict ⇒ report it, **and post the verdict as a PR comment** —
+  that comment is the only durable record that the branch was gated, and the only
+  thing distinguishing a gated PR from an ungated one. Under `pass-with-review`
+  the human criteria go first; under `pass-agent-judged` the judged criteria go
+  first, each with the agent's reasoning, so a reviewer can disagree with it.
 - `fail` ⇒ comment the unmet criterion and its evidence on
   the PR so the executor (or the next session) can act on it.
 
@@ -162,3 +226,38 @@ next action.
 Report **every** failed criterion, not just the first. An executor that fixes one
 failure at a time because the gate reported one at a time wastes an entire cycle
 per criterion.
+
+## The verdict comment — one format, two producers
+
+Both the in-lane gate and `/orca:verify` post this, so the shape is defined once,
+here. The first line is what `/orca:status` matches on; everything below it is
+for the human deciding whether to merge.
+
+```markdown
+<!-- orca:verify -->
+**orca:verify — PASS-AGENT-JUDGED** · #84 · `feat/audio-enum` · gated in-lane before PR
+
+⊙ Importing a malformed file surfaces an error instead of crashing
+    AGENT JUDGEMENT — not machine evidence
+    `import.go:112` returns a wrapped error on a short header; the caller at
+    `cmd/load.go:44` surfaces it. No panic path found for this input.
+
+✓ `./scripts/test.sh` exits 0
+✓ `docs/api.md` is modified
+✓ `Closes #84` present in the PR body
+```
+
+Rules that make it work:
+
+- **The literal `orca:verify` tag on line 1**, always, whatever the verdict. It
+  is the only thing distinguishing a gated PR from an ungated one, and the regex
+  looks for it.
+- **The verdict in caps**: `PASS`, `PASS-AGENT-JUDGED`, `PASS-WITH-REVIEW`, `FAIL`.
+- **Say where it ran** — `gated in-lane before PR` or `re-gated on demand`. A
+  reviewer should not have to guess whether a human asked for this.
+- **Markers**: `✓` verified, `✗` failed, `⊙` agent-judged, `?` awaiting human.
+  `⊙` and `?` are different claims and must not share a glyph.
+- **Judged and failed criteria go first**, with reasoning. A reviewer who reads
+  only the top of the comment must see the parts that are not proven.
+- **Re-gating adds a new comment; it never edits the old one.** The history of
+  what a branch was gated against is worth more than a tidy PR thread.

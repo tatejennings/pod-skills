@@ -147,12 +147,41 @@ tells you whether the gate has run.
 extra call, and only for the handful of lanes that have an open PR:
 
 ```bash
-gh pr view <n> --json comments --jq '[.comments[].body] | map(select(test("orca:verify|PASS|PASS-WITH-REVIEW|FAIL")))| last'
+gh pr view <n> --json comments --jq '[.comments[].body] | map(select(test("orca:verify")))| last'
 ```
+
+**Match on the `orca:verify` tag alone, not on the verdict words.** Every verdict
+comment carries that literal tag (`../_shared/evidence-gates.md`, "The verdict
+comment"), and it is the only part of the comment that cannot occur by accident.
+
+Matching bare verdict words instead is a live false-positive risk, not a
+theoretical one — **verified**: `"CI FAILED on this branch"`, `"the tests PASS
+now"`, and `"I will PASS on reviewing this today"` all match a
+`PASS|FAIL`-style pattern. Any of them would make an **ungated** PR read as
+gated, which hides exactly the case `awaiting-gate` exists to surface. A human
+saying "pass" in a PR thread is not a gate verdict.
+
+**Keep this pattern and that comment format in step.** A verdict the gate emits
+but this test misses reports a gated PR as ungated, which is indistinguishable
+from the gate never having run.
+
+Read the verdict itself off the matched comment's first line — it is one of
+`PASS`, `PASS-AGENT-JUDGED`, `PASS-WITH-REVIEW`, `FAIL`. A comment carrying the
+tag but no recognisable verdict is malformed: report the lane as
+`needs-attention` rather than guessing which way it went.
+
+**Take the *last* matching comment.** A branch that was re-gated after a rebase
+or a rework carries several, and only the newest describes the current tree.
 
 A PR with no verdict comment is **ungated**, however ready it looks. That is the
 distinction `isDraft` used to carry, and it is now the only one — an open PR
 proves work was pushed, nothing more.
+
+Lanes gate themselves before opening a PR (`../launch/SKILL.md` step 7), so the
+common case is a PR that already carries a verdict. **An ungated open PR is
+therefore no longer routine** — it means the lane skipped its gate, died before
+reaching it, or the PR was opened by hand. That is worth surfacing, which is what
+`awaiting-gate` now says.
 
 ## 4. Verdicts
 
@@ -161,8 +190,9 @@ Exactly one per lane:
 | Verdict | Condition |
 |---|---|
 | `working` | agents active or terminals live; PR absent |
-| `awaiting-gate` | a PR is open, no agent is active, and no gate verdict is on it — ready for `/orca:verify` |
-| `pr-open` | a PR is open and a gate verdict has been posted |
+| `awaiting-gate` | a PR is open, no agent is active, and **no gate verdict is on it** — the lane's self-gate did not run; gate it with `/orca:verify` |
+| `gate-failed` | a PR is open and the newest verdict is `FAIL` — the lane reworked once, failed again, and stopped |
+| `pr-open` | a PR is open and a passing gate verdict has been posted |
 | `merged-reapable` | PR merged + clean + `HEAD == headRefOid` + no live terminals |
 | `merged-live` | PR merged + clean + `HEAD == headRefOid` + terminals still live |
 | `stalled` | no live terminals, no open PR |
@@ -174,9 +204,12 @@ Resolution order:
    reported healthy and never reaped. It covers: dirty tree on a merged PR,
    detached HEAD, merged PR whose `HEAD != headRefOid`, and derivation errors
    (`unknown`).
-2. `awaiting-gate` beats `working` when no agent is active — that is the lane
-   asking for `/orca:verify`, and it is the state this pipeline is built around.
-3. `pr-open` beats `working` — the PR supersedes; the session is just waiting.
+2. **`gate-failed` beats every other open-PR state**, including `working`. A
+   branch whose own gate rejected it twice is the loudest thing on the board, and
+   an agent still running in that lane does not soften it.
+3. `awaiting-gate` beats `working` when no agent is active — a PR that reached
+   the board without a verdict means the self-gate did not happen.
+4. `pr-open` beats `working` — the PR supersedes; the session is just waiting.
 
 Notes: `HEAD != headRefOid` only counts as contradictory on a **merged** PR
 (post-merge commits a deletion would lose). On an open PR it is ordinary unpushed
@@ -247,16 +280,32 @@ edge; readiness below treats them as ready."*
 
 ## 6. Output
 
-One compact table: lane · issue · branch · PR (# / state / gated?) · session ·
+One compact table: lane · issue · branch · PR (# / state / gate) · session ·
 last activity · verdict. Then one line per **non-`working`** lane saying the next
-action:
+action.
 
-- `awaiting-gate` → "PR open, no agent running, not yet gated — run `/orca:verify <n>`"
-- `pr-open` → **"gate passed, awaiting your review and merge"**, with the PR's
-  age from `updatedAt`. This is the one lane state that is healthy *and* blocked
-  on a human, so it needs an action line even though nothing is wrong. Past about
-  a week, say so — a ready PR nobody merged is a real stall the verdict table
-  otherwise calls fine.
+The **gate** column carries the verdict itself, not a checkmark — `PASS`,
+`AGENT-JUDGED`, `REVIEW`, `FAIL`, or `—` for ungated. A boolean there would erase
+the one distinction the reader needs at merge time.
+
+- `awaiting-gate` → "PR open but **never gated** — the lane's self-gate did not
+  run. Gate it with `/orca:verify <n>` before merging." Say *never gated* rather
+  than *not yet gated*: lanes now gate themselves, so this is an anomaly worth a
+  second look, not a routine next step.
+- `gate-failed` → **"its own gate rejected this branch — do not merge"**, naming
+  the unmet criteria from the verdict comment. Then the next action:
+  `/orca:launch <n>` reworks it in the existing lane (§1a there), carrying the
+  failed criteria and their evidence into the contract. The lane already spent
+  its one automatic rework pass, so this one is the user's call.
+- `pr-open` → **"gated, awaiting your review and merge"**, with the PR's age from
+  `updatedAt` **and which passing verdict it carries** — `PASS`,
+  `PASS-AGENT-JUDGED`, or `PASS-WITH-REVIEW`. Those are three different claims
+  (`../_shared/evidence-gates.md`): proven, judged by an agent, and unchecked.
+  Collapsing them into "gate passed" is exactly the laundering the verdicts exist
+  to prevent, and the distinction is most load-bearing here — at the moment
+  someone decides to merge. Under the latter two, name the criteria involved.
+  Past about a week, say so — a ready PR nobody merged is a real stall the
+  verdict table otherwise calls fine.
 - **`mergeable: CONFLICTING` on any open PR** → "will not merge as-is — rebase
   needed", regardless of verdict. Evidence gathered before a conflicting rebase
   is stale by definition.

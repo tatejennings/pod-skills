@@ -38,21 +38,22 @@ asked.
 
 These skills fill that gap, and add one thing neither side has: **an evidence
 gate**. Every issue carries a `### Done when` checklist written *before* the work
-starts; when a branch is done, `/orca:verify` checks the branch against that
-checklist — running the commands, grepping the diff, and refusing to guess at
-what only a human can judge.
+starts. When a branch is done, a **fresh agent that did not write the code**
+checks the branch against that checklist — running the commands, grepping the
+diff, judging the prose — and posts the verdict on the PR **before you see it**.
 
 That is the whole design. A PR existing proves nothing about whether the work is
-right, so something has to ask.
+right, so something has to ask — and it has to ask without being remembered.
 
 ```
        backlog                    lanes                   proof
   ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
   │ milestones       │    │ worktree         │    │ ### Done when    │
   │ readiness        │ →  │ branch + agent   │ →  │ commands run     │
-  │ dependencies     │    │ opens a PR       │    │ diff checked     │
+  │ dependencies     │    │ gates itself     │    │ diff checked     │
+  │                  │    │ opens a PR       │    │ verdict on the PR│
   └──────────────────┘    └──────────────────┘    └──────────────────┘
-      GitHub                    Orca                  /orca:verify
+      GitHub                    Orca              in-lane · /orca:verify
 ```
 
 ---
@@ -218,11 +219,14 @@ on it, and **stops**.
 The contract binds the executor: implement, self-review, run a **cold-reader
 review** — one subagent asking two questions of the diff: *does this implement
 what was asked, no more and no less?* and *will this be hard to change later, or
-cause a bug?* — then **open a normal PR on its own** with `Closes #<n>`.
+cause a bug?* — then **gate the branch with a second, independent agent**, and
+only then **open a normal PR on its own** with `Closes #<n>` and the verdict
+posted as a comment.
 
 Real defects and blockers get fixed. Anything that would refactor code the
 executor did not write gets **reported, not fixed** — a reviewer's opinion is not
-a mandate to rewrite. It never merges; that stays yours.
+a mandate to rewrite. A failed gate buys exactly **one** narrow rework pass, then
+the PR opens blocked rather than looping. It never merges; that stays yours.
 
 ```
 /orca:launch 84
@@ -231,7 +235,11 @@ a mandate to rewrite. It never merges; that stays yours.
 #### `/orca:status`
 The dashboard, and the join this plugin exists for. Milestone progress, a
 `READY NEXT` list of unblocked issues, a `YOUR TASKS` section for `manual` work,
-and every lane's branch, PR state, and session liveness.
+and every lane's branch, PR state, session liveness, **and gate verdict**.
+
+Two lane states are the ones to look for: `gate-failed` (the branch's own gate
+rejected it twice — do not merge) and `awaiting-gate` (a PR arrived with no
+verdict at all, meaning the lane's self-gate never ran).
 
 Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 — safe to put on a loop.
@@ -245,25 +253,48 @@ Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 
 ### Proving it was done
 
-#### `/orca:verify`
-**The evidence gate.** Checks a finished branch against its issue's own
-`### Done when` checklist: runs the criteria that are commands, greps *added
-lines* for the ones that are diff assertions, and **refuses to guess** at the
-ones only a human can judge.
+**The gate runs itself.** Before a lane opens its PR, the executor spawns a
+**fresh agent that did not write the code** and has it check the branch against
+the issue's own `### Done when` checklist: running the criteria that are
+commands, grepping *added lines* for the ones that are diff assertions, and
+judging the prose ones. The verdict is posted as a PR comment.
 
-Evidence comes from the branch and the commands — never from the executor's
-report of them. Never merges, never closes an issue, never marks a PR ready.
+That independence is the point. Evidence comes from the branch and the commands —
+**never from the executor's report of them** — so an implementer checking its own
+work would be the failure the gate exists to catch. The executor spawns the gate;
+it does not perform it and cannot overrule it.
+
+**On `fail` the lane reworks itself once**, fixing only the failed criteria, then
+re-gates. A second `fail` opens the PR anyway carrying the failing verdict and
+reports the branch blocked — a bound, so a lane cannot grind.
+
+So the PR reaches you **already gated**, with the evidence sitting where you
+decide whether to merge.
+
+| Verdict | Meaning |
+|---|---|
+| `pass` | every criterion was machine-checkable and passed |
+| `pass-agent-judged` | machine criteria passed; an independent agent judged the prose ones met — **opinion, not evidence** |
+| `pass-with-review` | machine criteria passed; ≥1 prose criterion is **unjudged** and needs you |
+| `fail` | ≥1 criterion failed — **every** failure named, with evidence |
+
+The three passing verdicts say *proven*, *someone looked and thinks so*, and
+*nobody has checked this yet*. They are not interchangeable, and a judging agent
+can only ever make the gate stricter: its "met" never produces a plain `pass`,
+its "not met" blocks, and unsure means `pass-with-review`.
+
+#### `/orca:verify` — the re-gate
+Runs the same gate on demand. Since lanes gate themselves, this is usually a
+*second* opinion: use it when the base has moved, when commits landed after the
+verdict, when a verdict looks wrong, or when `/orca:status` shows a PR as
+ungated. It re-derives everything and never reads the old verdict as input.
+
+Never merges, never closes an issue, never marks a PR ready.
 
 ```
 /orca:verify 84       # by issue
 /orca:verify          # the current worktree's lane
 ```
-
-| Verdict | Meaning |
-|---|---|
-| `pass` | every checkable criterion met, and there were no human ones |
-| `pass-with-review` | checkable criteria met, but ≥1 needs your judgement — **listed** |
-| `fail` | ≥1 checkable criterion failed — **every** failure named, with evidence |
 
 ---
 
@@ -304,14 +335,23 @@ You are done when `/orca:status` shows a milestone with progress and a
 /orca:plan 84         → research, draft, adversarial review
                         you approve                        ← GATE 1
 /orca:launch 84       → worktree + agent; this session is free
-                        …the agent implements and opens a PR on its own…
-/orca:status          → the lane shows `awaiting-gate`
-/orca:verify 84       → the evidence gate                  ← GATE 2
-                        pass → offer to mark it ready
-                        fail → criteria commented on the PR; /orca:launch 84 reworks it
+                        …the agent implements…
+                        …a cold agent gates the branch     ← GATE 2 (automatic)
+                          fail → the lane reworks itself once, then re-gates
+                          fail twice → PR opens blocked, carrying the evidence
+                        …then it opens a PR with the verdict on it…
+/orca:status          → the lane shows `pr-open` + its verdict
 you review and merge                                       ← GATE 3
 /orca:status --reap   → the finished lane is cleaned up
 ```
+
+**GATE 2 no longer waits for you.** It used to be a command you ran between the
+PR opening and merging it — which meant, in practice, that it did not run, and
+the PR merged ungated. Now the lane gates itself before the PR exists and the
+verdict is a comment on it, so the only thing left at GATE 3 is your decision.
+
+`/orca:verify 84` is still there to re-gate on demand, and `/orca:status` still
+flags a PR that somehow arrived without a verdict as `awaiting-gate`.
 
 ### 3. Several issues in parallel
 
@@ -403,10 +443,16 @@ filed rather than after the work:
 - [ ] The importer handles a malformed header without crashing
 ```
 
-The first three are machine-checkable; the fourth is not, and that is fine.
-`/orca:verify` sorts every criterion into **command**, **diff assertion**, or
-**human** — and it reports human criteria for your judgement rather than passing
-them. A gate that quietly passes what it cannot check is worse than no gate.
+The first three are machine-checkable; the fourth is not, and that is fine. The
+gate sorts every criterion into **command**, **diff assertion**, or **human**.
+
+The first two are proven. For the third, an independent agent may render a
+judgement — and when it does, the verdict says so: `pass-agent-judged`, never
+plain `pass`. Its "not met" blocks like any other failure; if it is unsure, the
+criterion goes to you as `pass-with-review`. **The label is the point.** A gate
+that quietly passes what it cannot prove is worse than no gate — but a gate that
+returns "needs your review" on every branch is one you stop reading, which comes
+to the same thing.
 
 **Two labels the skills understand:**
 
@@ -441,9 +487,10 @@ the one decision worth keeping.
 
 **No enabled automation.** The pipeline *can* be driven on a schedule by an Orca
 automation, but this plugin ships none enabled, and turning one on has real
-preconditions — chiefly that `/orca:verify` has been seen to **fail** on
-incomplete work, not just pass. The command, the precheck that carries the
-quotas, and the full list are in
+preconditions — chiefly that the gate has been seen to **fail** on incomplete
+work, not just pass. Lanes gating themselves does not change that; a pipeline
+whose only gate is one it spawns for itself is still a closed loop. The command,
+the precheck that carries the quotas, and the full list are in
 [`_shared/automation.md`](plugins/orca/skills/_shared/automation.md).
 
 A pipeline that can open PRs but cannot check them is a machine for generating
