@@ -5,8 +5,8 @@ adversarial cold reader. The panel is what a tech lead adds on top: **several in
 each with a different lens, looping until the plan holds** — and a stated bar for which of their
 disagreements you resolve yourself.
 
-Two things here — the roster and the decision bar — decide how hands-off this skill really is.
-Both have a default written below that holds for any repo. **A consuming repo overrides either by
+Two things — the roster (`seats.md`) and the decision bar (below) — decide how hands-off this
+skill really is. Both have a default that holds for any repo. **A consuming repo overrides either by
 saying so in its own `CLAUDE.md` / `AGENTS.md`**; read those at §0 and prefer what they say. Never
 edit this file to encode one repo's preference — a plugin update overwrites it.
 
@@ -22,7 +22,7 @@ previous round's findings (a fresh agent per round, so it reads cold):
 3. the repo's rules — `CLAUDE.md` / `AGENTS.md`, and the docs they name as binding. If the repo
    keeps a decisions or ADR file, quote the locked entries that touch the plan; if it does not,
    say so rather than inventing one;
-4. the lens below for their seat.
+4. the lens for their seat, verbatim from `seats.md`.
 
 Spawn them with the `Agent` tool as **fresh** general-purpose agents, in parallel, one message. Not
 forks: a fork inherits your drafting bias.
@@ -36,25 +36,20 @@ convergence the decision bar reads as independence.
 
 ## The roster
 
-Three seats always, a fourth when the repo implies one.
+The seats and their lenses live in **`seats.md`** — the one place a persona is defined. A plan
+panel round convenes, from that roster:
 
-| Seat | Lens | Reports on |
-|---|---|---|
-| **Requirements & decisions** | Does every `### Acceptance criteria` criterion get produced by some step? Does any step contradict a locked decision, a non-negotiable, or the product doc? Is anything in the plan not asked for? | missing criteria coverage; contradictions; scope creep |
-| **Architecture & codebase fit** | Does the plan use what the codebase already has (existing types, utilities, conventions)? Does it put state where the repo's architecture rules say state lives? Will it be hard to change later? | reuse missed; convention breaks; durability risks |
-| **Test & verification** | Are the tests the plan names sufficient to prove the criteria, and do they match the repo's testing rules? Is anything untestable as planned? Would the gate be able to check this? | missing or weak tests; unprovable criteria |
-| **Domain** (when applicable) | The platform or domain the work lives in — a mobile-platform expert, a data-pipeline expert, a security reviewer for auth work | platform pitfalls the generalists miss |
+- **Requirements & decisions, Architecture & codebase fit, Test & verification — always, three
+  seats, never fewer, including for `scope:s`.** A small issue is where an unreviewed plan is most
+  likely to be launched, so the floor does not move with size.
+- **UX & design, Security, Domain** — when `seats.md`'s *Convened* column or the repo's own
+  instructions say so.
+- **Cap: five seats per round** (three core + at most two domain seats). More is not more
+  independence; overlapping findings read as convergence. If more would apply, take the two the
+  issue most implies and record in `## Panel` which were not convened.
 
-**The roster rule: three seats always, never fewer — including for `scope:s`.** A small issue is
-where an unreviewed plan is most likely to be launched, so the floor does not move with size.
-
-**Choosing the fourth seat.** Add the Domain seat whenever the repo's `CLAUDE.md` / `AGENTS.md`
-names a platform or stack, or the issue touches a domain with its own failure modes (auth,
-payments, migrations, concurrency). Give the seat that domain's name and nothing more — if a skill
-for it is available in this environment, the agent for that seat may use it. Never name a specific
-skill here; what is installed varies per machine.
-
-A repo wanting a different roster says so in its own instructions; that overrides this table.
+Give each seat exactly its lens from `seats.md` and nothing from another seat's row. A repo wanting
+a different roster says so in its own instructions; that overrides both files.
 
 ## The reviewer prompt
 

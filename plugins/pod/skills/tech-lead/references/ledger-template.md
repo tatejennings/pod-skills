@@ -21,6 +21,7 @@ merged. This is state, not narrative.
 - Started: <ISO time> · Mode: awaiting approval | autonomy granted <ISO time> | paused | declined | stopped | idle-stopped <ISO time> | hard-cap-stopped <ISO time>
 - Idle ticks (owner-only in a row): 0   ← reset to 0 whenever a tick does anything; stop at 2
 - Cap: <n> · Order: #15, #16, #17, #18 (as approved/edited)
+- Slate reviewed by product seat: <ISO time> | not yet   ← once; never re-convened on resume
 - Decision bar: default | recommend-only (set by user at <time>)
 - Repo rules read: CLAUDE.md @ <commit>; locked decisions: <the file the repo names, or "none">
 - Gate identity: `<login this run posts verdicts as>` · trusted producers: `<login>`, `<…>`
@@ -57,6 +58,7 @@ merged. This is state, not narrative.
 
 ## Tick log
 
+- <ISO time> · convened product seat (reordered #16 before #15) · proposed · awaiting approval
 - <ISO time> · observed 2 lanes · dispatched fix r1 → PR #21 · launched #16 · notified: no
 - <ISO time> · noop
 ```

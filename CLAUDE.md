@@ -97,10 +97,22 @@ over them, so it has rules the others do not.
 - **It has no flags.** Scope, cap, and steering are plain language; whether the
   user asked or told is what selects propose-vs-act. Do not add a flag to it —
   the interface *is* that reading.
-- **Its `references/` are load-bearing, not overflow.** `expert-panel.md` (the
-  roster, reviewer prompt, rounds, decision bar), `review-fix.md` (the only
-  place in this plugin that reads PR review comments), `ledger-template.md` (the
-  loop's memory, written outside the repo and never tracked).
+- **Its `references/` are load-bearing, not overflow.** `seats.md` (the roster
+  of specialist personas — product, requirements, architecture, test, UX,
+  security, domain — each lens, when it is convened, and the rule that seats
+  advise and never act), `expert-panel.md` (the reviewer prompt, rounds,
+  decision bar), `review-fix.md` (the only place in this plugin that reads PR
+  review comments), `ledger-template.md` (the loop's memory, written outside the
+  repo and never tracked).
+- **Its specialists are seats, not skills.** A persona — PM, QA, art director,
+  security reviewer — is a row in `references/seats.md` that the tech lead
+  convenes as a fresh advisor for one question, and then decides on itself under
+  the bar. Do not add `/pod:<persona>` skills: they collide with `triage`,
+  `status`, `verify` and `tech-lead` in routing, and each is a second composer
+  needing its own bounds and ledger. QA is `/pod:verify`; grooming is
+  `/pod:triage`. Seats never edit, comment, launch, or write the ledger. Bounds
+  here are also design: one product-seat round on the slate; three core seats
+  always; five seats per plan round at most.
 - **Its defaults are defaults, not the user's config.** The roster and decision
   bar are overridden by a consuming repo's own `CLAUDE.md`, never by editing the
   reference file — a plugin update overwrites it. It carried two `TODO(user)`
