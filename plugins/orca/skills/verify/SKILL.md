@@ -241,6 +241,25 @@ What may be done with a verdict:
   `/orca:status` cannot tell a gated PR from an ungated one — they look
   identical.
 
+**Every verdict you post carries the commit it checked** — the tag takes
+`head=`, `base=`, and `issue=` (`../_shared/evidence-gates.md`, "The verdict
+comment"). Read them in the worktree you gated, at gate time:
+
+```bash
+git -C <path> rev-parse HEAD                        # head=
+git -C <path> merge-base HEAD origin/<base-ref>     # base=
+```
+
+This matters most here, because a re-gate is usually happening *precisely
+because* the tree moved. A verdict without its head SHA cannot be distinguished
+from one a later push invalidated, so `/orca:status` treats it as `gated-stale`
+and the gate you just ran counts for nothing.
+
+**Verify the head you gated is still the head.** Re-read `headRefOid` after the
+checks finish and before posting: if it changed while you were running, commits
+landed mid-gate. Say so and re-run rather than posting a verdict about a tree
+that is already gone.
+
   Under `pass-with-review`, **list the human criteria first**, in the comment and
   in the report. They are what a reviewer should look at, and burying them under
   a green verdict is how an unverified claim gets read as a verified one. Under
