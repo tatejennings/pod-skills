@@ -1,6 +1,6 @@
 ---
 name: verify
-description: The evidence gate - check a finished branch or PR against its issue's own "### Done when" acceptance checklist, mechanically. Runs the criteria that are commands, greps the branch diff for the criteria that are diff assertions, and refuses to guess at the ones only a human can judge, then reports pass / pass-with-review / fail with the evidence for each. Verifies the branch and the commands, never the executor's report of them. Posts the verdict as a PR comment, which is the durable record that a branch was gated. Never merges and never closes an issue. Use when the user says "/orca:verify", "/orca:verify 84", "verify this branch", "check the acceptance criteria", "did this actually satisfy the issue", "gate this PR", "is this PR ready", or after a lane opens a PR. Also use for "did the agent actually finish this", "check the lane's work", "prove this is done", or "does this meet the criteria". Not for reviewing code quality or finding bugs - that is a code review, use /code-review or /review instead; this checks only whether the issue's stated criteria are met, and it is not CI.
+description: The evidence gate, run on demand - check a finished branch or PR against its issue's own "### Done when" acceptance checklist, mechanically. Runs the criteria that are commands, greps the branch diff for the criteria that are diff assertions, and handles the ones only a human can judge, then reports pass / pass-agent-judged / pass-with-review / fail with the evidence for each. Verifies the branch and the commands, never the executor's report of them. Posts the verdict as a PR comment, which is the durable record that a branch was gated. Never merges and never closes an issue. Lanes already gate themselves before opening a PR, so this is usually a RE-gate - use it when the base has moved, when new commits landed after the verdict, when a verdict looks wrong, or when /orca:status shows a PR as ungated (awaiting-gate). Use when the user says "/orca:verify", "/orca:verify 84", "verify this branch", "re-verify", "check the acceptance criteria", "did this actually satisfy the issue", "gate this PR", "is this PR ready", "this PR was never gated", or "the gate verdict looks wrong". Also use for "did the agent actually finish this", "check the lane's work", "prove this is done", or "does this meet the criteria". Not for reviewing code quality or finding bugs - that is a code review, use /code-review or /review instead; this checks only whether the issue's stated criteria are met, and it is not CI.
 ---
 
 # Verify — the evidence gate
@@ -18,6 +18,30 @@ The discipline that makes this worth running, stated once:
 > **Evidence comes from the branch and the commands, never from the executor's
 > report of them.** Read the diff. Run the commands. A summary claiming the work
 > is done is the thing being checked, not the check.
+
+## Usually a re-gate, not the first gate
+
+Lanes gate themselves before opening a PR (`../launch/SKILL.md` step 7), so most
+PRs already carry a verdict comment. Running this skill is then a **re-gate**,
+and it is worth doing when:
+
+- **the base has moved** since the verdict was posted — the evidence was computed
+  against a different tree, and a stale `pass` is what someone merges on;
+- **a verdict looks wrong**, or rests on a judged criterion a reviewer doubts;
+- **new commits landed** on the branch after the gate ran;
+- the PR is **ungated** (`/orca:status` shows `awaiting-gate`) — the lane skipped
+  its gate or died before reaching it.
+
+Two rules for a re-gate, both consequences of "re-derive on every run"
+(`../_shared/evidence-gates.md`):
+
+- **Never read the existing verdict as input.** Do not confirm it, do not start
+  from it, do not skip a criterion it already passed. A cached pass is exactly
+  the stored state this model exists to avoid, and a verdict inherited from a
+  previous tree is indistinguishable from one that was never checked.
+- **Add a comment; never edit the old one.** The sequence of verdicts is the
+  record of what the branch has been through, and it is worth more than a tidy
+  thread.
 
 ## What this skill is not for
 
@@ -143,18 +167,27 @@ Checked on every run, in addition to the issue's own list
 
 ## 5. Verdict
 
-Three, and the first two are genuinely different:
+Four, and the three passing ones are genuinely different
+(`../_shared/evidence-gates.md` defines them; this is the summary):
 
 | Verdict | Meaning |
 |---|---|
 | `pass` | Every checkable criterion passed, and there were **no** human criteria |
-| `pass-with-review` | Every checkable criterion passed, but ≥1 human criterion needs judgement |
-| `fail` | ≥1 checkable criterion failed |
+| `pass-agent-judged` | Every checkable criterion passed, and ≥1 human criterion was **judged met by an independent agent** — opinion, not evidence |
+| `pass-with-review` | Every checkable criterion passed, but ≥1 human criterion is **unjudged** and needs a person |
+| `fail` | ≥1 checkable criterion failed, **or** an agent judged a human criterion unmet |
 
 **Never report `pass` while human criteria are outstanding.** That is
 `pass-with-review`, and the outstanding items must be listed — they are exactly
 what a reviewer should look at first. A gate that quietly passes what it could
 not check launders an unverified claim into a verified one.
+
+**Judging is optional here.** Running this skill by hand usually means a human is
+already in the loop, so leaving prose criteria for them and reporting
+`pass-with-review` is the right default. Judge them when asked to, or when the
+verdict is destined for a PR nobody will read before merging — and label it, per
+the rules in `../_shared/evidence-gates.md`. **Unsure is never
+`pass-agent-judged`.**
 
 ## 6. Report — and act only within limits
 
@@ -177,6 +210,11 @@ FAIL — 2 of 5 criteria unmet          #84 · branch feat/audio-enum · PR #91
     HUMAN JUDGEMENT — not checked
 ```
 
+Markers: `✓` verified, `✗` failed, `⊙` agent-judged, `?` awaiting human. **`⊙`
+and `?` are different claims** — one says an agent looked and thinks it holds,
+the other says nobody has checked — so they never share a glyph. The PR comment
+uses the same set (`../_shared/evidence-gates.md`, "The verdict comment").
+
 **Report every failed criterion, not just the first.** An executor that fixes one
 failure per cycle because the gate reported one per cycle wastes an entire round
 trip each time.
@@ -191,16 +229,24 @@ What may be done with a verdict:
   lane, carries these failed criteria and their evidence into the contract, and
   tells the executor to push to the existing PR rather than opening a second. Say that explicitly — otherwise the user re-derives all of it by hand
   in a fresh session and loses every constraint the contract encodes.
-- **`pass` / `pass-with-review`** ⇒ report it, **and post the verdict as a PR
-  comment.** Not just on fail: the comment is the only durable record that this
-  branch was gated. Without it the verdict lives in a session transcript, a
-  reviewer on GitHub cannot see the evidence at the moment they decide to merge,
-  and `/orca:status` cannot tell a gated PR from an ungated one — they look
+
+  **If the lane already failed its own gate twice**, say so plainly rather than
+  offering rework as though it were the first attempt. A branch that has now
+  failed three times is evidence about the *criteria or the approach*, not about
+  the executor, and another lap is unlikely to be the answer.
+- **Any passing verdict** ⇒ report it, **and post the verdict as a PR comment.**
+  Not just on fail: the comment is the only durable record that this branch was
+  gated. Without it the verdict lives in a session transcript, a reviewer on
+  GitHub cannot see the evidence at the moment they decide to merge, and
+  `/orca:status` cannot tell a gated PR from an ungated one — they look
   identical.
 
   Under `pass-with-review`, **list the human criteria first**, in the comment and
   in the report. They are what a reviewer should look at, and burying them under
-  a green verdict is how an unverified claim gets read as a verified one.
+  a green verdict is how an unverified claim gets read as a verified one. Under
+  `pass-agent-judged`, do the same with the judged criteria **and give the
+  reasoning**, so a reviewer can disagree with the judgement rather than having
+  to take it on faith.
 
 **Never merge. Never close an issue by hand. Never mark a PR ready
 unprompted.** Merging is the human's decision; closing happens through
@@ -212,7 +258,13 @@ unprompted.** Merging is the human's decision; closing happens through
 - **Trusting checkboxes**, or the executor's summary, as evidence.
 - **Passing a human criterion** because the surrounding work looks good.
 - **Reporting `pass` with human criteria outstanding** — that is
-  `pass-with-review`.
+  `pass-with-review`, or `pass-agent-judged` if one was genuinely judged.
+- **Reporting `pass-agent-judged` while unsure.** Uncertainty is
+  `pass-with-review`. The whole value of the label is that it means an agent
+  actually formed a view.
+- **Reading a previous verdict comment as input** on a re-gate. Re-derive
+  everything; a verdict computed against an older tree is not evidence about this
+  one.
 - **Searching the whole diff** for an "appears in the diff" criterion instead of
   added lines only.
 - **Accepting a pre-existing artifact** for a criterion demanding a new one.

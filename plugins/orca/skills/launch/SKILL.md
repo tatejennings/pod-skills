@@ -181,6 +181,19 @@ Steps:
      branch it did not write, so the durability question must apply **only to
      lines this rework changed.** Pre-existing structure is out of bounds; it
      passed the gate once and is not this run's to relitigate.
+   - the same **in-lane gate** the fresh contract carries (step 7), run against
+     **the issue's full criteria, not just the failed ones.** A rework can break
+     what previously passed, and a gate that only re-checks the failures would
+     never notice. This is also why the rework gets its own gate pass rather than
+     inheriting the earlier verdict: that verdict described a different tree.
+   - **the rework's own one-pass bound.** A `FAIL` here gets one narrow fix and
+     one re-gate, exactly as step 7a — then the executor pushes to the existing
+     PR and reports it blocked. A branch that has now failed the gate twice
+     across two sessions is telling you the criteria or the approach are wrong,
+     not that it needs a third session.
+   - **push to the existing PR and comment the new verdict there.** A re-gate
+     adds a comment; it never edits the old one. The sequence of verdicts is the
+     record of what this branch has been through.
 3. **Start an agent in the existing lane** — `orca terminal create --worktree
    <selector> --command "claude"`, then `terminal wait --for tui-idle` before
    sending the pointer sentence (`../_shared/orca-lanes.md`). **Not**
@@ -273,152 +286,39 @@ another checkout's untracked files, but any absolute path is readable:
 The contract is the whole reason this skill exists rather than a raw CLI call.
 Fill in every section; omit a section only when it genuinely has no content.
 
-```markdown
-# <Issue title, or a one-line name for the work>
+**The full contract template lives in
+[`references/contract-template.md`](references/contract-template.md)** — it is
+long, it is copied rather than reasoned about, and it carries its own rules about
+snapshots and overwriting. Read it and fill it in; do not reconstruct it from
+memory, and do not summarise it into the contract you write.
 
-Implement the work described below. Read this entire file before starting.
+**Paste the gate prompt into step 7 in full**, from
+[`references/self-gate.md`](references/self-gate.md) (the block under "The
+prompt"). The executor runs in a worktree of the *user's* repo and cannot see
+this plugin at all, so a file path there would be unresolvable — the contract has
+to carry the procedure itself. This is the one section that is copied rather than
+filled in, and the contract is unusable without it: an executor with no gate
+prompt will improvise a check, which is precisely the self-report the gate
+exists to replace.
 
-## The work
+What it must always contain, so a missing section is noticeable without opening
+the file:
 
-<2–4 sentences: the goal and the chosen approach.>
+| Section | Carries |
+|---|---|
+| `## The work` | the goal and chosen approach, plus the issue link |
+| `## Context` | why now; the issue body quoted, not paraphrased |
+| `## Decisions already made` | choices locked in planning, so they are not re-litigated |
+| `## Done when` | the issue's checklist **verbatim** — what the gate will check |
+| `## How to work` | the ten numbered steps, including the cold-reader review (6) and the in-lane gate (7/7a) |
+| `## Out of scope` | explicit non-goals, especially adjacent work that looks related |
+| `## Finish with` | what the final summary must report, including the gate verdict |
 
-Issue: #<n> — <url>          (omit both lines if there is no issue)
-
-## Context
-
-<Why now, relevant background, links to docs/specs/<slug>.md. Quote the issue
-body rather than paraphrasing it.>
-
-## Decisions already made
-
-<Choices locked during planning, one line of rationale each, so they are not
-re-litigated. Omit if the handoff carries no prior planning.>
-
-## Done when
-
-<The issue's ### Done when checklist, VERBATIM. These are the acceptance
-criteria; /orca:verify will check this exact list against your branch.
-
-If the issue had no checklist, say so explicitly here: "This issue has no
-acceptance criteria. Establish them before implementing and record them on the
-issue — do not assume." >
-
-## How to work
-
-1. You are in a fresh worktree with a branch already checked out. Confirm with
-   `git status` — do not create another branch.
-2. Follow the repo's CLAUDE.md / AGENTS.md rules (naming, required doc updates,
-   test commands).
-3. Implement step by step. Commit in logical increments with clear messages.
-4. If reality contradicts this contract on details, adapt and record the
-   deviation for your final summary. **If the core approach turns out to be
-   wrong, stop and report back** instead of improvising a new design.
-5. Verify against the "Done when" criteria above before considering the work
-   done. Criteria that are prose rather than commands still need satisfying —
-   they will be surfaced to a human reviewer.
-6. Review your own full branch diff for bugs and regressions before pushing.
-   Fix what is real, commit the fixes, re-run the tests.
-
-   Then **spawn one fresh subagent to review the diff** — a cold reader, not a
-   fork, so it does not inherit your assumptions. Give it three things: the
-   "Done when" criteria above, the Steps from this contract, and the branch diff
-   (`git diff <merge-base>...HEAD`). Ask it two questions:
-
-   > **1. Scope.** Does this diff implement what was asked — no more, no less?
-   > Name anything in the diff that no criterion or step called for, and anything
-   > called for that the diff does not do.
-   >
-   > **2. Durability.** Will this be hard to change later, or is it likely to
-   > cause a bug? Judge against the conventions *this codebase already uses* —
-   > not a style guide. Specifically: duplicated logic that will drift, a
-   > function or type doing several unrelated jobs, a new hard-coded dependency
-   > where the surrounding code injects, a change that forces edits in several
-   > places whenever one thing changes, swallowed errors, missing edge cases at a
-   > boundary the diff introduces.
-   >
-   > **Report only what you would block a PR over.** Skip naming, formatting,
-   > and preferences between two reasonable structures. If you find nothing that
-   > meets that bar, say so plainly — "no blockers" is a useful answer and the
-   > expected one on most diffs. A long list of small findings is worse than a
-   > short list of real ones, because it buries the real ones.
-
-   Question 1 is the one you cannot do yourself: your own review shares every
-   assumption that produced the code, so it catches typos but **not "I built
-   something coherent that is not what was asked."**
-
-   **Then act on the findings, with a hard bar on what you change:**
-
-   - **Fix** anything that is a real defect or a genuine blocker — a bug, a
-     swallowed error, an unhandled boundary, logic duplicated in a way that will
-     silently drift.
-   - **Fix** a structural problem *your own diff introduced* where the fix is
-     local and obvious — extracting a second responsibility you just created,
-     injecting a dependency you just hard-coded.
-   - **Report, do not fix**, anything that would refactor code you did not write,
-     or that trades working code for a principle. Put it in the PR body as a
-     note, or file it as a follow-up issue. **A reviewer's opinion is not a
-     mandate to rewrite** — scope creep justified by "best practice" is still
-     scope creep, and it is exactly what question 1 exists to catch.
-
-   Judge severity by consequence, not by rule: *would this cause a bug, or make
-   the next change to this area meaningfully harder?* **If neither, it is a
-   note.** Naming, formatting, a preference between two reasonable structures, a
-   principle applied for its own sake — all notes. The default is to leave
-   working code alone.
-
-   **Run the reviewer once.** Do not re-review after fixing: a fresh read of the
-   changed diff will always find something new, and that loop has no natural end.
-   Fix what the one pass found, re-run the tests, and push. If a fix was large
-   enough that you genuinely doubt it, that is a reason to **stop and report**,
-   not to start another round.
-
-   If the diff is off-plan in a way you cannot resolve, **stop and report**
-   rather than opening a PR you would have to defend.
-7. Save durable learnings to memory BEFORE opening the PR — conventions or traps
-   the next session would otherwise rediscover. Once this lane is finished it
-   becomes eligible for cleanup, and anything unsaved goes with it.
-8. Then, **on your own — do not wait to be told**: fetch and rebase onto the
-   latest default branch, push, and open a PR. **A normal PR, not a draft**, so
-   automated review tooling picks it up. The body MUST contain `Closes #<n>` —
-   that line is what records completion when it merges; nothing else does, and
-   nobody closes the issue by hand. (Omit if this work has no issue.)
-
-   Open it when steps 5 and 6 are genuinely satisfied: the criteria are met, the
-   tests pass, and your own review of the diff is clean. **If they are not, say
-   so and stop** — an honest "blocked on X" beats a PR you would not defend, and
-   the gate will find the gap anyway.
-9. **Never merge the PR.** A merge is the user's decision, always. The evidence
-   gate (`/orca:verify`) runs against the PR after you open it, so state in your
-   final summary that the work is awaiting that gate — a ready PR is not a claim
-   that it passed. Never write progress into a tracked file — no roadmap row, no
-   status-board cell, no "mark done".
-
-## Out of scope
-
-<Explicit non-goals, especially adjacent work that looks related.>
-
-## Finish with
-
-Branch name, PR link, what was implemented, deviations and why, test results,
-review findings and how they were resolved, and anything left for follow-up.
-```
-
-Three rules about this file:
-
-- **A contract is a snapshot, not a link.** It is written once and read by the
-  executor; **updating this skill does not reach a lane already launched.** A
-  contract written last week still binds its lane to last week's rules — which
-  is correct (a running executor should not have the ground shift under it) but
-  means a behavioral change here applies only to *future* launches.
-
-  When a rule changes in a way that matters for work already in flight — the
-  draft-PR change in 1.10.0 was one — the existing `.prompt.md` files under
-  `~/.claude/plans/<repo>/` have to be edited directly, or their lanes will keep
-  following the old instruction. Say so when reporting such a change.
-- **Never overwrite an existing contract** — suffix the slug instead. An
-  overwritten contract silently changes what a running lane was told to do.
-- The launch prompt stays a **single short pointer sentence**. Everything
-  multi-line lives here, so nothing has to survive shell quoting.
+**A contract is a snapshot, not a link** — it is written once and read by the
+executor, so updating this skill does not reach a lane already launched. That
+rule and its two companions (never overwrite; the launch prompt stays one
+sentence) are stated in full in the reference file, where the template they
+govern lives.
 
 ## 4. Launch the lane
 
@@ -508,8 +408,11 @@ rejected options, it costs nothing. If it did not, say so — that reasoning exi
 only in the transcript, and it is cheaper to add a line to the plan file now than
 to reconstruct it later.
 
-Point at what comes next: `/orca:status` to watch lanes, `/orca:verify <n>` to
-gate the branch once a PR exists.
+Point at what comes next: `/orca:status` to watch lanes. **Say that the lane
+gates itself** — the PR will arrive carrying a verdict comment, so the next
+decision the user makes is whether to merge, not whether to run a gate.
+`/orca:verify <n>` stays available to re-gate on demand, and is the right call
+when the base has moved a long way or a verdict looks wrong.
 
 ## Failure modes to avoid
 
@@ -522,3 +425,14 @@ gate the branch once a PR exists.
 - **Substituting a different agent** when `claude` is rejected.
 - **Monitoring the lane afterwards.** That is a full handoff turning into
   supervision — a different skill (`orchestration`) and a different request.
+- **Writing a contract whose step 7 lets the executor gate its own work.** The
+  gate is a *separate* agent; an executor grading itself is the report the gate
+  exists to distrust, and the contract must say so in those words.
+- **Pointing at `self-gate.md` instead of pasting it in.** The executor cannot
+  see this plugin. A path it cannot resolve is a step it will improvise.
+- **Dropping the one-pass rework bound** from step 7a. Without it a lane can
+  grind on the same criterion indefinitely — a reviewer loop with no termination
+  rule always finds one more thing (1.13.1).
+- **Omitting the verdict comment** from step 9. An ungated-looking PR is the
+  default state, so a gate whose result never reaches the PR has done nothing
+  that `/orca:status` or a human reviewer can see.

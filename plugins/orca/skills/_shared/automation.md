@@ -20,13 +20,27 @@ not responsible to ship**, for one reason that dominates the rest:
 > confident PR that closes an issue it did not satisfy. Every artifact looks
 > correct.
 
-`/orca:verify` exists because of that finding, and it is the precondition for
+The evidence gate exists because of that finding, and it is the precondition for
 any unattended run. A pipeline that can open PRs but cannot check them is a
 machine for generating confident wrong work.
 
 The responsible shape is not "no automation" but: **human-approved issue →
 supervised implementation → evidence-gated PR → human review and merge.**
 The automation may drive the first leg. It must never drive the last.
+
+**Lanes now gate themselves before opening a PR** (`../launch/SKILL.md` step 7),
+which strengthens the middle leg — but it does not move the last one, and it is
+not a reason to enable this. Note what the self-gate is and is not:
+
+- It is run by a **fresh agent that did not write the code**, so it is not the
+  executor's report of itself.
+- It is still **spawned by the lane**, so a lane that dies, or is subverted, is a
+  lane that does not gate. `/orca:status` reporting `awaiting-gate` on an open PR
+  is what catches that, and under an automation nobody may be reading it.
+- It **never merges**, so the human decision at the end is untouched.
+
+An automated pipeline whose only gate is one the pipeline spawns for itself is
+still a closed loop. The preconditions below are what open it.
 
 ## The command
 
@@ -90,9 +104,16 @@ deserves to be readable and testable on its own.
 Every one of these is a repo-side property, not a plugin feature. None of them
 are provided by installing this plugin.
 
-1. **`/orca:verify` passes on real work in this repo**, and has been seen to
-   **fail** on a branch known to be incomplete. A gate that has only ever
-   returned `pass` is untested.
+1. **The gate passes on real work in this repo**, and **has been seen to fail on
+   a branch known to be incomplete.** A gate that has only ever returned `pass`
+   is untested, and this requirement is unchanged by lanes now gating themselves
+   (`../launch/SKILL.md` step 7) — an automatic gate nobody has watched fail is
+   exactly as unproven as a manual one, and rather easier to stop thinking about.
+
+   Watch it fail on purpose: give a lane an issue whose criteria the work cannot
+   meet, and confirm it reworks **once**, fails again, opens the PR anyway, posts
+   `FAIL`, and stops. A lane that instead loops, or opens a green PR, is the
+   finding this precondition exists to surface.
 2. **Issues carry real `### Done when` checklists** — not fabricated ones. The
    gate is only as good as the criteria.
 3. **No merge authority anywhere.** The executor contract forbids merging;

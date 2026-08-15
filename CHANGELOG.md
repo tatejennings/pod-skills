@@ -3,6 +3,115 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.16.0 — 2026-08-06
+
+**The gate never ran.** Reported from real use, and it is the most consequential
+gap found so far because nothing about it looks broken:
+
+> "I find myself never running the verify command. I just assumed with how
+> detailed the plan is and the implementation and the code review that it's done
+> correctly… I always just merge the PR and delete the workspace. I don't have
+> time to verify."
+
+`/orca:verify` was not defective. It was **positional**. The pipeline has three
+gates, and two of them are on the path the user already walks — approving a plan,
+merging a PR. The third asked them to stop, open a different session, and type a
+command at the exact moment the work already felt finished. So it never happened,
+and every `### Done when` checklist this plugin exists to write ended in nothing.
+
+### Lanes now gate themselves
+
+The gate moved onto the path instead of waiting beside it. `/orca:launch`'s
+executor contract gains **step 7**: before opening a PR, the executor spawns a
+**fresh agent that did not write the code** and has it run the evidence gate
+against the branch.
+
+That independence is the whole design, not a detail. `_shared/evidence-gates.md`
+has always said evidence comes from the branch and the commands, *never from the
+executor's report of them* — so "have the executor check its own work" would have
+been the failure this gate exists to catch, wearing a gate's uniform. The
+executor spawns the gate; it does not perform it, and it does not overrule it.
+
+**On `FAIL`, the lane reworks itself once** (step 7a), fixing only the failed
+criteria with the gate's own evidence — no refactors, no adjacent improvements.
+Then it re-gates once. **A second `FAIL` ends it**: the PR opens anyway carrying
+the failing verdict, and the executor reports the branch blocked. That bound is
+deliberate and is the same lesson as 1.13.1 — a reviewer loop with no termination
+rule always finds one more thing.
+
+The PR now arrives **already gated**, with the verdict as a comment, so the
+evidence is in front of the user at the moment they decide to merge.
+
+### A fourth verdict, and why it is a trade-off
+
+Prose criteria may now be **judged by that independent agent** rather than always
+deferred to a human. This is a real relaxation of a rule stated in four places,
+so it is worth being explicit about the reasoning: a gate that returns
+`pass-with-review` on every branch stops being read, and a verdict nobody opens
+is the same as no gate — the original failure, arriving by a slower route.
+
+What keeps it honest is the label. The verdicts are now four:
+
+| Verdict | Means |
+|---|---|
+| `pass` | proven by machine |
+| `pass-agent-judged` | an independent agent read the diff and thinks it holds — **opinion, not evidence** |
+| `pass-with-review` | nobody has checked this yet |
+| `fail` | a criterion failed, or an agent judged one unmet |
+
+**The asymmetry is the safety property.** A judging agent's *"met"* is an opinion
+and can never produce a plain `pass`; its *"not met"* is actionable and blocks;
+**unsure is `pass-with-review`, never `pass-agent-judged`.** It can only ever make
+the gate stricter. Collapsing those three passing verdicts into one is the single
+change to `evidence-gates.md` that would break it.
+
+### Everything downstream learned the new vocabulary
+
+- **`/orca:status`** gains `gate-failed` — a PR whose own gate rejected it twice
+  and needs the user. It outranks every other open-PR state. `awaiting-gate` now
+  means *the self-gate did not run*, which is an anomaly rather than a routine
+  next step, and the table's gate column shows the verdict rather than a
+  checkmark, because "gated" alone erases the distinction that matters at merge
+  time.
+- **`/orca:verify`** stays, reframed as the **re-gate**: for when the base moved,
+  new commits landed, a verdict looks wrong, or a PR shows up ungated. It must
+  never read a previous verdict as input — a verdict computed against an older
+  tree is not evidence about this one.
+- **The verdict comment format is now specified once**, in
+  `_shared/evidence-gates.md`, because three producers must emit a string a
+  fourth consumer greps for. A verdict the gate emits but `/orca:status` cannot
+  match reports a gated PR as ungated — indistinguishable from never gating it.
+- **`_shared/automation.md`** notes that a self-gate does not weaken any
+  precondition for unattended runs. A pipeline whose only gate is one it spawns
+  for itself is still a closed loop.
+
+### `launch/SKILL.md` split into references
+
+It hit 613 lines. The contract template moved to
+`references/contract-template.md` and the gate procedure to
+`references/self-gate.md`, bringing the skill back to 427.
+
+`self-gate.md` carries a constraint worth knowing if you edit it: **its prompt
+must stay self-contained.** It is pasted into a contract and read by an agent in
+another worktree that cannot see this plugin, so every rule is written out inline
+and nothing points at a path only this repo resolves. A shared-spec change has to
+be carried into that prompt by hand.
+
+### If you have lanes in flight
+
+Per 1.13.2: **a contract is a file written at launch time.** Existing
+`.prompt.md` files under `~/.claude/plans/<repo>/` do not have step 7 and will
+keep opening ungated PRs. Either let those lanes finish and gate them by hand
+with `/orca:verify <n>`, or edit the contracts directly.
+
+### Before trusting this
+
+`automation.md`'s first precondition still applies and now applies here: **a gate
+that has only ever returned `pass` is untested.** Give a lane an issue whose
+criteria the work cannot meet, and confirm it reworks once, fails again, opens
+the PR anyway, posts `FAIL`, and stops. A lane that loops, or opens a green PR,
+is the finding.
+
 ## 1.15.0 — 2026-08-04
 
 **Two lanes could share one worktree, and merging one destroyed the other.**
