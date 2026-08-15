@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
+description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. With --auto it plans unattended - never asking, never entering plan mode, deferring any real fork into the plan file as a named question - and stops at the finished plan; this is what /orca:wave --auto and /orca:tech-lead send into a terminal nobody is watching. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
 ---
 
 # Plan
@@ -28,12 +28,27 @@ skip the review**.
 
 - `$ARGUMENTS` empty ⇒ ask what to plan.
 - Check for `--launch`: plan, review, then launch the lane via `/orca:launch` (§6).
+- Check for `--auto`: plan and review **unattended** — never ask, never enter
+  plan mode, and **stop at the finished plan file without launching.** This is
+  what `/orca:wave --auto` and `/orca:tech-lead` send into a terminal nobody is
+  watching, so anything that blocks on a human is a hang, not a pause. The
+  deciding bar is in §3 under *"With `--auto`"*: decide alone only where the
+  choice is overwhelming, and **defer with a named question** everywhere else —
+  a deferral costs one visit, a wrong guess costs an executor run.
+- `--auto` and `--launch` are **different flags and do not imply each other.**
+  `--auto` plans without asking and stops; `--launch` also starts the lane.
+  Passed together, `--auto`'s deferral bar governs the planning and `--launch`'s
+  disqualifiers still govern whether the lane may start.
 - The rest of `$ARGUMENTS` is the target — a leading `#` or an all-digits token
   means an issue; anything else is a milestone name or a description.
+- **An unrecognized flag is a stop, not a token to ignore.** Say which flag, and
+  name the two this skill takes. Guessing at a caller's intent here is how an
+  unattended context ends up in a mode nobody chose.
 - If not already in plan mode, call `EnterPlanMode` and stay there for the whole
-  skill. **Under `--launch`, do not enter plan mode** — its approval gate cannot
-  be auto-approved. Hold the same discipline manually: research and plan only,
-  and touch no repo files.
+  skill. **Under `--launch` or `--auto`, do not enter plan mode** — its approval
+  gate cannot be auto-approved, and under `--auto` there is no one to approve it.
+  Hold the same discipline manually: research and plan only, and touch no repo
+  files.
 
 ## 1. Pin down the requirements
 
@@ -122,17 +137,28 @@ Where a real trade-off needs the user's call, use AskUserQuestion **before**
 finalizing. Where a conventional default exists, decide it and record it under
 Decisions.
 
-**Inside a wave** (`/orca:wave` started this context in its own terminal): **ask
-normally** — unless `--auto` was also passed. The point of a plain wave is that
-the user moves between contexts answering questions, so asking and waiting is
-correct there; do not adopt a defer-instead-of-asking posture just because the
-context was started programmatically.
+**Inside a plain wave** (`/orca:wave` started this context in its own terminal,
+no `--auto`): **ask normally.** The point of a plain wave is that the user moves
+between contexts answering questions, so asking and waiting is correct there; do
+not adopt a defer-instead-of-asking posture just because the context was started
+programmatically.
 
-**With `--auto` in a wave**, hold the bar below: plan alone where the choice is
-overwhelming, and **defer with a named question where it is not.** The wave
-collects those questions and tells the user which tabs to visit, so a deferral
-is one visit rather than a blocked wave — and a wrong guess is still a whole
-executor run.
+**A programmatic caller is not by itself a reason to stop asking — `--auto` is.**
+The flag is the signal that nobody is watching this terminal; the terminal having
+been created by a skill is not.
+
+**With `--auto`**, hold the bar below: plan alone where the choice is
+overwhelming, and **defer with a named question where it is not.** Never call
+`AskUserQuestion` — under `--auto` nobody is reading this terminal, so an ask is
+a hang that ends at the caller's timeout with no plan at all. Write the question
+into the plan file instead, under a `## Deferred` heading, and keep planning
+around it.
+
+Who collects a deferral depends on the caller, and both are watching for it: a
+wave tells the user which tabs to visit, so a deferral is one visit rather than a
+blocked wave; `/orca:tech-lead` reads the finished plan file and routes the
+question to its own *Waiting on you*. Either way a deferral is cheap and a wrong
+guess is still a whole executor run.
 
 **Under `--launch`, do not ask** — and hold a high bar for deciding alone.
 Proceed on a fork only when one option is *overwhelmingly* recommended: the
@@ -260,11 +286,32 @@ ammunition against re-litigation later.
 deliberately **outside the repo** — a plan is not repo content, and a lane's new
 checkout cannot see another checkout's untracked files anyway.
 
+**When the target is an issue, `<issue-or-slug>` is the bare issue number** —
+`2026-08-15-84.md`, not `2026-08-15-84-audio-enum.md` and not
+`2026-08-15-audio-enum.md`. Callers that plan programmatically have to find this
+file afterwards, and a slug they cannot predict is a file they cannot open. Use a
+descriptive slug only for a milestone or free-form target, which has no number to
+key on.
+
 This matters beyond tidiness: a plan that exists only in conversation cannot be
 compared against another plan, handed to a later session, or re-read after this
 context closes. `/orca:wave --review` reads these files to check plans against
 each other, and `/orca:launch` can be pointed at one directly. **Never overwrite
-an existing plan file** — suffix the slug instead.
+an existing plan file** — suffix `-2`, `-3` after the number or slug
+(`2026-08-15-84-2.md`), so the number stays the prefix and the newest is still
+findable.
+
+**Last line of your output, always, and verbatim:**
+
+```
+PLAN FILE: <the absolute path you just wrote>
+```
+
+Under `--auto` this is the only way the caller learns where the plan went —
+`/orca:tech-lead` and `/orca:wave` read this line rather than guessing at a
+glob, and a glob is how a caller ends up reviewing the wrong issue's plan or
+scraping a half-written one out of a terminal buffer. Print it even when a human
+is watching; it costs one line and it is the contract.
 
 Then:
 

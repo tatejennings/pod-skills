@@ -253,6 +253,12 @@ Rules that make it work:
   is the only thing distinguishing a gated PR from an ungated one, and the regex
   looks for it.
 - **The verdict in caps**: `PASS`, `PASS-AGENT-JUDGED`, `PASS-WITH-REVIEW`, `FAIL`.
+  **Case is part of the contract**, and the two casings are not interchangeable:
+  UPPERCASE is the literal string on the wire — what a producer writes and what
+  `/orca:status` and `/orca:tech-lead` match against. The lowercase forms used in
+  the tables above and in prose elsewhere are the *names* of the verdicts, never
+  a string to emit or grep. A skill that "tidies" a wire string to lowercase
+  breaks the match silently, and a broken match reports a gated PR as ungated.
 - **Say where it ran** — `gated in-lane before PR` or `re-gated on demand`. A
   reviewer should not have to guess whether a human asked for this.
 - **Markers**: `✓` verified, `✗` failed, `⊙` agent-judged, `?` awaiting human.

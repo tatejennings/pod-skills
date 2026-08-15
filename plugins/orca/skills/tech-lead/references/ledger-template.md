@@ -23,12 +23,14 @@ merged. This is state, not narrative.
 - Cap: <n> · Order: #15, #16, #17, #18 (as approved/edited)
 - Decision bar: default | recommend-only (set by user at <time>)
 - Repo rules read: CLAUDE.md @ <commit>; locked decisions: <the file the repo names, or "none">
+- Auto-merge: off | **ON — user accepted at <ISO time>** (a PR can merge with nobody present)
+- Reviewers: owner `<login>`; adopted `<login>` (markers: `P1|P2|P3` badge) ; everyone else queued
 
 ## Lanes
 
 | Issue | Worktree id | Branch | PR | Verdict | Plan rounds | Fix rounds | Last-seen comment | Next |
 |---|---|---|---|---|---|---|---|---|
-| #15 | repo-1::/Users/…/<lane-slug> | feat/15-<lane-slug> | #21 | pr-open · pass | 2 | 1 | 3788608310 | ready to merge |
+| #15 | repo-1::/Users/…/<lane-slug> | feat/15-<lane-slug> | #21 | pr-open · PASS | 2 | 1 | 3788608310 | ready to merge |
 | #16 | — | — | — | planning (terminal <handle>) | 1 | 0 | — | panel round 2 |
 
 ## Decisions made
@@ -39,7 +41,7 @@ merged. This is state, not narrative.
 
 - #5 · manual · <what it needs>
 - #16 · fork: <A> vs <B> · panel 2–1 for A · my rec: A · queued <ISO time>
-- PR #21 · ready to merge (gated pass, no open threads, mergeable)
+- PR #21 · ready to merge (gated PASS, no open threads, mergeable)
 
 ## Ready to merge
 
