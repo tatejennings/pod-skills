@@ -334,7 +334,9 @@ orca worktree create --name <slug> --no-parent \
 Drop `--issue <n>` when the work has no issue. Everything else stays.
 
 **Verify the response rather than assuming it worked.** Response shape, confirmed
-live at 1.4.162:
+live at 1.4.162 and still documented in `worktree create --help` at 1.4.182 —
+the help text there states the `agentTerminalHandle` / `startupTerminal.handle`
+fallback verbatim:
 
 | What | Where |
 |---|---|

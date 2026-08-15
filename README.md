@@ -20,7 +20,7 @@ reports, you merge.
 
 - [The idea in one minute](#the-idea-in-one-minute)
 - [Install](#install)
-- [The seven skills](#the-seven-skills)
+- [The eight skills](#the-eight-skills)
 - [Flags, in full](#flags-in-full)
 - [Workflows](#workflows)
 - [The conventions the skills read](#the-conventions-the-skills-read)
@@ -54,6 +54,9 @@ right, so something has to ask — and it has to ask without being remembered.
   │                  │    │ opens a PR       │    │ verdict on the PR│
   └──────────────────┘    └──────────────────┘    └──────────────────┘
       GitHub                    Orca              in-lane · /orca:verify
+
+  └──────────────────── /orca:tech-lead ─────────────────────┘   →   you
+      drives all three, and stops here                            merge
 ```
 
 ---
@@ -120,7 +123,7 @@ contract.
 
 ---
 
-## The seven skills
+## The eight skills
 
 Grouped by what you are trying to do.
 
@@ -296,6 +299,41 @@ Never merges, never closes an issue, never marks a PR ready.
 /orca:verify          # the current worktree's lane
 ```
 
+### Running the whole thing
+
+#### `/orca:tech-lead`
+Every skill above stops on purpose: `/orca:plan` stops at a plan, `/orca:launch`
+stops at a running lane, `/orca:status` only reads. **You are what connects
+them** — deciding what is next, keeping lanes fed, reacting to the review
+comments on the PRs they open, resolving the forks planning surfaces, and
+merging.
+
+This skill takes that seat, **except the merge**. It reads the backlog and the
+live lanes, proposes a slate, and — once you tell it to go — plans each issue
+with a panel of independent expert reviewers until the plan holds, launches it
+via `/orca:launch`, watches the lanes, dispatches fixes for Codex and owner
+review comments, and decides the forks its experts agree on. It composes the
+other skills rather than reimplementing them, and never edits code itself.
+
+**Ask it and it proposes; tell it and it goes.** A question gets a slate and a
+pause; an imperative gets the same slate and then action.
+
+```
+/orca:tech-lead                      # propose a slate, wait
+/orca:tech-lead take the loop epic   # propose, then run it
+/orca:tech-lead handle the review comments on my PRs
+/orca:tech-lead cap 2                # steer a running one
+/orca:tech-lead resume               # pick up from the ledger
+```
+
+It stops when everything left needs you, and says what. Bounds are built in:
+three plan-review rounds, two fix rounds per PR, two owner-only ticks before it
+idles out, and an eight-hour hard cap. **It never merges a PR and never closes
+an issue** — that decision is the one this whole pipeline exists to keep yours.
+
+For a read-only answer to "what should I work on next", use `/orca:status`;
+this skill is for when you want it acted on.
+
 ---
 
 ## Flags, in full
@@ -311,6 +349,12 @@ Never merges, never closes an issue, never marks a PR ready.
 
 Everything else takes plain arguments: issue numbers, a milestone name, or a
 free-form description.
+
+`/orca:tech-lead` has **no flags at all** — it reads plain language, and whether
+you asked or told it is what decides between proposing and acting. Scope
+(`the loop epic`, `#15 #16`, `my open PRs`), cap (`cap 2`, `one at a time`), and
+steering (`pause`, `stop`, `status`, `add #14`, `drop #16`, `only reviews for
+now`, `resume`) are all just words.
 
 ---
 
@@ -381,7 +425,23 @@ split, or any real fork lacked a clear answer, it stops and presents the plan
 with the open question named. A deferral costs one question; a wrong guess costs
 an entire executor run.
 
-### 5. Keeping the backlog honest
+### 5. Fire and forget a whole epic
+
+```
+/orca:tech-lead take the loop epic, cap 2
+```
+
+Workflow 2, repeated, without you in the middle of it. It prints the slate it
+chose — so you can steer before anything starts — then plans each issue with an
+expert panel, launches it, watches the lanes, and handles the review comments on
+the PRs they open. It reports each pass and notifies you only when something
+actually needs you.
+
+It stops when everything left is yours: a PR ready to merge, a fork its experts
+split on, a `needs-owner` issue, a gate that failed twice. **The merge is never
+its.** `resume` picks it back up from where it stopped.
+
+### 6. Keeping the backlog honest
 
 ```
 /loop 15m /orca:status --reap   # live dashboard, finished lanes cleaned up
@@ -389,7 +449,7 @@ an entire executor run.
 /orca:migrate                   # after upgrading this plugin
 ```
 
-### 6. Emptying your head into the backlog
+### 7. Emptying your head into the backlog
 
 You have been keeping a list — in a notes app, in your head, in a scratch file.
 Paste it:

@@ -3,6 +3,81 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.17.0 — 2026-08-15
+
+### `/orca:tech-lead` — the seat the pipeline leaves empty
+
+Every skill in this plugin stops on purpose. `/orca:plan` stops at a plan,
+`/orca:launch` stops at a running lane and explicitly says *do not monitor it*,
+`/orca:status` only reads. That is deliberate — but it means the human is the
+thing connecting them, and the connecting work is not the interesting part:
+noticing a lane finished, reading the Codex comments on its PR, deciding which
+issue goes next, resolving a fork planning surfaced.
+
+This skill takes all of that **except the merge**. It composes the existing
+skills rather than reimplementing them — it invokes `/orca:status` for the lane
+× backlog join, `/orca:plan` for planning, `/orca:launch` for lanes — and never
+edits code itself. What it adds on top is the part none of them own: a panel of
+independent expert reviewers over each plan, PR review-comment triage and fix
+dispatch, and a decision bar for forks.
+
+**Ask it and it proposes; tell it and it goes.** A question prints a slate and
+waits. An imperative prints the same slate — so the choice is always visible and
+steerable — then starts.
+
+**Every loop in it is bounded**, which is the same lesson as 1.13.1 and 1.16.0:
+three plan-review rounds, two fix rounds per PR, one rework per gate, two
+owner-only ticks before it idles out, and an eight-hour hard cap on any autonomy
+grant. When a bound is hit it escalates rather than trying once more.
+
+**It never merges a PR and never closes an issue.** That is the one decision the
+whole pipeline exists to keep human, and no wording from the user unlocks it.
+
+State lives in a ledger outside the repo (`~/.claude/plans/<repo>/tech-lead-<scope>.md`)
+so a compaction or restart resumes rather than re-plans.
+
+The skill was developed as a personal global skill and moved here because it is
+useless without this plugin — its own preconditions stop if `/orca:*` is not
+invocable. Moving it made three changes necessary:
+
+- **Its two `TODO(user)` blocks are gone.** A shipped skill cannot ask the
+  installer to edit files inside a plugin directory that the next update
+  overwrites. The conservative fallbacks became the stated defaults, and a
+  consuming repo now overrides them the way every other skill here takes repo
+  conventions — by saying so in its own `CLAUDE.md`.
+- **It no longer names a specific skill or file.** The expert panel's Domain
+  seat described an iOS/SwiftUI reviewer by name and assumed a decisions file
+  exists; both are now described by how they are *chosen*, per the
+  app-agnostic rule.
+- **Its description de-collides with `/orca:status`.** Both wanted "what should
+  I work on next". `/orca:status` keeps the read-only reading; this skill claims
+  it only when the user wants it acted on.
+
+### Re-verified against `orca` 1.4.182
+
+Every command and flag the skills reference was re-checked against live `--help`
+after the CLI upgrade from 1.4.162. **No breaks** — all 26 commands still exist,
+and the load-bearing facts hold: `worktree create` still has no branch-name
+flag, `worktree ps` still returns `worktreeId` where `worktree list` returns
+`id`, and `project setup-update --kind git` still fixes the `kind: folder` trap.
+
+Three notes added from new surface:
+
+- **`--setup run` over `--run-hooks`** on `worktree create`: `--run-hooks` is
+  documented as a legacy alias that *also reveals the worktree*, so it does two
+  things where one was wanted. (On `worktree rm`, `--run-hooks` remains the real
+  flag — there is no `--setup` there.) `orca-lanes.md` now says why the handoff
+  invocation omits both it and `--activate`.
+- **`--reuse-session` is not for the automation**, and `automation.md` now says
+  so. It applies only to `--workspace-mode existing`; adopting it would mean
+  each scheduled run inheriting the previous run's context, which is exactly the
+  independence an unattended launcher needs.
+- **Linear is out of scope, explicitly.** Orca now ships a full `orca linear`
+  surface and `worktree create --linear-issue`. These skills read a `### Done
+  when` checklist out of a GitHub issue body and nothing else; `orca-lanes.md`
+  now warns against adding a `--linear-issue` fallback, because a lane whose
+  criteria live where the gate cannot read them silently loses the gate.
+
 ## 1.16.0 — 2026-08-06
 
 **The gate never ran.** Reported from real use, and it is the most consequential
