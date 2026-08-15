@@ -51,7 +51,11 @@ the shared file, not a skill's restatement of it:
   constraints. *(app-agnostic: GitHub only, nothing Orca-specific)*
 - `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a consuming
   repo's `AGENTS.md`. *(app-agnostic)*
-- `_shared/issue-schema.md` — the `### Done when` contract every skill reads.
+- `_shared/issue-schema.md` — the `### Acceptance criteria` contract every skill
+  reads. **`### Done when` is its former name and still reads everywhere** —
+  every consumer accepts both, because a heading a skill cannot find reads as *no
+  criteria*, which silently disables the gate. Write the new name; never make a
+  reader strict.
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff
   invocation.
 - `_shared/evidence-gates.md` — how a criterion is checked, and the four

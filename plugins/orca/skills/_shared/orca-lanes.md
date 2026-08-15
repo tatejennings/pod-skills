@@ -19,7 +19,7 @@ worktree is identified, how to resolve one safely, and which facts are native
 > full Linear surface (`orca linear …`, plus its bundled `orca-linear` skill),
 > and `worktree create` / `worktree set` accept `--linear-issue` alongside
 > `--issue`. None of these skills read or write Linear: every one of them reads
-> a `### Done when` checklist out of a GitHub issue body. A repo tracking work in
+> a `### Acceptance criteria` checklist out of a GitHub issue body. A repo tracking work in
 > Linear wants Orca's own Linear skill, not this plugin. Do not add a
 > `--linear-issue` fallback to a skill here — a lane whose criteria live where
 > the gate cannot read them silently loses the gate.

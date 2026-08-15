@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Done when" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/orca:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This works issue by issue. If the repo has tracking FILES - a ROADMAP.md, a TODO.md, a status table - or has never been set up for these skills, run /orca:migrate first; this skill assumes milestones and issues are already the source of truth. For a read-only answer to "what should I work on next" with no questions asked, use /orca:status. Planning the implementation of one issue is /orca:plan.
+description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Acceptance criteria" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/orca:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This works issue by issue. If the repo has tracking FILES - a ROADMAP.md, a TODO.md, a status table - or has never been set up for these skills, run /orca:migrate first; this skill assumes milestones and issues are already the source of truth. For a read-only answer to "what should I work on next" with no questions asked, use /orca:status. Planning the implementation of one issue is /orca:plan.
 ---
 
 # Triage
@@ -108,7 +108,7 @@ Flag an issue when any of these hold:
 **Never triaged**
 
 - no milestone (and it is not obviously a tracking/meta issue);
-- no `### Done when` checklist, or one that is empty;
+- no acceptance checklist under either heading (`../_shared/issue-schema.md`), or one that is empty;
 - a body under ~2 lines — a captured thought, not a specification.
 
 **Drifted since it was triaged**
@@ -121,7 +121,7 @@ Flag an issue when any of these hold:
   query, so the issue reports ready when it is not. This is the most consequential
   drift and the easiest to miss.
 - **Criteria under the wrong heading** — acceptance criteria present as prose or
-  under a heading that is not `### Done when`. The fix is a rename, **not**
+  under a heading that is not `### Acceptance criteria`. The fix is a rename, **not**
   authoring new criteria.
 - **A milestone that has closed** while the issue stayed open.
 - **No scope label** — nothing saying which part of the system the work touches.
@@ -218,7 +218,7 @@ The questions worth asking, in rough priority:
   behavior, or the desired one? For a bug: what happens, what should happen, how
   do you reproduce it?
 - **What would "done" look like?** The most important question, and the one that
-  becomes the `### Done when` checklist. Push for something observable. "It
+  becomes the `### Acceptance criteria` checklist. Push for something observable. "It
   works" is not a criterion; "the importer rejects a malformed header with an
   error instead of crashing" is.
 - **When?** Which milestone — or explicitly none, meaning unscheduled backlog.
@@ -246,7 +246,7 @@ kind). Ask open questions as prose. **Never invent an answer** — an unanswered
 question means the field stays empty and the issue stays untriaged, which is an
 honest outcome.
 
-### Writing the `### Done when` checklist
+### Writing the `### Acceptance criteria` checklist
 
 This is the part that makes the issue gateable later, so it gets the care
 `../_shared/issue-schema.md` demands:
@@ -268,7 +268,7 @@ This is the part that makes the issue gateable later, so it gets the care
 Per issue, once the questions are answered:
 
 ```bash
-# body: preserve everything, add or replace only the ### Done when section
+# body: preserve everything, add or replace only the ### Acceptance criteria section
 gh issue edit <n> --body-file - <<'EOF'
 <full body>
 EOF
@@ -289,7 +289,7 @@ gh issue create \
   --body-file - <<'EOF'
 <one-paragraph summary in the user's own framing>
 
-### Done when
+### Acceptance criteria
 
 - [ ] <criteria established in §2>
 EOF
@@ -309,7 +309,7 @@ Rules that matter:
 
 - **Preserve the existing body.** Read it, add or replace only the checklist
   section, write it back through stdin. Never `--body "…"` — quoting eats it.
-- **Never edit the `### Done when` checklist of an issue with a live lane or an
+- **Never edit the `### Acceptance criteria` checklist of an issue with a live lane or an
   open PR.** The executor was bound to those criteria and the gate will apply
   them; changing them mid-flight silently invalidates both. Check
   `orca worktree ps` (`repoId` + `linkedIssue`) and `gh pr list` first. If the

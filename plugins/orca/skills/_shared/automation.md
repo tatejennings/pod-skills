@@ -94,7 +94,7 @@ it fails closed — a broken precheck skips rather than launches.
 It should exit non-zero unless **all** of these hold:
 
 - **Work is actually ready** — an open, unassigned issue in the active milestone
-  with no unresolved `blockedBy` *and* a `### Done when` checklist. An issue with
+  with no unresolved `blockedBy` *and* a `### Acceptance criteria` checklist. An issue with
   no criteria must never be launched unattended: nothing could gate the result.
 - **Under the concurrency cap** — count live lanes for the repo
   (`orca worktree ps --json`, filtered on `repoId` + `isMainWorktree: false`)
@@ -122,7 +122,7 @@ are provided by installing this plugin.
    meet, and confirm it reworks **once**, fails again, opens the PR anyway, posts
    `FAIL`, and stops. A lane that instead loops, or opens a green PR, is the
    finding this precondition exists to surface.
-2. **Issues carry real `### Done when` checklists** — not fabricated ones. The
+2. **Issues carry real `### Acceptance criteria` checklists** — not fabricated ones. The
    gate is only as good as the criteria.
 3. **No merge authority anywhere.** The executor contract forbids merging;
    confirm nothing else does it. PRs open ready for review (drafts are skipped by

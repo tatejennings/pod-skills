@@ -37,7 +37,7 @@ readiness, dependencies, and whether finished work actually satisfies what was
 asked.
 
 These skills fill that gap, and add one thing neither side has: **an evidence
-gate**. Every issue carries a `### Done when` checklist written *before* the work
+gate**. Every issue carries a `### Acceptance criteria` checklist written *before* the work
 starts. When a branch is done, a **fresh agent that did not write the code**
 checks the branch against that checklist — running the commands, grepping the
 diff, judging the prose — and posts the verdict on the PR **before you see it**.
@@ -48,7 +48,7 @@ right, so something has to ask — and it has to ask without being remembered.
 ```
        backlog                    lanes                   proof
   ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-  │ milestones       │    │ worktree         │    │ ### Done when    │
+  │ milestones       │    │ worktree         │    │ acceptance crit. │
   │ readiness        │ →  │ branch + agent   │ →  │ commands run     │
   │ dependencies     │    │ gates itself     │    │ diff checked     │
   │                  │    │ opens a PR       │    │ verdict on the PR│
@@ -132,7 +132,7 @@ Grouped by what you are trying to do.
 #### `/orca:migrate`
 Brings a repo's tracking up to the model the other skills read. Inventories every
 tracking file, classifies each section (live state / finished / narrative /
-reference), and proposes milestones, issues, `### Done when` checklists,
+reference), and proposes milestones, issues, `### Acceptance criteria` checklists,
 dependency edges, and the `AGENTS.md` block. **Writes nothing until you approve,
 and never commits** — the diff stays rejectable.
 
@@ -152,7 +152,7 @@ creating the issues *is* the work being delegated.
 
 For each item it asks what it actually means, what "done" would look like, when,
 what it depends on, and whether an agent can even do it — then creates the issue
-with a `### Done when` checklist, milestone, scope label, and real dependency
+with a `### Acceptance criteria` checklist, milestone, scope label, and real dependency
 edges. It checks for duplicates before filing, and each item is created as it is
 triaged, so an item you drop mid-pass was never filed.
 
@@ -183,7 +183,7 @@ free-form description. Researches with parallel agents, drafts an
 execution-ready plan, then hands it to a **cold-reader agent** to attack for
 completeness, holes, single-context feasibility, and blast radius.
 
-Writes the `### Done when` checklist onto the issue, because that is what makes
+Writes the `### Acceptance criteria` checklist onto the issue, because that is what makes
 the work gateable later. Saves the plan to `~/.claude/plans/<repo>/` so it
 survives the session.
 
@@ -259,7 +259,7 @@ Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 
 **The gate runs itself.** Before a lane opens its PR, the executor spawns a
 **fresh agent that did not write the code** and has it check the branch against
-the issue's own `### Done when` checklist: running the criteria that are
+the issue's own `### Acceptance criteria` checklist: running the criteria that are
 commands, grepping *added lines* for the ones that are diff assertions, and
 judging the prose ones. The verdict is posted as a PR comment.
 
@@ -512,11 +512,11 @@ That edge is what readiness reads. A `blocked` label can mirror it for the issue
 list, but a label alone is decorative — every readiness query will call that
 issue ready, which is the honest reading of the data.
 
-**Every issue carries a `### Done when` checklist**, written when the issue is
+**Every issue carries a `### Acceptance criteria` checklist**, written when the issue is
 filed rather than after the work:
 
 ```markdown
-### Done when
+### Acceptance criteria
 
 - [ ] `./scripts/test.sh` exits 0
 - [ ] `parseManifest` appears in the diff
@@ -526,6 +526,11 @@ filed rather than after the work:
 
 The first three are machine-checkable; the fourth is not, and that is fine. The
 gate sorts every criterion into **command**, **diff assertion**, or **human**.
+
+> **This section used to be called `### Done when`.** Both headings read, so a
+> repo written before the rename keeps working untouched — nothing to do unless
+> you want to. `/orca:migrate` rewrites the old heading in place as its v1 → v2
+> schema step, changing only that line and never the criteria under it.
 
 The first two are proven. For the third, an independent agent may render a
 judgement — and when it does, the verdict says so: `pass-agent-judged`, never
@@ -564,7 +569,7 @@ becomes a lane, what contract binds the executor, and what proves the result.**
 
 **GitHub Issues only.** Orca also ships a full Linear surface — `orca linear …`,
 its own `orca-linear` skill, and `--linear-issue` on `worktree create`. These
-skills read a `### Done when` checklist out of a GitHub issue body and nothing
+skills read a `### Acceptance criteria` checklist out of a GitHub issue body and nothing
 else. If your tracker is Linear, you want Orca's Linear skill, not this. A lane
 whose criteria live somewhere the gate cannot read them silently loses the gate,
 which is the failure this whole plugin exists to prevent.

@@ -278,7 +278,7 @@ READY NEXT
   blocker is still `OPEN`; a non-zero `totalCount` whose blockers have all closed
   is **ready** (`../_shared/github-backlog.md`).
 - Cap at ~8 and say how many more there are.
-- **Flag issues with no `### Done when` checklist** — they cannot be gated by
+- **Flag issues with no acceptance checklist under either heading** (`../_shared/issue-schema.md`) — they cannot be gated by
   `/orca:verify`, so mark them `(no criteria)` and point at `/orca:plan` or
   `/orca:migrate`.
 - Nothing ready and nothing blocked ⇒ one line pointing at `/orca:migrate`

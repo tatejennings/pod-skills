@@ -19,7 +19,7 @@ project's criteria are. Repo-specific gates live in the consuming repo, not here
 
 <why this exists; link to docs/specs/<slug>.md rather than restating it>
 
-### Done when
+### Acceptance criteria
 
 - [ ] `./scripts/test.sh` exits 0
 - [ ] `parseManifest` appears in the diff
@@ -33,10 +33,21 @@ project's criteria are. Repo-specific gates live in the consuming repo, not here
 
 Only two parts are load-bearing:
 
-- **`### Done when`** — the acceptance checklist. Required. This is what gates
-  the work, and it is written **when the issue is filed**, not after the work is
-  done. A checklist written afterwards describes what happened; a checklist
-  written up front describes what must happen. Only the second one is a gate.
+- **`### Acceptance criteria`** — the checklist that gates the work. Required,
+  and written **when the issue is filed**, not after the work is done. A
+  checklist written afterwards describes what happened; a checklist written up
+  front describes what must happen. Only the second one is a gate.
+
+  > **`### Acceptance criteria` is the former name of this section and still reads.** Every
+  > skill treats the two headings as the same section, so repos and issues
+  > written before the rename keep working untouched. **Write
+  > `### Acceptance criteria` for anything new**; `/orca:migrate` rewrites the old
+  > heading in place as its v2 schema step.
+  >
+  > Reading both is not politeness, it is a safety property: a heading a skill
+  > cannot find does not raise an error, it reads as **no criteria at all** —
+  > which is the one state that disables the gate and makes `/orca:launch` refuse
+  > the issue. A rename must never be able to produce that silently.
 - **`### Blocked by`** is *not* part of this schema. Dependencies are real
   GitHub edges (`gh issue edit <n> --add-blocked-by <m>`), because that is what
   readiness queries read. A prose "blocked by #12" line is decorative — see
@@ -143,7 +154,7 @@ what makes the label useful:
 | Situation | Where it belongs |
 |---|---|
 | The entire task needs a human | the `manual` **label** |
-| Some acceptance criteria need human judgement | the `### Done when` **checklist** |
+| Some acceptance criteria need human judgement | the `### Acceptance criteria` **checklist** |
 
 An issue with a few `*(human)*` criteria is still agent work — an agent
 implements, and a person judges the rest at review. Labelling that `manual` would
@@ -164,11 +175,27 @@ Recognize the convention loosely — a repo may spell it `human`, `human only`, 
 string, and say which label you matched. Do not rename a repo's existing label to
 `manual`.
 
+## Finding the checklist — accept both headings
+
+**Every skill that reads acceptance criteria accepts either heading**, anchored
+to its own line, at any depth (`##`–`####`):
+
+- `### Acceptance criteria` — current, and what to write
+- `### Done when` — the former name, still valid, rewritten by `/orca:migrate`
+
+They mean the same section. An issue carrying either **has criteria**, and must
+never be reported as missing them, refused a launch, or gated as though it had
+none. An issue carrying **both** is a conflict, not a choice: report it and
+gate nothing, because two checklists means nobody knows which one binds.
+
+Write only `### Acceptance criteria` for anything new — in a body you create,
+and in one you rewrite.
+
 ## Where this schema is enforced, and where it is not
 
 **Enforced** — a skill may require the checklist and stop without it:
 
-- `/orca:verify` has nothing to do without a `### Done when` section. Missing ⇒
+- `/orca:verify` has nothing to do without an `### Acceptance criteria` section. Missing ⇒
   report that the issue has no gate and stop. Do not invent criteria.
 
 **Suggested, never required** — the repo may predate the schema:

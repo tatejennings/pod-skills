@@ -33,7 +33,7 @@ Why a separate agent at all, stated once, because it is the entire point:
 >
 > Your inputs:
 >
-> - **Criteria** (the issue's `### Done when`, verbatim): `<paste>`
+> - **Criteria** (the issue's `### Acceptance criteria`, verbatim): `<paste>`
 > - **Worktree path**: `<abs path>`
 > - **Base branch**: `<base>`
 > - **Issue number**: `<n>`
@@ -194,7 +194,7 @@ Why a separate agent at all, stated once, because it is the entire point:
   branch it is judging has no independent verdict left to give.
 - **Merge, mark ready, or close the issue.** A gate with merge authority is not a
   gate.
-- **Invent criteria.** No `### Done when` ⇒ report that the branch cannot be
+- **Invent criteria.** No `### Acceptance criteria` ⇒ report that the branch cannot be
   gated. Inferring criteria from the diff and then passing them is the exact
   failure this whole mechanism exists to prevent.
 - **Pass a criterion because the work looks good.** Looking good is not evidence.

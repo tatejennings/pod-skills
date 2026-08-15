@@ -18,7 +18,7 @@ previous round's findings (a fresh agent per round, so it reads cold):
 1. the plan file, whole — at the path `/orca:plan` reported on its `PLAN FILE:` line, never a
    globbed guess (§3.3 step 2);
 2. the issue — `gh issue view <n> --json title,body,labels,milestone,url`, body verbatim, including
-   its `### Done when`;
+   its `### Acceptance criteria`;
 3. the repo's rules — `CLAUDE.md` / `AGENTS.md`, and the docs they name as binding. If the repo
    keeps a decisions or ADR file, quote the locked entries that touch the plan; if it does not,
    say so rather than inventing one;
@@ -40,7 +40,7 @@ Three seats always, a fourth when the repo implies one.
 
 | Seat | Lens | Reports on |
 |---|---|---|
-| **Requirements & decisions** | Does every `### Done when` criterion get produced by some step? Does any step contradict a locked decision, a non-negotiable, or the product doc? Is anything in the plan not asked for? | missing criteria coverage; contradictions; scope creep |
+| **Requirements & decisions** | Does every `### Acceptance criteria` criterion get produced by some step? Does any step contradict a locked decision, a non-negotiable, or the product doc? Is anything in the plan not asked for? | missing criteria coverage; contradictions; scope creep |
 | **Architecture & codebase fit** | Does the plan use what the codebase already has (existing types, utilities, conventions)? Does it put state where the repo's architecture rules say state lives? Will it be hard to change later? | reuse missed; convention breaks; durability risks |
 | **Test & verification** | Are the tests the plan names sufficient to prove the criteria, and do they match the repo's testing rules? Is anything untestable as planned? Would the gate be able to check this? | missing or weak tests; unprovable criteria |
 | **Domain** (when applicable) | The platform or domain the work lives in — a mobile-platform expert, a data-pipeline expert, a security reviewer for auth work | platform pitfalls the generalists miss |

@@ -1,12 +1,12 @@
 ---
 name: migrate
-description: Bring this repo's tracking up to the model the orca skills expect, whether it has never been migrated or was migrated under an older version of these skills - inventories every tracking file, separates live work from finished and narrative from state, proposes milestones, issues, and a "### Done when" checklist on each, and applies only what you approve. Re-run it after upgrading the plugin to move a conforming repo onto the current schema, or any time to audit for drift. Use when the user says "/orca:migrate", "set this repo up for the orca skills", "set up tracking for this project", "migrate my roadmap to issues", "migrate this project to the new skills", "I updated the plugin, update my repo", "my roadmap is a mess", "clean up how we track tasks", "the roadmap keeps causing merge conflicts", "onboard this project", or "audit our tracking". This migrates tracking *files and conventions* - "what should I work on next" is /orca:status, and planning one piece of work is /orca:plan. Not for driving the Orca app: worktrees, terminals, and agents belong to Orca's bundled orca-cli skill.
+description: Bring this repo's tracking up to the model the orca skills expect, whether it has never been migrated or was migrated under an older version of these skills - inventories every tracking file, separates live work from finished and narrative from state, proposes milestones, issues, and a "### Acceptance criteria" checklist on each, and applies only what you approve. Re-run it after upgrading the plugin to move a conforming repo onto the current schema, or any time to audit for drift. Use when the user says "/orca:migrate", "set this repo up for the orca skills", "set up tracking for this project", "migrate my roadmap to issues", "migrate this project to the new skills", "I updated the plugin, update my repo", "my roadmap is a mess", "clean up how we track tasks", "the roadmap keeps causing merge conflicts", "onboard this project", or "audit our tracking". This migrates tracking *files and conventions* - "what should I work on next" is /orca:status, and planning one piece of work is /orca:plan. Not for driving the Orca app: worktrees, terminals, and agents belong to Orca's bundled orca-cli skill.
 ---
 
 # Migrate tracking
 
 Bring this repo's tracking to the model every other skill in this plugin reads:
-**state in GitHub Issues, narrative in `docs/specs/`, a `### Done when` checklist
+**state in GitHub Issues, narrative in `docs/specs/`, a `### Acceptance criteria` checklist
 on every issue, and a generated roadmap that is never a source of truth.**
 
 A repo can be behind the model for three independent reasons, and a single run
@@ -99,7 +99,7 @@ what is true now — someone can edit the block and change nothing else, or chan
 everything else and leave the block alone. Never let a current marker skip the
 drift audit, and never trust it over what §5b actually observes.
 
-The current schema version is **v1**. It is recorded in `CHANGELOG.md` under the
+The current schema version is **v2**. It is recorded in `CHANGELOG.md` under the
 plugin release that introduced it; when the model changes in a way that requires
 repo-side work, that version increments and §5 gains a migration step for it.
 **A schema bump is not the same as a plugin version bump** — most plugin releases
@@ -172,7 +172,7 @@ Note especially:
   progress count meaningless and adds another candidate for "active". Assigning
   a milestone is what *scheduling* means. Flag only issues that look like real
   work someone forgot to schedule.
-- Issues whose body has **no `### Done when` section** — the gap `/orca:verify`
+- Issues whose body has **no acceptance checklist under either heading** — the gap `/orca:verify`
   cares about. Check for the *criteria*, not the exact heading: an issue may
   state acceptance criteria in prose or under a different heading, in which case
   the fix is a heading rename, not authoring new criteria.
@@ -222,7 +222,7 @@ the whole skill to drop one issue is a bad trade.
 For each live-state item, propose an issue: title, milestone, labels, and a body
 following `../_shared/issue-schema.md`.
 
-**The `### Done when` checklist is the hard part, and the point.** Derive criteria
+**The `### Acceptance criteria` checklist is the hard part, and the point.** Derive criteria
 from what the source actually says. Where the source is vague, write the honest
 prose criterion rather than inventing a checkable one — `issue-schema.md`'s three
 buckets exist precisely so an unverifiable criterion has a legitimate home. Do not
@@ -231,14 +231,14 @@ contort a criterion into a fake command to make a future gate go green.
 Where a criterion genuinely is checkable, use the checkable form:
 
 ```markdown
-### Done when
+### Acceptance criteria
 - [ ] `./scripts/test.sh` exits 0
 - [ ] `docs/api.md` is modified
 - [ ] Importing a malformed file surfaces an error instead of crashing
 ```
 
 If an item is too thin to write any criteria for, **say so and propose it
-anyway** with a `### Done when` containing one line: `- [ ] <to be defined —
+anyway** with a `### Acceptance criteria` containing one line: `- [ ] <to be defined —
 this issue needs triage before it can be planned>`. A thin issue that is honestly
 marked thin is better than a fabricated checklist, and better than silently
 dropping the work.
@@ -348,7 +348,7 @@ a current one:
 
 ```markdown
 ## Task tracking
-<!-- orca-skills tracking model v1 -->
+<!-- orca-skills tracking model v2 -->
 ```
 
 Write the version this run applied, not the plugin version. On a §5a upgrade,
@@ -420,12 +420,54 @@ Schema history:
 
 | Version | Repo-side change required |
 |---|---|
-| v1 | The initial model: issues carry `### Done when`; narrative in `docs/specs/`; the `AGENTS.md` block; roadmap generated, not tracked. |
+| v1 | The initial model: issues carry an acceptance checklist under `### Done when`; narrative in `docs/specs/`; the `AGENTS.md` block; roadmap generated, not tracked. |
+| v2 | That checklist's heading is renamed to **`### Acceptance criteria`**. Nothing else changes — same items, same forms, same meaning. |
 
 When a future release changes what these skills expect of a repo, it adds a row
 here **and** a step below saying exactly what to change. A schema version with no
 row is a bug in the release, not a no-op — stop and say so rather than guessing
 what the upgrade should do.
+
+#### v1 → v2: rename the acceptance checklist heading
+
+**Every skill reads both headings**, so this upgrade is a tidy-up, not a repair —
+a repo that never runs it keeps working. Say that plainly when you propose it, so
+nobody believes their backlog is broken.
+
+Find the issues still using the old heading:
+
+```bash
+gh issue list --state all --limit 500 --json number,title,body \
+  --jq '[.[] | select(.body | test("(?m)^#{2,4} +Done when *$")) | {number, title}]'
+```
+
+For each, rewrite **only that heading line** and leave the body otherwise byte-identical:
+
+```bash
+gh issue view <n> --json body --jq .body > /tmp/issue-<n>.md
+# replace the single heading line, e.g. '### Done when' → '### Acceptance criteria'
+gh issue edit <n> --body-file /tmp/issue-<n>.md
+```
+
+Rules that keep this safe:
+
+- **Only the heading changes.** Not the checklist items, not their order, not
+  their checked state, not surrounding prose. An acceptance criterion is an
+  executable contract (`../_shared/evidence-gates.md`); a migration that edits one
+  is changing what a branch will be gated against.
+- **Match the heading anchored to its own line**, at any depth (`##`–`####`), and
+  only when `Done when` is the whole heading text. A line mentioning "done when"
+  inside a sentence, or a criterion containing the words, is not a heading.
+- **Skip closed issues unless the user asks for them.** They are history; nothing
+  will gate them again. Offer it, default to open only.
+- **An issue with both headings is a conflict, not a rename** — report it and
+  leave it alone. Two acceptance checklists means someone was mid-edit, and
+  picking one is a decision you do not get to make.
+- **Batch, and report counts**: how many rewritten, how many skipped and why.
+  This can touch hundreds of issues, so it goes through the same approval gate as
+  everything else here — propose, then apply.
+
+Then update the marker to v2.
 
 ### 5b. Drift audit — always run this
 
@@ -437,7 +479,8 @@ with ordinary use and is independent of which schema version is recorded.
 
 | Drift | How it shows up | How to detect |
 |---|---|---|
-| Issues without criteria | Filed by hand since the migration — the usual source | `gh issue list --state open --json number,title,body`, check for `### Done when` |
+| Issues without criteria | Filed by hand since the migration — the usual source | `gh issue list --state open --json number,title,body`, check for `### Acceptance criteria` **or** the older `### Done when` — an issue carrying either has criteria |
+| Issues still on the old heading | Filed before v2, or by someone copying an old issue | Same query. **Not a defect** — every skill reads both. Offer the v1→v2 rename above; never report it as missing criteria |
 | Decorative blocking | A `blocked` label with no edge; readiness reports it ready | `labels` contains a blocking label while `blockedBy.totalCount == 0` |
 | A tracker regrowing | Progress rows reappearing in a tracked file | §1a's search, re-run |
 | Reintroduced instructions | "update the roadmap when done" added back | §1c's grep, re-run |
@@ -476,7 +519,7 @@ other.
 
 - **Migrating a reference doc.** Not every tracked markdown file is a tracker.
   When unsure, leave it and ask.
-- **Fabricating acceptance criteria.** A `### Done when` invented to look
+- **Fabricating acceptance criteria.** A `### Acceptance criteria` invented to look
   complete is worse than an honestly thin one — it will pass a gate that should
   have failed.
 - **Rewriting the user's narrative.** Specs move verbatim.

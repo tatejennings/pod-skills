@@ -1,6 +1,6 @@
 ---
 name: launch
-description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Done when" acceptance criteria, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:launch", "/orca:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", "put this in its own lane", or "hand off #84" / "hand this off" / "give this to another agent" WHEN the work is a GitHub issue or a plan agreed in this repo - this skill adds the issue's acceptance criteria, the in-flight and manual-label checks, and the executor contract on top of a raw handover. Deciding WHAT to build, or an issue with no acceptance criteria yet, is /orca:plan; launching several planned issues at once is /orca:wave --launch, which checks their plans for collisions first. For a handover with no issue and no plan behind it, or raw worktree and terminal mechanics, use Orca's bundled orca-cli skill; for supervised coordination with waits and decision gates, its orchestration skill.
+description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Acceptance criteria" checklist, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/orca:launch", "/orca:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", "put this in its own lane", or "hand off #84" / "hand this off" / "give this to another agent" WHEN the work is a GitHub issue or a plan agreed in this repo - this skill adds the issue's acceptance criteria, the in-flight and manual-label checks, and the executor contract on top of a raw handover. Deciding WHAT to build, or an issue with no acceptance criteria yet, is /orca:plan; launching several planned issues at once is /orca:wave --launch, which checks their plans for collisions first. For a handover with no issue and no plan behind it, or raw worktree and terminal mechanics, use Orca's bundled orca-cli skill; for supervised coordination with waits and decision gates, its orchestration skill.
 ---
 
 # Launch
@@ -124,7 +124,7 @@ Then check three things, and **report rather than silently proceeding** on any:
   That is the most common reason to start an agent, and blocking it would leave
   the failure path with no owner. Go to §1a instead.
 
-**Read the `### Done when` checklist** from the body (`../_shared/issue-schema.md`).
+**Read the acceptance checklist** from the body — `### Acceptance criteria`, or the older `### Done when`, which still counts (`../_shared/issue-schema.md`, "Finding the checklist").
 It goes into the contract verbatim — it is what `/orca:verify` will check, and
 the executor must see the same criteria the gate will apply.
 
@@ -309,7 +309,7 @@ the file:
 | `## The work` | the goal and chosen approach, plus the issue link |
 | `## Context` | why now; the issue body quoted, not paraphrased |
 | `## Decisions already made` | choices locked in planning, so they are not re-litigated |
-| `## Done when` | the issue's checklist **verbatim** — what the gate will check |
+| `## Acceptance criteria` | the issue’s checklist **verbatim** — what the gate will check |
 | `## How to work` | the ten numbered steps, including the cold-reader review (6) and the in-lane gate (7/7a) |
 | `## Out of scope` | explicit non-goals, especially adjacent work that looks related |
 | `## Finish with` | what the final summary must report, including the gate verdict |
