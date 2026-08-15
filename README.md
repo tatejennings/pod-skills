@@ -541,9 +541,18 @@ This plugin points at them rather than restating them.
 The boundary, stated once: **Orca owns how the CLI works; this plugin owns what
 becomes a lane, what contract binds the executor, and what proves the result.**
 
+**GitHub Issues only.** Orca also ships a full Linear surface — `orca linear …`,
+its own `orca-linear` skill, and `--linear-issue` on `worktree create`. These
+skills read a `### Done when` checklist out of a GitHub issue body and nothing
+else. If your tracker is Linear, you want Orca's Linear skill, not this. A lane
+whose criteria live somewhere the gate cannot read them silently loses the gate,
+which is the failure this whole plugin exists to prevent.
+
 **No merge automation.** Lanes end at an open PR and a human merges. Since
 the merge is the only state transition in the model, automating it would automate
-the one decision worth keeping.
+the one decision worth keeping. `/orca:tech-lead` runs the rest of the pipeline
+unattended and stops precisely there — it will tell you a PR is ready to merge,
+and never act on it.
 
 **No enabled automation.** The pipeline *can* be driven on a schedule by an Orca
 automation, but this plugin ships none enabled, and turning one on has real
