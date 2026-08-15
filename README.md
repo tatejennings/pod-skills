@@ -359,6 +359,31 @@ three plan-review rounds, two fix rounds per PR, two owner-only ticks before it
 idles out, and an eight-hour hard cap. **It never merges a PR and never closes
 an issue** — that decision is the one this whole pipeline exists to keep yours.
 
+**Who it calls in.** The tech lead is one seat in a small hierarchy, and the
+specialists it consults are **seats**, not skills:
+
+```
+you            management — merge, forks past the bar, needs-owner / manual
+ └─ tech lead  the one composer — proposes, plans, launches, dispatches, decides under the bar
+     ├─ seats  advisors, fresh per question, one lens each, no authority
+     │           product · requirements · architecture · test · ux/design · security · domain
+     ├─ lanes  workers — one issue each, started by /pod:launch
+     └─ skills tools — /pod:status, /pod:plan, /pod:verify, …
+```
+
+A **product** seat reads the draft slate once before it is proposed — order,
+dependency edges, whether two issues are really one — and may reorder within
+your scope but never widen it. **Requirements, architecture and test** seats
+review every plan, always three, never fewer. **UX & design**, **security** and
+a **domain** seat join the plan panel when the repo's `CLAUDE.md` names them or
+the issue calls for them, five seats at most. Every seat is a fresh agent that
+returns text; the tech lead decides what to do with it under the decision bar,
+and nothing a seat says can make anything merge. The roster and each lens live in
+[`tech-lead/references/seats.md`](plugins/pod/skills/tech-lead/references/seats.md);
+a repo overrides it in its own `CLAUDE.md`. There is deliberately no `/pod:qa` or
+`/pod:pm` — a persona you could invoke would collide with `verify` and `triage`
+in routing and be a second loop with no bounds.
+
 For a read-only answer to "what should I work on next", use `/pod:status`;
 this skill is for when you want it acted on.
 
@@ -468,9 +493,9 @@ an entire executor run.
 ```
 
 Workflow 2, repeated, without you in the middle of it. It prints the slate it
-chose — so you can steer before anything starts — then plans each issue with an
-expert panel, launches it, watches the lanes, and handles the review comments on
-the PRs they open. It reports each pass and notifies you only when something
+chose — checked once by a product seat for order and shape, so you can steer
+before anything starts — then plans each issue with an expert panel, launches
+it, watches the lanes, and handles the review comments on the PRs they open. It reports each pass and notifies you only when something
 actually needs you.
 
 It stops when everything left is yours: a fork its experts split on, a
@@ -597,6 +622,14 @@ skills read a `### Acceptance criteria` checklist out of a GitHub issue body and
 else. If your tracker is Linear, you want Orca's Linear skill, not this. A lane
 whose criteria live somewhere the gate cannot read them silently loses the gate,
 which is the failure this whole plugin exists to prevent.
+
+**Not a cast of persona skills.** There is one composer, `/pod:tech-lead`, and
+the specialists it consults — product, architecture, test, UX, security — are
+seats it convenes as advisors, defined in one reference file and overridable
+per repo. A `/pod:qa` or `/pod:pm` you could invoke directly would collide with
+`verify` and `triage` in routing and be a second loop with its own bounds to
+get wrong. QA is `/pod:verify`; grooming is `/pod:triage`; everything else is a
+seat.
 
 **No merge automation.** Lanes end at an open PR and a human merges. Since
 the merge is the only state transition in the model, automating it would automate

@@ -1,6 +1,6 @@
 ---
 name: tech-lead
-description: Take the tech-lead seat over this repo's Orca pipeline and keep the work moving without the user driving each step - reads the backlog and the live lanes, proposes a slate, and once told to go it plans each issue with a panel of expert reviewers until the plan holds, launches it as a lane via /pod:launch, watches the lanes, dispatches fixes for the review comments on the resulting PRs (from the owner and from whatever review bot the repo has adopted - Codex or any other; comments from anyone else are queued for you, never acted on), decides forks when the experts agree, and stops only when everything left needs the human. It never merges. Ask it and it proposes; tell it and it goes. Use when the user says "/pod:tech-lead", "be the tech lead", "orchestrate the epic", "work on whatever's next", "do whatever you think is best", "just go", "run it", "keep going until you need me", "take the epic", "push <epic> forward", "what's next on the <epic> - go do it", "handle the Codex comments on my PRs", "deal with the review comments", "resume" after a tech-lead session, or steers a running one with "pause", "stop", "status", "add #N", "drop #N", "cap N", "only reviews for now". A bare read-only "what should I work on next" or "how are the lanes doing" is /pod:status - use this skill only when the user wants something ACTED on, not just reported. Also not for a single one-off handoff (/pod:launch), planning one issue interactively (/pod:plan), planning several with the user answering questions (/pod:wave), or supervising dispatch workers with worker_done semantics (Orca's bundled orchestration skill); driving the Orca app directly is its orca-cli skill. Never merges a PR and never closes an issue - the merge is the user's.
+description: Take the tech-lead seat over this repo's Orca pipeline and keep the work moving without the user driving each step - reads the backlog and the live lanes, proposes a slate, and once told to go it plans each issue with a panel of expert reviewers until the plan holds (specialist seats - product, requirements, architecture, test, UX, security - convened as advisors, never as actors), launches it as a lane via /pod:launch, watches the lanes, dispatches fixes for the review comments on the resulting PRs (from the owner and from whatever review bot the repo has adopted - Codex or any other; comments from anyone else are queued for you, never acted on), decides forks when the experts agree, and stops only when everything left needs the human. It never merges. Ask it and it proposes; tell it and it goes. Use when the user says "/pod:tech-lead", "be the tech lead", "orchestrate the epic", "work on whatever's next", "do whatever you think is best", "just go", "run it", "keep going until you need me", "take the epic", "push <epic> forward", "what's next on the <epic> - go do it", "handle the Codex comments on my PRs", "deal with the review comments", "resume" after a tech-lead session, or steers a running one with "pause", "stop", "status", "add #N", "drop #N", "cap N", "only reviews for now". A bare read-only "what should I work on next" or "how are the lanes doing" is /pod:status - use this skill only when the user wants something ACTED on, not just reported. Also not for a single one-off handoff (/pod:launch), planning one issue interactively (/pod:plan), planning several with the user answering questions (/pod:wave), or supervising dispatch workers with worker_done semantics (Orca's bundled orchestration skill); driving the Orca app directly is its orca-cli skill. Never merges a PR and never closes an issue - the merge is the user's.
 ---
 
 # Tech lead — the seat the pipeline leaves empty
@@ -32,6 +32,10 @@ yourself. Your context stays clean enough to make decisions in; agents in lanes 
   never emit `worker_done`, so this skill supervises by **state**, not by inbox.
 - **Driving the Orca app directly** ⇒ Orca's bundled `orca-cli` skill; this skill only borrows the
   handful of terminal commands it names below.
+- **A persona you can invoke directly.** There is no `/pod:qa`, `/pod:pm`, `/pod:art-director`.
+  QA is `/pod:verify`; backlog grooming is `/pod:triage`; every other specialist is a **seat**
+  this skill convenes for a question and then decides on itself — `references/seats.md`. Seats
+  advise, this skill acts, and only the user merges.
 
 ## 0. Preconditions — stop, do not degrade
 
@@ -110,12 +114,22 @@ Record the mode in the ledger the moment it is decided — `autonomy granted by 
 ## 2. The proposal — always the first thing you print
 
 Whatever the mode, the first pass **observes and proposes; it launches nothing.** Run §3 step 1,
-then print, in this order:
+draft the slate, then **convene the Product seat on the draft, once** — `references/seats.md`,
+*The slate*. It gets the draft with your reasons, the READY NEXT list, every in-scope issue's
+title, labels, milestone and `blockedBy`, and the repo's rules; it answers whether it would change
+the order and whether anything is one issue pretending to be several or the reverse. Fold
+reorderings that are clearly right; put merge/split candidates and "do not skip this" under
+*Waiting on you* — those restructure the backlog, which is the user's. One seat, one round, no
+loop; it may reorder within the scope, never widen it. Write `Slate reviewed <time>` to the ledger
+and **never re-convene it on `resume`** — an approved or edited slate is the user's.
+
+Then print, in this order:
 
 1. **The slate.** Which issues you want to start, in what order, at what cap, and *why* — readiness
    (every `blockedBy` node `CLOSED`), which one unblocks the most, dependency edges inside the
-   scope, size labels. Name the plan-with-experts step and the launch step so it is clear each
-   issue gets planned before it runs.
+   scope, size labels. One line `Product seat: held | reordered … because … | flagged …`. Name the
+   plan-with-experts step and the launch step so it is clear each issue gets planned before it
+   runs.
 2. **In flight now, and what you will do about it.** Each live lane / open PR with its `/pod:status`
    verdict and your next action: fix these review comments, escalate this failed gate, list these
    human criteria for the user.
@@ -241,7 +255,9 @@ While `live lanes < cap` and READY NEXT is non-empty and the scope has candidate
    against something the maintainer no longer approved. On the next tick, an issue whose
    `updated_at` moved after its lane launched goes under *Waiting on you* rather than being
    silently gated against new criteria.
-2. **Plan with experts** — `references/expert-panel.md`. Planning itself runs in a separate Orca
+2. **Plan with experts** — convene the plan panel per `references/seats.md` (three core seats
+   always, domain seats when the repo or the issue calls for them, five at most) and run the
+   rounds per `references/expert-panel.md`. Planning itself runs in a separate Orca
    terminal exactly as `/pod:wave` does it, so it cannot enter plan mode in *your* context.
    **Write the ledger row before you start it** (`#<n> | planning (terminal <handle>)`), not at the
    end of the tick — a crash between starting the terminal and writing the ledger is a resumed
@@ -392,6 +408,11 @@ Never write progress into a tracked file. Never write the ledger inside any chec
   event. Read the terminal before concluding; never kill on silence.
 - **Trusting the executor's summary or a checkbox.** The `<!-- orca:verify -->` comment is the
   record; read that.
+- **Convening a seat to act.** A seat that edits, comments on GitHub, launches, or writes the
+  ledger is not a seat — it is an unbounded second actor. Seats return text; you decide.
+- **Adding a persona as a skill.** `/pod:pm`, `/pod:qa` and the like collide with `triage`,
+  `verify` and this skill in routing, and each is a second composer with no bounds. A new
+  specialist is a new row in `references/seats.md`, convened from here.
 - **Restating `/pod:plan`, `/pod:launch`, or `/pod:status` instead of invoking them.** If you
   find yourself writing a contract template or a status join, stop — the skill exists, call it.
 - **Notifying on every tick.** A notification the user cannot act on trains them to ignore the

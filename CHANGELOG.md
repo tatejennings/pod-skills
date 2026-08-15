@@ -4,6 +4,81 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.1.0 — 2026-08-15
+
+**Seats: the specialists the tech lead convenes.** The plugin now has personas —
+product, requirements, architecture, test, UX & design, security, domain — and
+none of them is a skill.
+
+The question that started this was whether to add persona skills next to the
+tech lead: a project manager, a QA person, an art director. The repo already had
+most of them by *function* — `/pod:verify` is QA, `/pod:triage` is grooming, the
+expert panel was three unnamed reviewers — and the missing ones would each have
+been a second composer with its own bounds and its own ledger, colliding in
+routing with `triage`, `status`, `verify` and `tech-lead`. So a persona is a
+**seat**: a fresh agent the tech lead convenes for one question with one lens,
+whose text the tech lead reads and then decides on itself under the decision
+bar. Seats advise; the tech lead acts; the user merges. That is the hierarchy —
+you → tech lead → seats / lanes / skills — and it is now written down.
+
+### `tech-lead/references/seats.md` — new, load-bearing
+
+The one place a persona is defined: standing rules for every seat (fresh agent,
+never a fork; same inputs plus its lens and nothing else; the fenced-issue-body
+rule; the "only findings that would change what happens" bar; **never edits,
+comments, launches, or writes the ledger**), the roster with each seat's lens,
+what it reports on, and when it is convened, and the two convening points below.
+A consuming repo overrides the roster in its own `CLAUDE.md`; the file is never
+edited for one repo.
+
+Three seats are new:
+
+- **Product** — convened **once, at slate time**, before the proposal prints.
+  Order, dependency edges inside the scope, milestone coherence, issues that are
+  one pretending to be several or the reverse, skips it would not skip. It may
+  reorder *within* the scope the user named and never widen it; merge/split
+  suggestions go under *Waiting on you*, because they restructure the backlog.
+  Not re-convened on `resume` — an approved or edited slate is the user's.
+- **UX & design** — a plan-panel domain seat when the repo names it or the issue
+  is user-facing: flows, states, copy, accessibility, and visual direction where
+  the repo says it cares.
+- **Security** — a plan-panel domain seat when the issue touches auth, payments,
+  permissions, migrations, or anything run under a credential.
+
+**Bounds, which are design, not tuning:** one product-seat round on the slate;
+three core seats always, never fewer, including `scope:s`; **five seats per plan
+round at most** (three core + two domain) — more cold readers produce
+overlapping findings that read as convergence, which is exactly what the
+decision bar must not mistake for independence.
+
+**Deliberately not a seat:** a PR-time UX / "art director" review of what a
+lane produced. Its findings would be review comments authored by the tech lead's
+own agent and then dispatched by the tech lead — a self-loop outside the trust
+model in `review-fix.md`, where only the owner and an adopted reviewer generate
+dispatched work. A repo wanting design review of output adopts a reviewer for
+it, and the comments come in through the same door as everyone else's.
+
+### `expert-panel.md`
+
+The roster table and "choosing the fourth seat" moved to `seats.md`; the panel
+file keeps inputs, the reviewer prompt, rounds, and the decision bar, and says
+which seats a plan round convenes and the five-seat cap.
+
+### `tech-lead/SKILL.md`
+
+§2 convenes the product seat on the draft slate and prints one `Product seat:`
+line in the proposal; §3.3 convenes the plan panel per `seats.md`; *not for*
+gains "a persona you can invoke directly"; two failure modes added — *convening
+a seat to act* and *adding a persona as a skill*. The description names the seats
+as advisors, never actors; no trigger phrase changed, so the `/pod:status`
+boundary is where it was. The ledger header records `Slate reviewed <time>`.
+
+### Docs
+
+README and the guide gain a *Who it calls in* block with the hierarchy under
+`/pod:tech-lead`, and *not a cast of persona skills* under what this is not.
+CLAUDE.md records the seats-not-skills rule so it is not re-litigated.
+
 ## 2.0.0 — 2026-08-15
 
 **The plugin is now `pod`, and its skills are `/pod:<skill>`.**
