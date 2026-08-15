@@ -1,7 +1,73 @@
 # Changelog
 
-Notable changes to the `orca` plugin. Versions track
-`plugins/orca/.claude-plugin/plugin.json`.
+Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
+`plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
+`/orca:` invocations — they were true when written and are left as history.
+
+## 2.0.0 — 2026-08-15
+
+**The plugin is now `pod`, and its skills are `/pod:<skill>`.**
+
+A pod is what a group of orcas is called. The old name, `orca`, said two false
+things at once: that these skills were made by the Orca team, and — because
+`/orca:*` sat right next to Orca's own bundled `orca-cli` and `orchestration`
+skills — that "use orca to hand this off" had one obvious meaning. It did not.
+Every SKILL.md carried a paragraph fighting that routing collision per case;
+the name was the root cause. `pod` keeps the ocean, drops the claim, and reads
+as what it is: a team of agents on top of Orca, not Orca.
+
+This is a **name change only.** No skill's behaviour, flags, or trigger phrases
+changed except the namespace prefix. Nothing was rewritten to be smarter under
+cover of the rename.
+
+### What changed
+
+- `plugins/orca/` → `plugins/pod/`; `plugin.json` name `orca` → `pod`.
+- Marketplace `orca-skills` → `pod-skills`; installs are `pod@pod-skills`.
+- Every `/orca:<skill>` invocation in skills, `_shared/`, `references/`, README,
+  the guide, CLAUDE.md, CONTRIBUTING.md, TRACKING.md, and this repo's own
+  `/ship` and `/audit-orca` skills → `/pod:<skill>`.
+- The "collides with Orca's bundled skills" prose in CLAUDE.md and
+  CONTRIBUTING.md now says what is still true after the rename: the *subject*
+  overlaps, so every skill still names the bundled skill that owns what it
+  declines. The namespace no longer collides.
+- README and the guide state up front that the plugin is not Orca's, and gain
+  an *Upgrading from `orca@orca-skills`* section.
+
+### What deliberately did not change
+
+- **Every reference to the Orca app and CLI.** `orca status`, `orca terminal …`,
+  `orca-cli`, `orchestration`, `_shared/orca-lanes.md`, `$ORCA_CLI_COMMAND`,
+  `orca-dev` / `orca-ide`, and this repo's `/audit-orca` — those name Orca, which
+  did not move.
+- **The verdict tag on the wire, `<!-- orca:verify head=… -->`.** It is a
+  durable record identifier already sitting in consuming repos' PR comments;
+  renaming it would orphan every existing verdict and force every consumer to
+  grep an alternation forever. `_shared/evidence-gates.md` now says so beside its
+  definition: it names the record format, not the plugin, and never follows a
+  rename.
+- **The `AGENTS.md` block and its `<!-- orca-skills tracking model v2 -->`
+  marker.** The block written into consuming repos names no skills, so nothing
+  in it changes and there is no schema bump — `/pod:migrate`'s version table is
+  untouched. The marker prefix stays for the same reason as the tag.
+- Changelog history below this entry.
+
+### Migrating
+
+There is no in-place upgrade across a name change:
+
+```bash
+claude plugin uninstall orca@orca-skills
+claude plugin marketplace remove orca-skills
+claude plugin marketplace add tatejennings/pod-skills
+claude plugin install pod@pod-skills
+```
+
+Consuming repos need nothing. Prose in a repo's own `CLAUDE.md` that spells out
+`/orca:<skill>` needs a hand edit; that is the only trace.
+
+The GitHub repository and local checkout are renamed `pod-skills` separately;
+the old GitHub URL redirects.
 
 ## 1.20.0 — 2026-08-15
 

@@ -1,23 +1,24 @@
-# orca-skills
+# pod-skills
 
-Local Claude Code plugin marketplace holding all Orca-related skills in a single
-plugin named `orca`. This repo contains only markdown and JSON — there is no
+Local Claude Code plugin marketplace holding a backlog-and-planning layer for the
+Orca app in a single plugin named `pod` — a pod being what a group of orcas is
+called. It is not made by the Orca team. This repo contains only markdown and JSON — there is no
 build step.
 
 ## Where things go
 
-- New skills: `plugins/orca/skills/<skill-name>/SKILL.md` (folder + one file).
+- New skills: `plugins/pod/skills/<skill-name>/SKILL.md` (folder + one file).
 - Skills about maintaining *this repo* (not shipped to users) live in
   `.claude/skills/`:
   - **`/ship`** — cuts a GitHub release.
   - **`/audit-orca`** — re-verifies every `orca` CLI fact against the installed
     binary, checks whether Orca's bundled skills have started claiming trigger
-    phrases that collide with `/orca:*`, and updates the version stamp. **Run it
+    phrases that collide with `/pod:*`, and updates the version stamp. **Run it
     after every Orca upgrade** — the CLI moves independently, and nothing else
     here would notice a flag that vanished.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
-- Plugin identity/version: `plugins/orca/.claude-plugin/plugin.json`.
-- Skills are invoked namespaced: `/orca:<skill-name>`.
+- Plugin identity/version: `plugins/pod/.claude-plugin/plugin.json`.
+- Skills are invoked namespaced: `/pod:<skill-name>`.
 
 ## Skill-authoring rules
 
@@ -31,10 +32,11 @@ build step.
   `worktree list` returns it as `id` while `worktree ps` returns it as
   `worktreeId`.
 - **Every skill states what it is NOT for, and names the bundled Orca skill that
-  owns that case.** The namespace collides semantically with Orca's own
-  `orca-cli` and `orchestration` skills — "use orca to hand this off" could route
-  either way. Orca's bundled skills already disambiguate each other this way;
-  match that.
+  owns that case.** These skills sit on top of the Orca app, so their *subject*
+  overlaps with Orca's own `orca-cli` and `orchestration` skills — "hand this off
+  in Orca" could route either way. (The plugin was named `orca` until 2.0.0, when
+  the namespace itself collided too; `pod` fixed the name, not the overlap.)
+  Orca's bundled skills already disambiguate each other this way; match that.
 - **Skills are app- and project-agnostic.** No skill references a specific
   project, game, milestone name, label, or acceptance criterion. Project-specific
   conventions live in the consuming repo, not here. If a skill needs a repo's
@@ -49,7 +51,7 @@ the shared file, not a skill's restatement of it:
 
 - `_shared/github-backlog.md` — milestone resolution, the readiness query, `gh`
   constraints. *(app-agnostic: GitHub only, nothing Orca-specific)*
-- `_shared/agents-fragment.md` — the block `/orca:migrate` appends to a consuming
+- `_shared/agents-fragment.md` — the block `/pod:migrate` appends to a consuming
   repo's `AGENTS.md`. *(app-agnostic)*
 - `_shared/issue-schema.md` — the `### Acceptance criteria` contract every skill
   reads. **`### Done when` is its former name and still reads everywhere** —
@@ -60,7 +62,7 @@ the shared file, not a skill's restatement of it:
   invocation.
 - `_shared/evidence-gates.md` — how a criterion is checked, and the four
   verdicts. Read by the lane's own self-gate (`launch/references/self-gate.md`),
-  by `/orca:verify`, and by `/orca:status`, which greps for the verdict string.
+  by `/pod:verify`, and by `/pod:status`, which greps for the verdict string.
   **The verdict casing is part of the contract**: UPPERCASE (`PASS`, `FAIL`, …)
   is the literal string on the wire that consumers grep for; lowercase is only
   the verdict's *name* in prose. Do not "tidy" one into the other — a consumer
@@ -76,13 +78,13 @@ shared one. Both files say so in a header — keep any copies you maintain in sy
 Repetition elsewhere (the handoff invocation, "nothing ever merges") is
 deliberate — an instruction present where it is needed cannot be missed.
 
-## `/orca:tech-lead` is the one skill that composes the others
+## `/pod:tech-lead` is the one skill that composes the others
 
 Every other skill is a leaf: it does its job and stops. `tech-lead` is the loop
 over them, so it has rules the others do not.
 
-- **It invokes, it never restates.** It calls `/orca:status` for the lane ×
-  backlog join, `/orca:plan` for planning, `/orca:launch` for lanes. If you find
+- **It invokes, it never restates.** It calls `/pod:status` for the lane ×
+  backlog join, `/pod:plan` for planning, `/pod:launch` for lanes. If you find
   yourself writing a contract template or a status query into it, stop — the
   skill exists. Its own listed failure modes say this; keep it true.
 - **Its bounds are the design, not tuning knobs.** Three plan-review rounds, two
@@ -105,7 +107,7 @@ over them, so it has rules the others do not.
   blocks as a personal skill; they were removed for exactly this reason. Do not
   reintroduce that shape.
 
-**Its nearest collision is `/orca:status`**, which owns the read-only reading of
+**Its nearest collision is `/pod:status`**, which owns the read-only reading of
 "what should I work on next". `tech-lead` claims that phrasing only when the user
 wants it acted on. If you edit either description, re-check the other.
 
@@ -119,7 +121,7 @@ skills. It is the one repo that opts out.
 ## After any skill edit
 
 1. `claude plugin validate .` from the repo root.
-2. Bump `version` in `plugins/orca/.claude-plugin/plugin.json`.
+2. Bump `version` in `plugins/pod/.claude-plugin/plugin.json`.
 3. Add a `CHANGELOG.md` entry under the new version — what changed and why, per
    skill.
 4. Check the docs for drift: `README.md`'s per-skill sections, flag table,
@@ -143,8 +145,8 @@ skills. It is the one repo that opts out.
    command alone does NOT update the installed copy:
 
    ```bash
-   claude plugin marketplace update orca-skills
-   claude plugin update orca@orca-skills
+   claude plugin marketplace update pod-skills
+   claude plugin update pod@pod-skills
    ```
 
    Changes apply to new sessions; existing ones need `/reload-plugins`.

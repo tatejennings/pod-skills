@@ -5,9 +5,9 @@ description: Cut a release of this plugin marketplace - verifies the plugin vers
 
 # Ship a release
 
-Release the `orca` plugin: prove the repo is internally consistent, then tag it
+Release the `pod` plugin: prove the repo is internally consistent, then tag it
 and publish a GitHub release. The version in
-`plugins/orca/.claude-plugin/plugin.json` is the single source of truth — the git
+`plugins/pod/.claude-plugin/plugin.json` is the single source of truth — the git
 tag and release name follow it, never the other way around.
 
 Nothing here merges or force-pushes, and every check that fails stops the ship
@@ -19,7 +19,7 @@ Report exactly what failed and stop if any check fails.
 
 1. **Repo root:** you are in the marketplace repo
    (`.claude-plugin/marketplace.json` exists). Read `<version>` from
-   `plugins/orca/.claude-plugin/plugin.json`.
+   `plugins/pod/.claude-plugin/plugin.json`.
 2. **Changelog current:** `CHANGELOG.md` has a `## <version>` section at the top.
    Missing ⇒ stop and tell the user what is unreleased — offer to draft the entry
    from the commits since the last tag, but let them approve the wording;
@@ -33,7 +33,7 @@ Report exactly what failed and stop if any check fails.
    change with no corresponding changelog line ⇒ stop and list the gaps.
    Docs-only commits (README, CLAUDE.md, this skill) need no entry.
 6. **Docs not stale:** if commits since the last tag touched
-   `plugins/orca/skills/`, confirm `README.md`'s skills table and pipeline
+   `plugins/pod/skills/`, confirm `README.md`'s skills table and pipeline
    diagram reflect them. Drift ⇒ stop and say precisely what looks out of date.
    (Same check CLAUDE.md requires after any skill edit.)
 
@@ -73,7 +73,7 @@ section — its bullets verbatim, since they already describe the release. Above
 them add one plain-language sentence naming what a user gets from this version,
 and below them a short install/upgrade line:
 
-    Existing installs: `claude plugin update orca@orca-skills`
+    Existing installs: `claude plugin update pod@pod-skills`
     (new installs: see the README).
 
 `--verify-tag` is deliberate: it aborts if the tag never reached the remote, so a
@@ -83,5 +83,5 @@ release cannot point at a tag nobody can fetch.
 
 Release URL, tag, version, the changelog bullets shipped, and anything the
 preflight let through with a warning. Remind the user that installed plugins
-still need `claude plugin update orca@orca-skills` — a GitHub release does not
+still need `claude plugin update pod@pod-skills` — a GitHub release does not
 reach their machine by itself.

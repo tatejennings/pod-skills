@@ -1,6 +1,6 @@
 ---
 name: audit-orca
-description: Audit this plugin's skills against the installed Orca CLI and its bundled skills - re-verifies every `orca` command and flag the skills reference against live `--help` output, checks whether Orca's bundled skill descriptions have started claiming trigger phrases that collide with /orca:*, reports new CLI surface worth adopting, and updates the version stamp. Use when the user says "/audit-orca", "audit against orca", "did orca change", "check the CLI facts", "Orca updated - are we still correct", or after upgrading the Orca app. This maintains THIS repo; it is not shipped to users.
+description: Audit this plugin's skills against the installed Orca CLI and its bundled skills - re-verifies every `orca` command and flag the skills reference against live `--help` output, checks whether Orca's bundled skill descriptions have started claiming trigger phrases that collide with /pod:*, reports new CLI surface worth adopting, and updates the version stamp. Use when the user says "/audit-orca", "audit against orca", "did orca change", "check the CLI facts", "Orca updated - are we still correct", or after upgrading the Orca app. This maintains THIS repo; it is not shipped to users.
 ---
 
 # Audit against the installed Orca
@@ -18,7 +18,7 @@ This skill is that notice. It is a maintenance skill for this repo, like
 
 ```bash
 orca status --json          # result.runtime.appVersion — what is installed
-grep -n "Verified against \`orca\`" plugins/orca/skills/_shared/orca-lanes.md
+grep -n "Verified against \`orca\`" plugins/pod/skills/_shared/orca-lanes.md
 ```
 
 Same version ⇒ say so and offer to run the checks anyway (a rebuild can change
@@ -33,7 +33,7 @@ the real binary; do not fall back to memory.
 Collect the distinct commands the skills reference:
 
 ```bash
-grep -rhoE 'orca [a-z-]+( [a-z-]+)?' plugins/orca/skills/ | sort -u
+grep -rhoE 'orca [a-z-]+( [a-z-]+)?' plugins/pod/skills/ | sort -u
 ```
 
 Filter out prose matches (`orca skills get <name>` is a real command; "orca
@@ -55,7 +55,7 @@ For each command above, diff the flags the skills use against live `--help`:
 
 ```bash
 orca <command> --help          # authoritative list
-grep -rn "orca <command>" plugins/orca/skills/   # what we tell agents to pass
+grep -rn "orca <command>" plugins/pod/skills/   # what we tell agents to pass
 ```
 
 Three findings to report separately:
@@ -88,8 +88,8 @@ it as verified on live data.
 ## 4. Bundled skill collisions — the subtle one
 
 Orca ships its own skills, and **their descriptions can start claiming phrases
-this plugin also claims.** That is not hypothetical: `/orca:handoff` was renamed
-to `/orca:launch` in 1.5.0 precisely because `orca-cli` and `orchestration` both
+this plugin also claims.** That is not hypothetical: `/pod:handoff` was renamed
+to `/pod:launch` in 1.5.0 precisely because `orca-cli` and `orchestration` both
 list "hand off"/"handover" as their triggers.
 
 ```bash
@@ -103,13 +103,13 @@ and any **new** one that appears), compare its trigger phrases against our seven
 descriptions:
 
 ```bash
-grep -h "^description:" plugins/orca/skills/*/SKILL.md
+grep -h "^description:" plugins/pod/skills/*/SKILL.md
 ```
 
 Report:
 
 - **A phrase claimed by both** — a real routing ambiguity. The fix is usually to
-  drop it from ours and name theirs, the way `/orca:launch` now does.
+  drop it from ours and name theirs, the way `/pod:launch` now does.
 - **A new bundled skill** that overlaps a skill here — worth a considered
   boundary statement before users hit it.
 - **A bundled skill that now does what one of ours does.** If Orca ships the

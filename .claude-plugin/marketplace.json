@@ -1,13 +1,13 @@
 {
-  "name": "orca-skills",
+  "name": "pod-skills",
   "description": "Skills that add a GitHub-Issues backlog and planning layer on top of the Orca app \u2014 migrate a repo's tracking onto the model, triage raw issues into plannable ones, plan work adversarially, launch it as a lane with an agent already working, watch the lanes, and gate the result against the issue's own acceptance checklist. Requires Orca.",
   "owner": {
     "name": "Tate Jennings"
   },
   "plugins": [
     {
-      "name": "orca",
-      "source": "./plugins/orca",
+      "name": "pod",
+      "source": "./plugins/pod",
       "description": "Requires the Orca app. A GitHub-Issues backlog and planning layer over Orca's worktree/terminal CLI: migrate, triage, plan, wave, launch, status, verify."
     }
   ]
