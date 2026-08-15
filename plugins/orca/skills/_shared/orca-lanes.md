@@ -14,10 +14,21 @@ worktree is identified, how to resolve one safely, and which facts are native
 > **Where the boundary sits:** `orca-cli` owns *how the CLI works*. This plugin
 > owns *what to hand off and what contract binds the executor*. When a skill here
 > needs to explain a command's mechanics, it points at `orca-cli` instead.
+>
+> **This plugin's tracker is GitHub Issues, and only that.** Orca also ships a
+> full Linear surface (`orca linear …`, plus its bundled `orca-linear` skill),
+> and `worktree create` / `worktree set` accept `--linear-issue` alongside
+> `--issue`. None of these skills read or write Linear: every one of them reads
+> a `### Done when` checklist out of a GitHub issue body. A repo tracking work in
+> Linear wants Orca's own Linear skill, not this plugin. Do not add a
+> `--linear-issue` fallback to a skill here — a lane whose criteria live where
+> the gate cannot read them silently loses the gate.
 
-Verified against `orca` **1.4.162**, 2026-07-31. Re-verify with
-`orca <group> --help` before writing any new CLI fact into a skill — never from
-memory. That rule has caught real defects, including one below.
+Verified against `orca` **1.4.182**, 2026-08-15 — every command and flag below
+re-checked against live `--help` at that version, with no breaks from 1.4.162.
+Re-verify with `orca <group> --help` before writing any new CLI fact into a
+skill — never from memory. That rule has caught real defects, including one
+below.
 
 ## Verified facts
 
@@ -323,6 +334,18 @@ Why each flag:
   frontmatter is needed to map a lane back to its tracker entry.
 - The pointer file path must be **outside the repo**: a new checkout cannot see
   another checkout's untracked files, but any absolute path is readable.
+
+**Two flags this invocation deliberately omits** (verified 1.4.182):
+
+- `--setup run|skip|inherit` — forces the repo's `orca.yaml` setup hooks. Omitted
+  so the repo's own setup policy decides; pass `--setup run` only when a lane
+  genuinely needs the hooks to have run before the agent starts. **`--run-hooks`
+  is a legacy alias for `--setup run` on `create` and additionally reveals the
+  worktree** — prefer `--setup run`, which does only the one thing. (On
+  `worktree rm`, `--run-hooks` is the real flag and has no `--setup` equivalent.)
+- `--activate` — reveals the new lane in the Orca app. Omitted on purpose: a
+  launch should not steal the user's view. `create` does not switch focus by
+  default, so nothing is needed to keep it that way.
 
 **A worktree cannot be created from an unborn `HEAD`.** A repo with zero commits
 has no ref to branch from. Make the initial commit first, or use

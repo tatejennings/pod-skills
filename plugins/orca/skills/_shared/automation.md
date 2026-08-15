@@ -8,7 +8,7 @@ preconditions.**
 This is a config artifact, not a skill. Nothing invokes it; a human creates it
 when they decide the guardrails below are in place.
 
-Verified against `orca` 1.4.162, 2026-07-31 (`orca automations create --help`).
+Verified against `orca` 1.4.182, 2026-08-15 (`orca automations create --help`).
 
 ## Why disabled
 
@@ -67,6 +67,14 @@ Flags that carry the weight:
 | `--repo path:…` | Resolve by path, never by name (`orca-lanes.md`). |
 | `--provider claude` | Valid ids include `codex`, `claude`, `gemini`. |
 | `--trigger` | `hourly`, `daily`, `weekdays`, `weekly`, a 5-field cron, or an RRULE. |
+
+**`--reuse-session` does not apply here, and that is deliberate.** Added in
+1.4.182, it submits a later run to the previous live session — but only for
+`--workspace-mode existing`. Under `new-per-run` there is no session to reuse.
+Do not switch to `existing` to gain it: a reused session accumulates context
+across runs, so run *n* inherits whatever run *n−1* concluded, and the
+independence that makes an unattended launcher auditable is exactly what is
+lost. `--fresh-session` is the opposite switch and is the default here already.
 
 Enable later, once the preconditions hold. **Automation subcommands take a
 positional `<id>`, not a `--worktree`-style selector** (see the note below on
@@ -151,7 +159,7 @@ orca automations run <id> --json               # run once, now
 ```
 
 Argument styles differ: `show`, `edit`, and `run` accept **either** a positional
-id or `--id`; `runs` accepts **only** `--id`. Verified at 1.4.162 — re-check with
+id or `--id`; `runs` accepts **only** `--id`. Verified at 1.4.182 — re-check with
 `--help` rather than assuming symmetry.
 
 `automations run` is the right way to test: it runs the automation immediately
