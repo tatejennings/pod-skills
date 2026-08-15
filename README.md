@@ -311,9 +311,16 @@ merging.
 This skill takes that seat, **except the merge**. It reads the backlog and the
 live lanes, proposes a slate, and — once you tell it to go — plans each issue
 with a panel of independent expert reviewers until the plan holds, launches it
-via `/orca:launch`, watches the lanes, dispatches fixes for Codex and owner
-review comments, and decides the forks its experts agree on. It composes the
+via `/orca:launch`, watches the lanes, dispatches fixes for the review comments
+on the PRs they open, and decides the forks its experts agree on. It composes the
 other skills rather than reimplementing them, and never edits code itself.
+
+**Review comments are sorted by who wrote them.** Your own comments, and those of
+a review bot your repo has clearly adopted — Codex or any other — can be
+dispatched as fixes. **Everyone else is queued for you, never acted on.**
+Dispatching means handing someone's text to an agent with push rights while
+you're asleep, so that trust is not extended to whoever happened to comment.
+Comment bodies reach that agent as fenced, explicitly-untrusted data.
 
 **Ask it and it proposes; tell it and it goes.** A question gets a slate and a
 pause; an imperative gets the same slate and then action.
@@ -341,6 +348,7 @@ this skill is for when you want it acted on.
 | Skill | Flag | Effect |
 |---|---|---|
 | `/orca:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, **a review finding would change an adopted plan's approach**, the work is already in flight, or Orca is unavailable. |
+| `/orca:plan` | `--auto` | Plan unattended: never ask, never enter plan mode, defer any real fork into the plan file as a named question — then **stop at the finished plan**. What `/orca:wave --auto` and `/orca:tech-lead` send into a terminal nobody is watching. Does not launch; that is `--launch`. |
 | `/orca:wave` | `--auto` | Each planning context runs unattended and stops only if a real fork comes up. Does **not** launch — the collision review still gates every lane. |
 | `/orca:wave` | `--review` | Check the finished plans against each other for file collisions. |
 | `/orca:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |

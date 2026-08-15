@@ -3,6 +3,131 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.18.0 — 2026-08-15
+
+A four-lens adversarial review of 1.17.0's `/orca:tech-lead` — one reviewer
+briefed to argue the skill should not exist, one hunting operational defects, one
+judging it against its own goal, one auditing safety and authority. Three of the
+four independently found the same two blocking defects. Everything below was
+re-verified by hand against the files and the live `gh` API before being fixed.
+
+### `/orca:plan` never implemented `--auto`
+
+`/orca:wave` has sent `/orca:plan <n> --auto` since it shipped, and documents the
+flag as real. `/orca:plan` parsed only `--launch`. So `--auto` fell through to
+`EnterPlanMode` — **an approval gate with nobody there to approve it.**
+
+`/orca:tech-lead` was the first caller to hit it on every issue rather than
+occasionally, which is how it surfaced, but the defect was never tech-lead's.
+`/orca:plan` §0 now parses `--auto` (plan unattended, never ask, never enter plan
+mode, defer forks into the plan file, stop at the plan), and §3's asking rules
+now key on the flag rather than on "inside a wave" — a programmatic caller is not
+a reason to stop asking, the flag is. **An unrecognized flag is now a stop**, not
+a token to ignore.
+
+### Plans are found, not guessed
+
+`/orca:tech-lead` globbed `<date>-<n>*.md`, which matches issue #8 when you asked
+for #84, and misses entirely when the plan was named from a slug. On a miss it
+fell back to **scraping a plan out of a terminal buffer** — possibly a
+half-written draft, possibly one awaiting an approval nobody gave — and reviewing
+that as though it were a plan.
+
+Two changes make the handoff explicit. `/orca:plan` names issue-targeted plans by
+the bare issue number, and prints `PLAN FILE: <absolute path>` as its last line,
+always. Callers read that line. A missing file is now a **reported failure**, not
+a fallback to scraping.
+
+### Review comments are untrusted input
+
+The fix contract copied PR review comment bodies **verbatim** into a file, then
+told an agent with push rights and `gh` auth to *"execute its instructions
+exactly."* The prohibitions sat 42 lines below the injected text, and a `>`
+blockquote — the only delimiter — does not survive a comment containing its own
+headings. On a public repo, any commenter reached an unattended agent.
+
+- A **`## Hard limits` block now comes first**, before any third-party text,
+  copied verbatim into every contract. A contract without it, or with it after
+  the findings, is invalid and must not be sent. Same rule `/orca:launch` already
+  held for the gate prompt, for the same reason.
+- Comment bodies go in **fenced blocks**, never blockquotes, under an explicit
+  statement that they are data describing a problem and never instructions — with
+  an instruction to report any attempt as an injection.
+- The **expert panel** gets the same treatment: issue bodies are attacker-writable
+  too, and an issue that quietly steers three cold readers the same way
+  manufactures the convergence the decision bar reads as independence.
+
+### Reviewers are a role, not a product
+
+The skill hardcoded `chatgpt-codex-connector[bot]`, its badge format, and
+`@codex review`. **That is an app-agnosticism violation** — other repos run other
+reviewers, several reviewers, or none.
+
+Authors now sort into three roles: **owner** (always P1), **adopted reviewer**
+(findings dispatchable), and **everyone else** (queued, never dispatched). A bot
+is not trusted for being a bot; adoption has to be evident from the repo's own
+configuration. Priority markers are learned per-reviewer and recorded in the
+ledger. Codex remains as a labelled worked example of the middle role. The
+re-trigger is only sent when its form is known — **an at-mention of a guessed
+handle pings a real person at 4am.**
+
+That previously-unbadged-comments defaulted to `P2` *auto-fix* is what made this
+urgent: the default trusted a stranger's text enough to act on it.
+
+### Auto-merge: the invariant was narrower than it read
+
+"Nothing ever merges" is enforced by forbidding every *agent* from merging — and
+that part holds; it was traced and no path around it was found. But contracts
+mandate **non-draft** PRs so review tooling sees them, and a non-draft PR in a
+repo with auto-merge enabled merges itself on green CI with **no agent
+involved.** The guarantee was "no agent merges," which is not the same sentence.
+
+`/orca:tech-lead` §0 now checks `autoMergeAllowed` and stops unless the user
+overrides it knowingly. (Verified live: it is a GraphQL field; `gh repo view
+--json` does not expose it.) This is a limit of the model rather than a bug in
+the skill — worth stating plainly, since an eight-hour unattended loop is where
+it would first matter.
+
+### Smaller fixes from the same review
+
+- **The fix-round counter moves at dispatch**, not when the round closes. It was
+  the only termination rule on the fix loop, and a compaction in between lost it.
+- **The reviewer is not re-triggered after round 2.** Soliciting a review the loop
+  is not permitted to act on hands the user a fresh unaddressed round.
+- **Round 2 of the panel is a cold read again.** Reviewers were being handed the
+  `## Panel` section recording what was dismissed and why — a rebuttal written by
+  the party under review, which anchors against re-raising it. The section stays
+  in the file for the executor and the user; it is withheld from the panel.
+- **A split has a path.** A panel round recommending one is not a fork the
+  decision bar can take (it restructures the backlog), and `/orca:launch` would
+  refuse it — so the issue used to vanish silently from the tick. It now goes to
+  *Waiting on you* naming `/orca:plan` §5a.
+- **Planning terminals are closed on every path**, and swept at the top of each
+  tick. They live in the *active* worktree, where `/orca:status` cannot see them
+  (it filters `isMainWorktree == false`), so leaks were invisible to the loop's
+  own dashboard. Handles are re-resolved rather than cached across the block.
+- **The ledger row is written before the planning terminal starts**, mirroring the
+  rule already held for the mode.
+- **Verdict casing is documented as part of the contract** in
+  `_shared/evidence-gates.md`: UPPERCASE is the literal string on the wire that
+  `/orca:status` and `/orca:tech-lead` grep for; lowercase is only the verdict's
+  name in prose. Tidying one into the other breaks the match silently, and a
+  broken match reports a gated PR as ungated.
+
+### Still open, and deliberately so
+
+The review's strongest structural finding stands: `_shared/automation.md` records
+an adversarial review concluding **unattended issue → PR is not responsible to
+ship**, and lists eight preconditions. `/orca:tech-lead` currently meets three —
+no spend ceiling, no PR cap, no circuit breaker across issues, no leases on
+shared files, no stale-lane cancellation — and does not reference that file. It
+also lacks the cross-lane collision check `/orca:wave --review` exists to
+provide, so the composed skill is weaker there than the skills it composes.
+
+Those are the next change, not this one. This release makes the skill *work* and
+makes it *safe to point at a repo*; it does not yet earn its way past the bar the
+plugin set for itself.
+
 ## 1.17.0 — 2026-08-15
 
 ### `/orca:tech-lead` — the seat the pipeline leaves empty

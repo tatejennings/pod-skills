@@ -57,9 +57,10 @@ the shared file, not a skill's restatement of it:
 - `_shared/evidence-gates.md` — how a criterion is checked, and the four
   verdicts. Read by the lane's own self-gate (`launch/references/self-gate.md`),
   by `/orca:verify`, and by `/orca:status`, which greps for the verdict string.
-  **The verdict vocabulary is lowercase** — `pass`, `pass-agent-judged`,
-  `pass-with-review`, `fail` — and a fifth consumer that cannot match what a
-  producer emits reports a gated PR as ungated.
+  **The verdict casing is part of the contract**: UPPERCASE (`PASS`, `FAIL`, …)
+  is the literal string on the wire that consumers grep for; lowercase is only
+  the verdict's *name* in prose. Do not "tidy" one into the other — a consumer
+  that cannot match what a producer emits reports a gated PR as ungated.
 - `_shared/automation.md` — the scheduled automation, shipped disabled, and the
   preconditions for enabling it. A config artifact, not a skill.
 
