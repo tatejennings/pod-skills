@@ -179,7 +179,7 @@ can tell you what is wrong with a line of code; it cannot tell you what to do.
 
 - Worktree: `<path>` — the branch `<branch>` is already checked out. **Do not create a branch.**
 - PR: <url> — **push to this PR. Do not open another.**
-- Issue: #<n> — <url>. Its `### Done when` checklist is what the gate will re-check in full.
+- Issue: #<n> — <url>. Its `### Acceptance criteria` checklist is what the gate will re-check in full.
 - Follow the repository's CLAUDE.md / AGENTS.md. <paste the repo's non-negotiables that touch code>
 
 ## Findings to address
@@ -216,12 +216,12 @@ Reply to post: "<the reason, plainly>"
    apply it — say so in your final summary and in that thread's reply.
 2. Commit in logical increments. Run the repository's test command after the last fix.
 3. **Cold-reader review**, once. Spawn a fresh subagent (not a fork) with the findings, the
-   `### Done when` criteria, and `git diff <base>...HEAD` for *this round's commits only*, and ask
+   `### Acceptance criteria` criteria, and `git diff <base>...HEAD` for *this round's commits only*, and ask
    two questions: (1) does this diff address each finding without touching what already passed?
    (2) is anything in this round's lines likely to cause a bug or be hard to change? Judge only
    lines this round changed — the rest of the branch passed a gate and is not yours to relitigate.
    Fix real blockers; report the rest. Run it once; do not re-review after fixing.
-4. **Gate**, by an agent that did not write it, against the issue's **full** `### Done when` —
+4. **Gate**, by an agent that did not write it, against the issue's **full** `### Acceptance criteria` —
    a fix can break what previously passed. <paste the gate prompt here in full, exactly as the
    lane's original contract carried it — it is under "step 7" in
    `~/.claude/plans/<repo-name>/<original-contract>.prompt.md`>. Give it only the criteria, the

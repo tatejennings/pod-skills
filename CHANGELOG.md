@@ -3,6 +3,52 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.20.0 — 2026-08-15
+
+**Schema v2: `### Done when` is now `### Acceptance criteria`.**
+
+"Done when" was a personal convention. *Acceptance criteria* is what the rest of
+the industry calls this, and a repo's issue template should not need a glossary.
+The section is unchanged in every other respect — same items, same three forms,
+same meaning, same gate.
+
+### Nothing breaks, by design
+
+**Every skill reads both headings** and treats them as the same section. A repo
+written before this release keeps working untouched, whether or not it ever
+re-runs `/orca:migrate`.
+
+That tolerance is a safety property, not politeness. A heading a skill cannot
+find does not raise an error — **it reads as *no criteria at all***, which is the
+one state that disables the gate and makes `/orca:launch` refuse the issue. A
+rename must never be able to produce that silently, so `issue-schema.md` gains a
+*Finding the checklist* section stating the rule once, and every consumer points
+at it rather than implementing strictness of its own.
+
+An issue carrying **both** headings is a conflict, not a choice: report it and
+gate nothing. Two checklists means nobody knows which one binds.
+
+### `/orca:migrate` gains the v1 → v2 step
+
+The schema-version machinery existed for exactly this and had never been used.
+The upgrade finds issues still on the old heading and rewrites **only that
+heading line**, leaving the body otherwise byte-identical — because an acceptance
+criterion is an executable contract, and a migration that edits one is changing
+what a branch will be gated against. It matches the heading anchored to its own
+line at any depth, skips closed issues unless asked, refuses issues carrying both
+headings, and reports counts of what it rewrote and what it skipped.
+
+The drift audit learned the difference too: an issue on the old heading is **not**
+a defect and is never reported as missing criteria — it is offered the rename.
+
+### Everywhere else
+
+The rename reached the executor contract's `## Acceptance criteria` section, the
+self-gate prompt, the `AGENTS.md` fragment written into consuming repos (now
+stamped `tracking model v2`), all eight skill descriptions, the README, and the
+guide. Ordinary English uses of "done when" — *"you are done when `/orca:status`
+shows…"* — were left alone; only the heading and prose naming it changed.
+
 ## 1.19.0 — 2026-08-15
 
 **A verdict now says which commit it checked, and who wrote it.** From an

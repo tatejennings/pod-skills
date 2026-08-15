@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Done when" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. With --auto it plans unattended - never asking, never entering plan mode, deferring any real fork into the plan file as a named question - and stops at the finished plan; this is what /orca:wave --auto and /orca:tech-lead send into a terminal nobody is watching. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
+description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Acceptance criteria" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /orca:launch, starting the work as a lane instead of stopping for approval. With --auto it plans unattended - never asking, never entering plan mode, deferring any real fork into the plan file as a named question - and stops at the finished plan; this is what /orca:wave --auto and /orca:tech-lead send into a terminal nobody is watching. Use when the user says "/orca:plan", "/orca:plan 84", "/orca:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /orca:wave, starting the work in a lane is /orca:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
 ---
 
 # Plan
@@ -167,7 +167,7 @@ being wrong would be cheap to reverse. Anything less is a fork you do not own �
 defer (§6). Deferring on honest uncertainty is a correct outcome, not a failure:
 a wrong guess costs a whole executor run, a deferral costs one question.
 
-### 3a. The `### Done when` checklist — write it onto the issue
+### 3a. The `### Acceptance criteria` checklist — write it onto the issue
 
 **This is what makes the work gateable, and it is part of planning, not an
 afterthought.** Per `../_shared/issue-schema.md`, derive acceptance criteria and
@@ -175,7 +175,7 @@ write them onto the issue:
 
 ```bash
 gh issue edit <n> --body-file - <<'EOF'
-<existing body, with the ### Done when section added or updated>
+<existing body, with the ### Acceptance criteria section added or updated>
 EOF
 ```
 
@@ -188,7 +188,7 @@ Rules that matter more than completeness:
   bucket exists for exactly this.
 - **Never fabricate criteria** to look thorough. A criterion nobody can verify,
   or one that does not follow from the requirements, is worse than a short list.
-- **An existing `### Done when` section is not yours to replace.** It was written
+- **An existing `### Acceptance criteria` section is not yours to replace.** It was written
   before this planning pass — by `/orca:triage` with the user, or by an earlier
   run — and criteria written earlier are the stronger gate. Show the existing
   criteria beside the ones you would have written and **ask**. Silently
@@ -219,7 +219,7 @@ source, and have it attack on four axes.
 > the work.
 
 1. **Completeness** — is every requirement covered by a step? Does every step
-   have a verification? Is every `### Done when` criterion actually produced by
+   have a verification? Is every `### Acceptance criteria` criterion actually produced by
    some step?
 2. **Holes** — unstated assumptions, missing edge cases, migrations or format
    changes glossed over, test debt, doc obligations skipped.
@@ -332,7 +332,7 @@ finished PR.
 
 So before any part is launched:
 
-1. **File an issue per part.** Each gets its own `### Done when` checklist,
+1. **File an issue per part.** Each gets its own `### Acceptance criteria` checklist,
    covering only that part. `/orca:triage <n>` is the natural way, or file them
    directly per `../_shared/issue-schema.md`.
 2. **Record the order as real dependency edges** — part B blocked by part A:

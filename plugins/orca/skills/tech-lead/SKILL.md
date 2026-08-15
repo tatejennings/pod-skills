@@ -72,7 +72,7 @@ gh api graphql -f query='query { repository(owner:"<o>", name:"<r>") {
 Then confirm the pipeline this skill composes is present: `/orca:status`, `/orca:plan`,
 `/orca:launch` must be invocable (`orca` plugin installed). Missing ⇒ stop and name the install
 command from the plugin README. Confirm the repo is on the tracking model — issues carry
-`### Done when`. If they do not, this is a `/orca:migrate` or `/orca:triage` job first; say so.
+`### Acceptance criteria`. If they do not, this is a `/orca:migrate` or `/orca:triage` job first; say so.
 
 Read the repo's `CLAUDE.md` / `AGENTS.md` **once** and carry its rules — branch naming, account,
 non-negotiables, locked decisions file, test requirements — into every expert prompt and every
@@ -122,7 +122,7 @@ then print, in this order:
 3. **What you will decide alone vs. bring back.** State the decision bar (`references/expert-panel.md`)
    in one sentence. This is the contract for the autonomy the user is about to grant.
 4. **What you are skipping and why.** `manual`, `needs-owner`, `blocked` (name the blocker), no
-   `### Done when`, already in flight. Never bury a skip.
+   `### Acceptance criteria`, already in flight. Never bury a skip.
 
 Then, **propose-and-wait**: `AskUserQuestion` with the slate as the recommended option, plus an
 edit path (*change the slate*) and *not now*. An edit ("drop #16, add #14, cap 2") ⇒ re-propose
@@ -211,7 +211,7 @@ While `live lanes < cap` and READY NEXT is non-empty and the scope has candidate
 1. **Pick** — the scope's own order first (the slate the user approved), then smallest `scope:*`
    label, then lowest issue number. Skip `manual`, `needs-owner`, anything with an `OPEN` blocker,
    anything in flight (open PR, assignee, or live lane with `linkedIssue == n`), anything with no
-   `### Done when` (say so — it needs `/orca:triage` or `/orca:plan` first, and `/orca:plan` is
+   `### Acceptance criteria` (say so — it needs `/orca:triage` or `/orca:plan` first, and `/orca:plan` is
    the next step anyway, so it will get one).
 
    **A criteria-less issue is a hard skip here, not an offer.** `/orca:launch` will hand off
@@ -220,7 +220,7 @@ While `live lanes < cap` and READY NEXT is non-empty and the scope has candidate
    never write criteria yourself to unblock a launch. An issue whose criteria you invented is one
    you then gate against your own invention.
 
-   **Check who wrote the criteria before launching against them.** A `### Done when` checklist is
+   **Check who wrote the criteria before launching against them.** A `### Acceptance criteria` checklist is
    an *executable contract* — the gate runs its command criteria in a worktree with your
    credentials (`_shared/evidence-gates.md`, "Command criteria — run them"). So the question is not
    whether the issue exists but **who last edited the thing that will be executed**:
@@ -289,7 +289,7 @@ While `live lanes < cap` and READY NEXT is non-empty and the scope has candidate
    Forks that survive go to §3.4. **A round that recommends a split does not go to §3.4** — a split
    is not a fork the bar can decide (it restructures the backlog, and §3.4's third condition
    excludes it by construction). It goes to *Waiting on you*, naming `/orca:plan` §5a as the next
-   step: each part needs its own issue with its own `### Done when` before anything launches.
+   step: each part needs its own issue with its own `### Acceptance criteria` before anything launches.
 3. **Launch** — invoke `/orca:launch <n>` **in your own context**, with the reviewed plan already
    in it. `/orca:launch` fills the contract from the issue and the plan it can see, runs its own
    refusals (in-flight, `manual`, blockers), and proves isolation. If it refuses, believe it,

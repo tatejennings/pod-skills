@@ -25,9 +25,15 @@ The `<!-- orca-skills tracking model vN -->` line is **not decoration.**
 older schema from one already current. Drop it and the next run cannot
 distinguish the two.
 
+**v2 renamed the acceptance checklist heading** from `### Done when` to
+`### Acceptance criteria`. Both still read — a v1 repo keeps working — so this
+block naming the new one is a statement of what to write from now on, not a
+requirement the repo's existing issues already meet. `/orca:migrate` rewrites the
+old heading as its v1 → v2 step.
+
 ```markdown
 ## Task tracking
-<!-- orca-skills tracking model v1 -->
+<!-- orca-skills tracking model v2 -->
 
 - Task state lives in GitHub Issues. No tracked file records progress, status,
   or completion.
@@ -43,7 +49,7 @@ distinguish the two.
   readiness reads; a label mirrors it and can go stale.
 - An issue with **no milestone** is the unscheduled backlog. Assigning a
   milestone is what scheduling means.
-- Every issue carries a `### Done when` checklist of acceptance criteria —
+- Every issue carries an `### Acceptance criteria` checklist —
   that checklist is what gates the work, and it is written when the issue is
   filed, not after the work is done.
 - `ROADMAP.md` is generated from GitHub state and gitignored. Never edit it by

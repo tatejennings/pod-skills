@@ -56,9 +56,9 @@ body rather than paraphrasing it.>
 <Choices locked during planning, one line of rationale each, so they are not
 re-litigated. Omit if the handoff carries no prior planning.>
 
-## Done when
+## Acceptance criteria
 
-<The issue's ### Done when checklist, VERBATIM. These are the acceptance
+<The issue's ### Acceptance criteria checklist, VERBATIM. These are the acceptance
 criteria. A cold agent will check this exact list against your branch at step 7,
 before your PR opens, and /orca:verify re-checks it on demand afterwards.
 
@@ -76,7 +76,7 @@ issue — do not assume." >
 4. If reality contradicts this contract on details, adapt and record the
    deviation for your final summary. **If the core approach turns out to be
    wrong, stop and report back** instead of improvising a new design.
-5. Verify against the "Done when" criteria above before considering the work
+5. Verify against the acceptance criteria above before considering the work
    done. Criteria that are prose rather than commands still need satisfying —
    they will be surfaced to a human reviewer.
 6. Review your own full branch diff for bugs and regressions before pushing.
@@ -84,7 +84,7 @@ issue — do not assume." >
 
    Then **spawn one fresh subagent to review the diff** — a cold reader, not a
    fork, so it does not inherit your assumptions. Give it three things: the
-   "Done when" criteria above, the Steps from this contract, and the branch diff
+   acceptance criteria above, the Steps from this contract, and the branch diff
    (`git diff <merge-base>...HEAD`). Ask it two questions:
 
    > **1. Scope.** Does this diff implement what was asked — no more, no less?
@@ -142,7 +142,7 @@ issue — do not assume." >
    Spawn **one fresh subagent** (a cold reader, not a fork) and have it run the
    evidence gate against your branch. Give it exactly four things:
 
-   - the **`## Done when` criteria above, verbatim**
+   - the **`## Acceptance criteria` above, verbatim**
    - the **worktree path**, so it runs commands where the work is
    - the **base branch**, so it computes its own merge-base diff
    - the issue number, for the `Closes #<n>` check

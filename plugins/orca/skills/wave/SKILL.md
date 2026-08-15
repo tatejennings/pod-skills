@@ -54,7 +54,7 @@ Exclude, and say why:
 - **Blocked** — any blocker still `OPEN` in `blockedBy.nodes[].state`.
 - **`manual`** — no agent can do it, so a plan is wasted
   (`../_shared/issue-schema.md`).
-- **No `### Done when` checklist** — plannable, but say so: the plan will have to
+- **No `### Acceptance criteria` checklist** — plannable, but say so: the plan will have to
   establish criteria, and `/orca:triage` is the cheaper place to do that.
 
 **Cap the wave at ~4.** Past that you cannot realistically hold four planning
