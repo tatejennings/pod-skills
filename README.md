@@ -240,9 +240,10 @@ The dashboard, and the join this plugin exists for. Milestone progress, a
 `READY NEXT` list of unblocked issues, a `YOUR TASKS` section for `manual` work,
 and every lane's branch, PR state, session liveness, **and gate verdict**.
 
-Two lane states are the ones to look for: `gate-failed` (the branch's own gate
-rejected it twice — do not merge) and `awaiting-gate` (a PR arrived with no
-verdict at all, meaning the lane's self-gate never ran).
+Three lane states are the ones to look for: `gate-failed` (the branch's own gate
+rejected it twice — do not merge), `awaiting-gate` (a PR arrived with no verdict
+at all, meaning the lane's self-gate never ran), and `gated-stale` (it *was*
+gated, then more commits landed — so the code now on the PR is unchecked).
 
 Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 — safe to put on a loop.
@@ -405,6 +406,13 @@ verdict is a comment on it, so the only thing left at GATE 3 is your decision.
 `/orca:verify 84` is still there to re-gate on demand, and `/orca:status` still
 flags a PR that somehow arrived without a verdict as `awaiting-gate`.
 
+**A verdict is a claim about one commit.** It carries the head SHA and merge base
+it checked, and the author who produced it. So if anything lands after the gate
+runs — a fix, a rebase, your own commit — the verdict stops applying and
+`/orca:status` says `gated-stale` rather than showing a stale pass. And a
+`PASS`-shaped comment from someone who is not a trusted gate producer never
+counts, which matters on a public repo where anyone can comment.
+
 ### 3. Several issues in parallel
 
 ```
@@ -445,9 +453,14 @@ expert panel, launches it, watches the lanes, and handles the review comments on
 the PRs they open. It reports each pass and notifies you only when something
 actually needs you.
 
-It stops when everything left is yours: a PR ready to merge, a fork its experts
-split on, a `needs-owner` issue, a gate that failed twice. **The merge is never
-its.** `resume` picks it back up from where it stopped.
+It stops when everything left is yours: a fork its experts split on, a
+`needs-owner` issue, a gate that failed twice, or a PR it has marked
+**human-review-ready** — meaning the gate passed *against the commit now on the
+PR*, CI is green with nothing pending, the reviewer actually ran against that
+head, no blocking threads are open, and auto-merge is not armed. Where it cannot
+establish that a review happened, it says *review state unknown* rather than
+treating silence as approval. **The merge is never its.** `resume` picks it back
+up from where it stopped.
 
 ### 6. Keeping the backlog honest
 
@@ -559,7 +572,7 @@ which is the failure this whole plugin exists to prevent.
 **No merge automation.** Lanes end at an open PR and a human merges. Since
 the merge is the only state transition in the model, automating it would automate
 the one decision worth keeping. `/orca:tech-lead` runs the rest of the pipeline
-unattended and stops precisely there — it will tell you a PR is ready to merge,
+unattended and stops precisely there — it will tell you a PR is human-review-ready,
 and never act on it.
 
 **No enabled automation.** The pipeline *can* be driven on a schedule by an Orca

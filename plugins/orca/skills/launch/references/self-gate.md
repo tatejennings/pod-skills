@@ -146,9 +146,18 @@ Why a separate agent at all, stated once, because it is the entire point:
 > This text is posted verbatim as a PR comment, and tooling greps its first line,
 > so the shape is not cosmetic:
 >
+> First get the two commit ids your verdict is about, **in the worktree you
+> gated**, before you write anything:
+>
+> ```bash
+> git -C <worktree path> rev-parse HEAD                       # the head you checked
+> git -C <worktree path> merge-base HEAD origin/<base ref>    # the merge base
+> ```
+>
 > ```markdown
-> <!-- orca:verify -->
+> <!-- orca:verify head=<full 40-char HEAD sha> base=<full 40-char merge-base sha> issue=84 -->
 > **orca:verify — PASS-AGENT-JUDGED** · #84 · `feat/audio-enum` · gated in-lane before PR
+> Head `9f1fd02` · merge-base `344e9d7` on `main` · <UTC timestamp, e.g. 2026-08-15T14:22:07Z>
 >
 > ⊙ Importing a malformed file surfaces an error instead of crashing
 >     AGENT JUDGEMENT — not machine evidence
@@ -165,6 +174,12 @@ Why a separate agent at all, stated once, because it is the entire point:
 >
 > - **Line 1 carries the literal `orca:verify` tag and the verdict in caps**,
 >   always. It is the only thing marking this branch as gated.
+> - **`head=` and `base=` carry the full 40-character SHAs you just read** — not
+>   the short forms, not a guess, not a value copied from anywhere else. Your
+>   verdict is a claim about **that one tree**. Anything pushed afterwards makes
+>   it stale, and tooling detects that by comparing your `head=` against the PR's
+>   current head. A verdict without them cannot be checked and is treated as
+>   stale on arrival — which wastes the entire gate you just ran.
 > - **Failed and judged criteria go first**, with their evidence and reasoning.
 >   Someone reading only the top of the comment must see what is not proven.
 > - **Markers**: `✓` verified, `✗` failed, `⊙` agent-judged, `?` awaiting human.

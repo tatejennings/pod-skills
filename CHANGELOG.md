@@ -3,6 +3,138 @@
 Notable changes to the `orca` plugin. Versions track
 `plugins/orca/.claude-plugin/plugin.json`.
 
+## 1.19.0 — 2026-08-15
+
+**A verdict now says which commit it checked, and who wrote it.** From an
+external top-down review of 1.18.0, which asked a sharper question than the
+previous round: not *can the loop misbehave* but **are the artifacts the loop
+trusts worth trusting.** They were not. Every claim below was re-verified against
+the files and the live GitHub API before being fixed.
+
+This release repairs the evidence gate itself, so it lands mostly in
+`_shared/evidence-gates.md` and `/orca:status` — which means it fixes
+`/orca:verify` and `/orca:launch` too, not only the tech lead.
+
+### A gate verdict was not bound to anything
+
+The verdict comment recorded the issue and the branch. **Not the commit.** And
+`/orca:status` took the newest tagged comment on the assumption that "only the
+newest describes the current tree" — which any later push falsifies.
+
+So: commit A gates `PASS`. A fix agent, a rebase, or a human pushes commit B. The
+`PASS` is still the newest comment, and the PR reads as gated. **Nothing had
+checked the code you were about to merge**, and no artifact anywhere said so.
+
+The tag now carries the commit it verified:
+
+```
+<!-- orca:verify head=<40-char sha> base=<40-char merge-base> issue=84 -->
+```
+
+Consumers compare `head=` against the PR's `headRefOid`. A mismatch — or a
+missing `head=`, or a base that is no longer the merge-base — is the new
+**`gated-stale`** verdict in `/orca:status`. Deliberately *not* a failure: it is
+the same claim as never having gated. Reporting it as a failure would send people
+to debug work that may be perfectly fine.
+
+`/orca:verify` also re-reads `headRefOid` after its checks and before posting — if
+commits landed mid-gate, it re-runs rather than posting a verdict about a tree
+that is already gone.
+
+### Anyone could forge one
+
+`/orca:status` matched `[.comments[].body]`. **The author was discarded.** On a
+public repo, any commenter could post a `PASS`-shaped comment carrying the marker
+and it became the durable gate record.
+
+The irony was ours: 1.18.0 author-classified *review findings* while leaving the
+artifact that authorizes readiness unauthenticated. Verdicts now require a
+trusted producer — the account the pipeline runs as, or one the repo's
+instructions name. An untrusted tagged comment is `needs-attention`, never
+gating, and never overwrites a valid earlier verdict. **A forged verdict is worse
+than no verdict: it converts *unproven* into *proven* exactly when a human stops
+looking.**
+
+### `### Done when` is an executable contract
+
+The gate runs command criteria in a worktree, under the user's credentials, by
+design. 1.18.0 fenced issue bodies for the expert panel and stopped there — so
+the trust boundary that matters most was the one left open: **anyone who can file
+or edit an issue on a public repo could put a command in a checklist and have it
+run under your token.**
+
+`_shared/evidence-gates.md` now states the rule for every gate: run command
+criteria only from a checklist authored or approved by the owner or a named
+maintainer. A criterion addressed to *you*, or reaching outside the worktree, is
+not a criterion — it is a malformed checklist, and gates nothing.
+
+`/orca:tech-lead` checks authorship before launching, snapshots the criteria with
+the issue's `updated_at`, and flags a lane whose issue changed after it launched.
+**A human running `/orca:verify` on their own repo is their own approval** — the
+rule bites when nobody is watching, which is when it matters.
+
+### "Ready to merge" did not mean the automation was clear
+
+It required a passing gate, no unresolved threads, and `mergeable`. **It never
+checked CI.** And "no unresolved threads" is vacuously true of a PR nobody
+reviewed — absence of findings is not evidence that review happened.
+
+Replaced with **human-review-ready**, which requires all of: a verdict that is
+passing *and* trusted *and* current-head; required CI green with nothing pending;
+a positive signal that the adopted reviewer completed against **this** head; no
+unresolved blocking threads; `mergeable` and not draft; auto-merge not armed.
+Where reviewer completion cannot be established, it reports **review state
+unknown** rather than treating silence as approval.
+
+The rename is the point. The loop reports that the review surface is trustworthy
+and complete. **Whether to merge stays a judgement it never makes.**
+
+### Fixing 1.18.0's auto-merge check
+
+1.18.0 stopped when the repository's `autoMergeAllowed` was true. That field
+means auto-merge *can be enabled*, not that it *is* — so it blocked safe repos
+that merely permit the feature, wrote `Auto-merge: ON` when nothing was armed,
+and trained an override for the wrong condition while never checking the
+dangerous one.
+
+Per-PR `autoMergeRequest` is the real signal, re-checked every tick because a
+human can arm it at any moment. A PR with it set is excluded and surfaced;
+`autoMergeAllowed` is informational only. (Reasoning from a field name instead of
+reading the schema — the exact failure this repo's verify-against-live rule
+exists to prevent, applied to an API that looked too obvious to check.)
+
+### The ledger is memory, never evidence
+
+Stated explicitly, because this release added ledger fields that could be
+misread as cached truth. The ledger holds what only the loop knows: grants,
+steering, counters, decisions, notification history. Everything about the world —
+PR state, CI, verdicts and their freshness, head SHAs, threads, auto-merge — is
+re-derived every tick. **When a row and the world disagree, the world wins and
+the row was stale.** A remembered `PASS` defeats every freshness rule above.
+
+### Criteria-less launch, narrowed rather than removed
+
+The review wanted `/orca:launch` to refuse criteria-less work outright. It keeps
+the hatch: a *present* user who declines planning and accepts an ungated branch
+has made a real choice. **`/orca:tech-lead` may not take that path** — under an
+autonomy grant nobody sees the offer, so the choice cannot be made, and inventing
+criteria to unblock a launch means gating against your own invention.
+
+### Deferred, and why
+
+Two items from the review are deliberately not here. **Five new expert seats**
+(PM, UX, security, release, deeper QA) add opinions about a *plan* while the
+problem was that a passing gate said nothing about the current *commit* — the
+review's own bottom line says the next improvement should not be another reviewer
+role. And **one normative state machine** covering all sixteen states is right in
+principle, but writing it now would describe a machine this release is actively
+changing; shared specs are most dangerous when they drift, and the surest way to
+make one drift is to write it before the thing it describes has settled.
+
+Both are better after. Still ahead, unchanged from 1.18.0: `automation.md`'s
+remaining preconditions (spend ceiling, PR cap, circuit breaker, leases,
+stale-lane cancellation) and the cross-lane collision check.
+
 ## 1.18.0 — 2026-08-15
 
 A four-lens adversarial review of 1.17.0's `/orca:tech-lead` — one reviewer

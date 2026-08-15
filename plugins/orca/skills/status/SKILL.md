@@ -147,10 +147,17 @@ tells you whether the gate has run.
 extra call, and only for the handful of lanes that have an open PR:
 
 ```bash
-gh pr view <n> --json comments --jq '[.comments[].body] | map(select(test("orca:verify")))| last'
+gh pr view <n> --json headRefOid,comments \
+  --jq '{head: .headRefOid,
+         verdicts: [.comments[] | select(.body | test("orca:verify"))
+                    | {author: .author.login, body: .body}]}'
 ```
 
-**Match on the `orca:verify` tag alone, not on the verdict words.** Every verdict
+**Three things decide whether a verdict counts**, and all three are required
+(`../_shared/evidence-gates.md`): the **tag**, the **author**, and the
+**`head=`**. Dropping any one of them reports an ungated or forged PR as gated.
+
+**1. Match on the `orca:verify` tag alone, not on the verdict words.** Every verdict
 comment carries that literal tag (`../_shared/evidence-gates.md`, "The verdict
 comment"), and it is the only part of the comment that cannot occur by accident.
 
@@ -165,13 +172,32 @@ saying "pass" in a PR thread is not a gate verdict.
 but this test misses reports a gated PR as ungated, which is indistinguishable
 from the gate never having run.
 
+**2. Require a trusted author.** The marker is not a credential — anyone who can
+comment can write it, and on a public repo that is anyone. Keep only comments
+whose `author.login` is the account this pipeline runs as (`gh api user --jq
+.login`) or an account the repo's instructions name as a gate producer. A tagged
+comment from anyone else ⇒ **`needs-attention`**, reported as *a verdict from an
+untrusted author was found and ignored*. It never overwrites a valid earlier
+verdict and never counts as gating.
+
+**3. Require `head=` to match the PR's current `headRefOid`.** The tag carries
+`head=`, `base=`, and `issue=`. A verdict is a claim about one tree; a later push
+invalidates it. Compare, and classify:
+
+- **equal** ⇒ the verdict describes the current tree. Use it.
+- **different, or no `head=` at all** ⇒ **`gated-stale`**. Commits landed after
+  the gate ran (or the verdict predates this format and cannot be checked).
+- Also stale if `base=` is no longer the merge-base of head and the base ref —
+  the diff the gate read is not the diff that will merge.
+
 Read the verdict itself off the matched comment's first line — it is one of
 `PASS`, `PASS-AGENT-JUDGED`, `PASS-WITH-REVIEW`, `FAIL`. A comment carrying the
 tag but no recognisable verdict is malformed: report the lane as
 `needs-attention` rather than guessing which way it went.
 
-**Take the *last* matching comment.** A branch that was re-gated after a rebase
-or a rework carries several, and only the newest describes the current tree.
+**Take the last comment that passes all three tests**, not the last tagged
+comment. A branch re-gated after a rebase or a rework carries several, and the
+newest *valid* one is the only one that describes the current tree.
 
 A PR with no verdict comment is **ungated**, however ready it looks. That is the
 distinction `isDraft` used to carry, and it is now the only one — an open PR
@@ -191,8 +217,9 @@ Exactly one per lane:
 |---|---|
 | `working` | agents active or terminals live; PR absent |
 | `awaiting-gate` | a PR is open, no agent is active, and **no gate verdict is on it** — the lane's self-gate did not run; gate it with `/orca:verify` |
-| `gate-failed` | a PR is open and the newest verdict is `FAIL` — the lane reworked once, failed again, and stopped |
-| `pr-open` | a PR is open and a passing gate verdict has been posted |
+| `gated-stale` | a valid verdict exists but its `head=` is not the PR's current `headRefOid` (or the base moved under it) — **commits landed after the gate ran.** Not a failure: nobody has checked this tree. Re-gate with `/orca:verify` |
+| `gate-failed` | a PR is open and the newest valid verdict is `FAIL` — the lane reworked once, failed again, and stopped |
+| `pr-open` | a PR is open and a passing gate verdict, **from a trusted author and matching the current head**, has been posted |
 | `merged-reapable` | PR merged + clean + `HEAD == headRefOid` + no live terminals |
 | `merged-live` | PR merged + clean + `HEAD == headRefOid` + terminals still live |
 | `stalled` | no live terminals, no open PR |
@@ -209,7 +236,13 @@ Resolution order:
    an agent still running in that lane does not soften it.
 3. `awaiting-gate` beats `working` when no agent is active — a PR that reached
    the board without a verdict means the self-gate did not happen.
-4. `pr-open` beats `working` — the PR supersedes; the session is just waiting.
+4. **`gated-stale` beats `pr-open`, and beats `working` when no agent is active.**
+   A stale verdict is a *pass-shaped comment that proves nothing about the current
+   tree*, so it is more misleading than no verdict at all — it must never be
+   quietly rendered as `pr-open`. When an agent **is** still working, `working`
+   wins: a fix agent mid-push is expected to invalidate the old verdict and post a
+   new one, so staleness there is a normal intermediate state, not a finding.
+5. `pr-open` beats `working` — the PR supersedes; the session is just waiting.
 
 Notes: `HEAD != headRefOid` only counts as contradictory on a **merged** PR
 (post-merge commits a deletion would lose). On an open PR it is ordinary unpushed
@@ -292,6 +325,11 @@ the one distinction the reader needs at merge time.
   run. Gate it with `/orca:verify <n>` before merging." Say *never gated* rather
   than *not yet gated*: lanes now gate themselves, so this is an anomaly worth a
   second look, not a routine next step.
+- `gated-stale` → **"gated, then more commits landed — the current code is
+  unchecked"**, naming the verdict's short `head=` and the PR's current head so
+  the gap is visible. Next action: `/orca:verify <n>` re-gates it. Say
+  *unchecked*, never *failed*: a stale verdict is the same claim as no verdict,
+  and calling it a failure sends the user to debug work that may be fine.
 - `gate-failed` → **"its own gate rejected this branch — do not merge"**, naming
   the unmet criteria from the verdict comment. Then the next action:
   `/orca:launch <n>` reworks it in the existing lane (§1a there), carrying the
