@@ -4,6 +4,29 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.0 — 2026-08-15
+
+**A bare `/pod:tech-lead` is the standing order.** Until now a bare invocation
+sat in the "question" row and proposed a slate, then waited. It now reads as a
+*tell*: take charge of the active milestone, pick the highest-priority ready
+work, and run it at the default cap of three lanes — propose and go. The
+reasoning: someone typing the skill's name with nothing after it wants the tech
+lead to be the tech lead, and "propose and wait" was one more message before
+anything happened. Asking is still one word away (`/pod:tech-lead what's next?`).
+
+Two things did not change. **The propose step still runs first** — the slate,
+in-flight lanes, the decision bar, and the skips are printed before any launch,
+so the user can `pause` or steer. And **scope resolution still never guesses**:
+if the repo has several undated milestones, the shared rule's *ask* step fires
+as a single question, and then it goes. Cap 3 is the "modest parallelism" — it
+was already the default and stays one; `cap N` still overrides it in words.
+
+- `tech-lead/SKILL.md` — description, the interface line, the mode table (a
+  new "bare" row; the question row no longer claims it), and the ambiguity rule
+  ("bare is not ambiguous").
+- `README.md`, `GUIDE.html`, `CLAUDE.md` — the example blocks and the
+  no-flags paragraph say the same.
+
 ## 2.1.0 — 2026-08-15
 
 **Seats: the specialists the tech lead convenes.** The plugin now has personas —

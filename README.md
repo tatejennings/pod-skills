@@ -344,10 +344,13 @@ you're asleep, so that trust is not extended to whoever happened to comment.
 Comment bodies reach that agent as fenced, explicitly-untrusted data.
 
 **Ask it and it proposes; tell it and it goes.** A question gets a slate and a
-pause; an imperative gets the same slate and then action.
+pause; an imperative gets the same slate and then action. A bare `/pod:tech-lead`
+is the standing order: take the active milestone, pick the highest-priority
+ready work, and run it — three lanes at a time by default.
 
 ```
-/pod:tech-lead                      # propose a slate, wait
+/pod:tech-lead                      # standing order: active milestone, cap 3, go
+/pod:tech-lead what's next?         # propose a slate, wait
 /pod:tech-lead take the loop epic   # propose, then run it
 /pod:tech-lead handle the review comments on my PRs
 /pod:tech-lead cap 2                # steer a running one
@@ -405,7 +408,8 @@ Everything else takes plain arguments: issue numbers, a milestone name, or a
 free-form description.
 
 `/pod:tech-lead` has **no flags at all** — it reads plain language, and whether
-you asked or told it is what decides between proposing and acting. Scope
+you asked or told it is what decides between proposing and acting (bare, with
+no words, is a tell). Scope
 (`the loop epic`, `#15 #16`, `my open PRs`), cap (`cap 2`, `one at a time`), and
 steering (`pause`, `stop`, `status`, `add #14`, `drop #16`, `only reviews for
 now`, `resume`) are all just words.
