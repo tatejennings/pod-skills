@@ -96,7 +96,9 @@ over them, so it has rules the others do not.
   it. This is the invariant the whole plugin exists to protect.
 - **It has no flags.** Scope, cap, and steering are plain language; whether the
   user asked or told is what selects propose-vs-act. Do not add a flag to it —
-  the interface *is* that reading.
+  the interface *is* that reading. **Bare `/pod:tech-lead` is a tell** (2.2.0):
+  the standing order — active milestone, cap 3, propose and go. Only *words*
+  that could read either way fall to propose-and-wait.
 - **Its `references/` are load-bearing, not overflow.** `seats.md` (the roster
   of specialist personas — product, requirements, architecture, test, UX,
   security, domain — each lens, when it is convened, and the rule that seats

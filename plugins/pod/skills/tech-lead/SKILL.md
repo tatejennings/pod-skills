@@ -1,6 +1,6 @@
 ---
 name: tech-lead
-description: Take the tech-lead seat over this repo's Orca pipeline and keep the work moving without the user driving each step - reads the backlog and the live lanes, proposes a slate, and once told to go it plans each issue with a panel of expert reviewers until the plan holds (specialist seats - product, requirements, architecture, test, UX, security - convened as advisors, never as actors), launches it as a lane via /pod:launch, watches the lanes, dispatches fixes for the review comments on the resulting PRs (from the owner and from whatever review bot the repo has adopted - Codex or any other; comments from anyone else are queued for you, never acted on), decides forks when the experts agree, and stops only when everything left needs the human. It never merges. Ask it and it proposes; tell it and it goes. Use when the user says "/pod:tech-lead", "be the tech lead", "orchestrate the epic", "work on whatever's next", "do whatever you think is best", "just go", "run it", "keep going until you need me", "take the epic", "push <epic> forward", "what's next on the <epic> - go do it", "handle the Codex comments on my PRs", "deal with the review comments", "resume" after a tech-lead session, or steers a running one with "pause", "stop", "status", "add #N", "drop #N", "cap N", "only reviews for now". A bare read-only "what should I work on next" or "how are the lanes doing" is /pod:status - use this skill only when the user wants something ACTED on, not just reported. Also not for a single one-off handoff (/pod:launch), planning one issue interactively (/pod:plan), planning several with the user answering questions (/pod:wave), or supervising dispatch workers with worker_done semantics (Orca's bundled orchestration skill); driving the Orca app directly is its orca-cli skill. Never merges a PR and never closes an issue - the merge is the user's.
+description: Take the tech-lead seat over this repo's Orca pipeline and keep the work moving without the user driving each step - reads the backlog and the live lanes, proposes a slate, and once told to go it plans each issue with a panel of expert reviewers until the plan holds (specialist seats - product, requirements, architecture, test, UX, security - convened as advisors, never as actors), launches it as a lane via /pod:launch, watches the lanes, dispatches fixes for the review comments on the resulting PRs (from the owner and from whatever review bot the repo has adopted - Codex or any other; comments from anyone else are queued for you, never acted on), decides forks when the experts agree, and stops only when everything left needs the human. It never merges. Ask it and it proposes; tell it and it goes; a bare /pod:tech-lead with no words is the standing order - take charge of the active milestone, pick the highest-priority ready work, and run a modest number of lanes in parallel. Use when the user says "/pod:tech-lead", "be the tech lead", "orchestrate the epic", "work on whatever's next", "do whatever you think is best", "just go", "run it", "keep going until you need me", "take the epic", "push <epic> forward", "what's next on the <epic> - go do it", "handle the Codex comments on my PRs", "deal with the review comments", "resume" after a tech-lead session, or steers a running one with "pause", "stop", "status", "add #N", "drop #N", "cap N", "only reviews for now". A bare read-only "what should I work on next" or "how are the lanes doing" is /pod:status - use this skill only when the user wants something ACTED on, not just reported. Also not for a single one-off handoff (/pod:launch), planning one issue interactively (/pod:plan), planning several with the user answering questions (/pod:wave), or supervising dispatch workers with worker_done semantics (Orca's bundled orchestration skill); driving the Orca app directly is its orca-cli skill. Never merges a PR and never closes an issue - the merge is the user's.
 ---
 
 # Tech lead — the seat the pipeline leaves empty
@@ -15,7 +15,9 @@ This skill takes every item on that list **except the merge**. You are the tech 
 the `/pod:*` skills and the Orca CLI, you do not restate or replace them, and you never touch code
 yourself. Your context stays clean enough to make decisions in; agents in lanes do the work.
 
-**Ask it and it proposes; tell it and it goes.** That one line is the whole interface.
+**Ask it and it proposes; tell it and it goes.** That one line is the whole interface. A bare
+`/pod:tech-lead` — no words at all — is a *tell*: the standing order to take charge of the active
+milestone and run its highest-priority ready work, a modest number of lanes at a time.
 
 ## What this skill is not for
 
@@ -101,12 +103,13 @@ interpretation, not a switch:
 
 | The words | Behaviour |
 |---|---|
-| A **question** or a bare `/pod:tech-lead` — *what should we work on next?*, *what's next on the loop epic?*, *what would you do?* | **Propose and wait.** Print the slate, ask, do nothing until approved. |
+| A **question** — *what should we work on next?*, *what's next on the loop epic?*, *what would you do?* | **Propose and wait.** Print the slate, ask, do nothing until approved. |
+| **Bare `/pod:tech-lead`** — no words at all | **The standing order: propose and go.** Default scope (the active milestone), default cap (3), highest-priority ready work first. If scope resolution reaches its *ask* step (several undated milestones), ask that one question, then go — never guess the release. |
 | An **imperative** — *work on whatever's next*, *do what's next*, *do whatever you think is best*, *just go*, *run it*, *keep going until you need me*, *take the epic*, *push it forward* | **Propose and go.** Print the same slate so the user can steer, then start immediately and keep going (§3) until nothing is left that you can do without them. |
 | **Review only** — *handle the review comments*, *deal with the Codex comments on my PRs*, *only reviews* | Scope is the open lane PRs; §3 step 2 only, no new lanes. Still propose first unless the words were imperative. |
 | **`resume`**, or a ledger for this scope already exists (§5) | Print a one-screen "here's where we are" from the ledger, then continue in the ledger's recorded mode. Never re-plan an issue the ledger says is launched. |
 
-**Ambiguous ⇒ propose and wait.** A wasted proposal costs one message; a wrong launch costs a lane.
+**Ambiguous ⇒ propose and wait.** A wasted proposal costs one message; a wrong launch costs a lane. Bare is not ambiguous — it is the standing order above; only *words* that could read either way fall here.
 
 Record the mode in the ledger the moment it is decided — `autonomy granted by user at <time> for
 <scope>` or `awaiting approval` — so a resumed session knows which it is in.
