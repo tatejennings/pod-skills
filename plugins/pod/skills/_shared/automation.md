@@ -8,7 +8,7 @@ preconditions.**
 This is a config artifact, not a skill. Nothing invokes it; a human creates it
 when they decide the guardrails below are in place.
 
-Verified against `orca` 1.4.182, 2026-08-15 (`orca automations create --help`).
+Verified against `orca` 1.4.200, 2026-09-11 (`orca automations create --help`).
 
 ## Why disabled
 

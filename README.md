@@ -121,7 +121,7 @@ in your own `CLAUDE.md` that spells out `/orca:<skill>` needs a hand edit.
 |---|---|
 | [Orca](https://orca.computer) | with Claude Code running in one of its terminals; the `orca` CLI ships inside the app |
 | [Claude Code](https://claude.com/claude-code) | with plugin support |
-| [`gh`](https://cli.github.com) ≥ 2.94.0 | authenticated. 2.94.0 added `blocked-by`/`blocking`; everything here is verified on 2.96.0 |
+| [`gh`](https://cli.github.com) ≥ 2.94.0 | authenticated. 2.94.0 added `blocked-by`/`blocking`; everything here is verified on 2.97.0 |
 
 If several GitHub accounts are authenticated, note that the skills check the
 **active** one before any write — `gh auth status`.
