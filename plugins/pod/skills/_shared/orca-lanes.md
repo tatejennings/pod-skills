@@ -24,8 +24,8 @@ worktree is identified, how to resolve one safely, and which facts are native
 > `--linear-issue` fallback to a skill here — a lane whose criteria live where
 > the gate cannot read them silently loses the gate.
 
-Verified against `orca` **1.4.182**, 2026-08-15 — every command and flag below
-re-checked against live `--help` at that version, with no breaks from 1.4.162.
+Verified against `orca` **1.4.200**, 2026-09-11 — every command and flag below
+re-checked against live `--help` at that version, with no breaks from 1.4.182.
 Re-verify with `orca <group> --help` before writing any new CLI fact into a
 skill — never from memory. That rule has caught real defects, including one
 below.

@@ -12,7 +12,7 @@ Point at this file.
 > referencing a shared one; if you maintain such a copy elsewhere, a fix here
 > belongs there too.
 
-Verified against `gh` 2.96.0, 2026-07-31. Floor is `gh` 2.94.0, the release that
+Verified against `gh` 2.97.0, 2026-09-11. Floor is `gh` 2.94.0, the release that
 added dependencies, sub-issues, and issue types.
 
 ## The tracked-progress-file guard
@@ -96,7 +96,7 @@ Then, in the caller:
 
 ### The `blockedBy` shape — verified on live data
 
-Verified 2026-07-31 against a repo with real dependency edges. `blockedBy`
+Verified 2026-09-11 against a repo with real dependency edges. `blockedBy`
 returns `{"nodes": [...], "totalCount": N}`, and **each node carries the
 blocker's `state`**, along with `number`, `title`, `url`, and `id`:
 

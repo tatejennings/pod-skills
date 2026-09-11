@@ -4,6 +4,40 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.1 — 2026-09-11
+
+### Re-verified against `orca` 1.4.200 and `gh` 2.97.0
+
+`/audit-orca` after the CLI upgrades from 1.4.182 / 2.96.0. **No breaks** —
+every command and flag the skills reference still exists, and the load-bearing
+facts hold: `worktree ps` still returns `worktreeId` where `worktree list`
+returns `id`; `worktree create` still has no branch-name flag; `automations`
+still mixes positional ids (`show`/`edit`/`run`) with `--id`-only (`runs`);
+`blockedBy.nodes[]` still carries the blocker's `state`, re-confirmed on live
+data with real dependency edges. No bundled-skill collisions: the roster gained
+`computer-use`, `orca-emulator`, `orca-emulator-android`, `orca-per-workspace-env`,
+and `linear-tickets` since the skills were written, and none overlaps this
+plugin's backlog-and-planning scope — Linear was already fenced off in
+`_shared/orca-lanes.md`. Stamps updated in `orca-lanes.md`, `automation.md`,
+and `github-backlog.md`.
+
+Surface noted but not adopted (proposals only, per the audit's own rule):
+
+- **`terminal read --screen`** returns the rendered screen instead of
+  accumulated output, whose stacked repaint fragments the help now calls
+  unsuitable for verifying rendered output. `/pod:tech-lead`'s
+  quiet-vs-dead terminal read and its `PLAN FILE:` scan are exactly that case.
+- **`terminal send --wait-submit` / `--retry-request`** observe prompt
+  submission and make retries idempotent — relevant everywhere a skill sends
+  `--text … --enter` and today infers submission from a later `tui-idle` wait.
+- **`worktree ps` grew multi-host semantics** (`hostScope`, `truncated`,
+  `totalCount`, and hosts a page does not cover). Single-host use is
+  unchanged; `/pod:status` would want the `truncated` flag checked if a
+  consuming setup ever pairs remote environments.
+- **`--worktree` selectors gained `identity:`**, and `worktree create` gained
+  `folder:`/`worktree:` parent forms — `orca-lanes.md`'s selector list is now a
+  subset; everything it lists still works.
+
 ## 2.2.0 — 2026-08-15
 
 **A bare `/pod:tech-lead` is the standing order.** Until now a bare invocation
