@@ -4,6 +4,37 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.2 — 2026-09-12
+
+### A title banner on the README
+
+`assets/banner.png` — the first committed image in the repo — sits above the
+`# pod-skills` heading in `README.md` and at the top of `GUIDE.html`'s hero.
+It draws the pipeline as an instrument schematic: one line branching into three
+lanes, each running to a gate that shows a pass and a hold, captioned
+**PLAN. LAUNCH. PROVE.** The palette is the guide's own
+(`#0E1A1F` ground, `#4EC9E8` accent), so the banner and the docs match by
+construction rather than by eye.
+
+No skill changed. The version moves because the repo ships a new tracked asset
+and two documents that reference it.
+
+Two notes for whoever regenerates it:
+
+- **The caption is a composite, not a generation.** Re-prompting an image model
+  for "the same art with different words" does not produce the same art — the
+  linework drifts everywhere, and the three image-editing models tried here
+  either rescaled the canvas or re-rendered the whole image (measurable drift in
+  all 24 horizontal bands). The shipped file instead has its caption band erased
+  with a copy of its own background, offset by exactly one 80px grid cell so the
+  grid aligns, and redrawn in SF Mono matched to the original's measured metrics
+  (cap height 63px, stroke 7px, `#8CF4FC`, centred on x=3161). Every pixel
+  outside that band is untouched.
+- **The source art is not in the repo.** The 6336×2688 original and the
+  alternate captions live in `local/banner-comps/`, which is gitignored;
+  `assets/banner.png` is a 1400px quantized copy (~560 KB) sized for GitHub's
+  content column at 2x.
+
 ## 2.2.1 — 2026-09-11
 
 ### Re-verified against `orca` 1.4.200 and `gh` 2.97.0

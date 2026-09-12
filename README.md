@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="pod-skills — plan. launch. prove." width="100%">
+</p>
+
 # pod-skills
 
 A Claude Code **plugin** that adds a **GitHub-Issues backlog and planning layer**
