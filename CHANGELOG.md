@@ -4,6 +4,31 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.3 — 2026-10-24
+
+### Re-verified against `orca` 1.4.229
+
+`/audit-orca` after the CLI upgrade from 1.4.200; `gh` is unchanged at 2.97.0,
+so its stamp stays. **No breaks** — every command and flag the skills reference
+still exists in live `--help`, and the load-bearing facts hold: `worktree list`
+returns `id` and `worktree ps` returns `worktreeId`; `worktree create` still has
+no branch-name flag; `automations` still mixes positional ids with `--id`;
+`blockedBy.nodes[]` still carries the blocker's `state`, re-confirmed on live
+data. No new bundled-skill collisions: the `orca-cli` overlap on "hand off" /
+"give this to another agent" is the existing one `/pod:launch` already scopes
+to GitHub issues. Stamps updated in `orca-lanes.md` and `automation.md`.
+
+Noted but not adopted (proposals only):
+
+- **Orca now ships Jira skills** (`orca-jira`, plus the legacy `jira-tickets`),
+  and `worktree create --reference` accepts a Jira key. Same situation as
+  Linear: `orca-lanes.md` fences Linear off explicitly but not Jira.
+- **`worktree rm --help` now documents that removal also deletes the local
+  branch**, retaining branches it cannot prove merged, and a new
+  `--allow-failed-archive-hook` waives a failed `--run-hooks` archive hook.
+  `/pod:status --reap` only removes merged lanes, so this is consistent with
+  it, but `orca-lanes.md` does not say a reap deletes the branch.
+
 ## 2.2.2 — 2026-09-12
 
 ### A title banner on the README
