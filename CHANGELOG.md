@@ -4,6 +4,32 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.4 — 2026-10-24
+
+### New: `/audit-claude-code`
+
+A repo-maintenance skill in `.claude/skills/`, not shipped. The skills lean on
+Claude Code as much as on Orca: they name its tools (`AskUserQuestion`,
+`EnterPlanMode`, `ScheduleWakeup`, `Monitor`), read `$ARGUMENTS`, and tell the
+user to `/loop`. `/audit-orca` checks none of that, and a renamed tool fails
+silently: the agent just improvises.
+
+It checks tool names against the running session's own tool list, which is
+the installed version's ground truth. It checks behaviors against `--help`,
+`claude plugin validate` and the docs, and reads the Claude Code changelog
+since the last audit to set its agenda. It also proposes adoptions: frontmatter
+the skills don't use yet (tool restrictions would enforce `status` and
+`verify`'s read-only promise), harness features that could carry part of
+`tech-lead`'s loop without relaxing its bounds, and `claude plugin eval` for
+routing tests. It proposes and never applies them, the same rule as
+`/audit-orca` §5.
+
+It is a separate skill, not a section of `/audit-orca`, because the two
+upgrade on unrelated schedules and only one of them has a binary to diff
+against.
+
+No shipped skill changed.
+
 ## 2.2.3 — 2026-10-24
 
 ### Re-verified against `orca` 1.4.229

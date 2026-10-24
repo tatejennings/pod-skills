@@ -16,6 +16,12 @@ build step.
     phrases that collide with `/pod:*`, and updates the version stamp. **Run it
     after every Orca upgrade** — the CLI moves independently, and nothing else
     here would notice a flag that vanished.
+  - **`/audit-claude-code`** — re-checks the Claude Code facts the skills
+    assert (tool names, `$ARGUMENTS`, `/loop`, plan mode) against the running
+    harness and the docs, and proposes new features worth adopting. **Run it
+    after Claude Code upgrades.** Kept apart from `/audit-orca` because the two
+    upgrade on unrelated schedules.
+    Last audited against Claude Code: **never** (first run sweeps everything).
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/pod/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/pod:<skill-name>`.
