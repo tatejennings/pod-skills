@@ -1,6 +1,26 @@
 ---
 name: triage
-description: Turn a pile of raw bugs, features, and research items into properly-formed GitHub issues, one at a time - paste in a bullet list or a brain dump and it works through them individually, asking what each actually means, what "done" would look like, how urgent, which milestone, what it depends on, and whether an agent can even do it, then FILES each one as a GitHub issue with a "### Acceptance criteria" checklist, milestone, scope label, and real dependency edges. Nothing needs to exist in GitHub first - creating the issues is this skill's job. Also works on issues that already exist: pass issue numbers to groom specific ones, or nothing at all to audit the whole open backlog for never-triaged and drifted items (a stale blocked label whose blocker already closed, a dependency written only in prose, criteria under the wrong heading). Use when the user says "/pod:triage", "triage these", "here are some bugs and ideas", "add these to the backlog", "file these", "capture these", "log these issues", "triage the backlog", "audit the issues", "clean up the backlog", "groom the backlog", "let's prioritize", "schedule these", "are the tickets up to date", or pastes a list of things to do. This works issue by issue. If the repo has tracking FILES - a ROADMAP.md, a TODO.md, a status table - or has never been set up for these skills, run /pod:migrate first; this skill assumes milestones and issues are already the source of truth. For a read-only answer to "what should I work on next" with no questions asked, use /pod:status. Planning the implementation of one issue is /pod:plan.
+description: >-
+  Turn a pile of raw bugs, features, and research items into properly-formed
+  GitHub issues, one at a time - paste a bullet list or a brain dump and it
+  asks what each means, what "done" looks like, how urgent, which milestone,
+  what it depends on, and whether an agent can do it, then FILES each as a
+  GitHub issue with a "### Acceptance criteria" checklist, milestone, scope
+  label, and real dependency edges. Nothing needs to exist in GitHub first.
+  Also grooms existing issues: pass numbers for specific ones, or nothing to
+  audit the open backlog for never-triaged and drifted items (a stale blocked
+  label, a dependency only in prose, criteria under the wrong heading). Use
+  when the user says "/pod:triage", "triage these", "here are some bugs and
+  ideas", "add these to the backlog", "file these", "capture these", "log
+  these issues", "triage the backlog", "audit the issues", "clean up the
+  backlog", "groom the backlog", "let's prioritize", "schedule these", "are
+  the tickets up to date", or pastes a list of things to do. This works issue
+  by issue. If the repo has tracking FILES - a ROADMAP.md, a TODO.md, a status
+  table - or has never been set up for these skills, run /pod:migrate first;
+  this skill assumes milestones and issues are already the source of truth.
+  For a read-only answer to "what should I work on next" with no questions
+  asked, use /pod:status. Planning the implementation of one issue is
+  /pod:plan.
 ---
 
 # Triage

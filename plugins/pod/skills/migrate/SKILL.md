@@ -1,6 +1,21 @@
 ---
 name: migrate
-description: Bring this repo's tracking up to the model the orca skills expect, whether it has never been migrated or was migrated under an older version of these skills - inventories every tracking file, separates live work from finished and narrative from state, proposes milestones, issues, and a "### Acceptance criteria" checklist on each, and applies only what you approve. Re-run it after upgrading the plugin to move a conforming repo onto the current schema, or any time to audit for drift. Use when the user says "/pod:migrate", "set this repo up for the orca skills", "set up tracking for this project", "migrate my roadmap to issues", "migrate this project to the new skills", "I updated the plugin, update my repo", "my roadmap is a mess", "clean up how we track tasks", "the roadmap keeps causing merge conflicts", "onboard this project", or "audit our tracking". This migrates tracking *files and conventions* - "what should I work on next" is /pod:status, and planning one piece of work is /pod:plan. Not for driving the Orca app: worktrees, terminals, and agents belong to Orca's bundled orca-cli skill.
+description: >-
+  Bring this repo's tracking up to the model the orca skills expect, whether
+  it has never been migrated or was migrated under an older version of these
+  skills - inventories every tracking file, separates live work from finished
+  and narrative from state, proposes milestones, issues, and a "### Acceptance
+  criteria" checklist on each, and applies only what you approve. Re-run it
+  after upgrading the plugin to move a conforming repo onto the current
+  schema, or any time to audit for drift. Use when the user says
+  "/pod:migrate", "set this repo up for the orca skills", "set up tracking for
+  this project", "migrate my roadmap to issues", "migrate this project to the
+  new skills", "I updated the plugin, update my repo", "my roadmap is a mess",
+  "clean up how we track tasks", "the roadmap keeps causing merge conflicts",
+  "onboard this project", or "audit our tracking". This migrates tracking
+  *files and conventions* - "what should I work on next" is /pod:status, and
+  planning one piece of work is /pod:plan. Not for driving the Orca app:
+  worktrees, terminals, and agents belong to Orca's bundled orca-cli skill.
 ---
 
 # Migrate tracking

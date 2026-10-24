@@ -15,7 +15,9 @@ skills: there is nothing to build, nothing to verify, and one author.
 
 Each skill is a folder with one file: `plugins/pod/skills/<name>/SKILL.md`, with
 `name` + `description` frontmatter. The description is the triggering mechanism —
-every "when to use" phrase belongs there, not in the body.
+every "when to use" phrase belongs there, not in the body. Write it as a
+`description: >-` block (unquoted, ` #84` starts a YAML comment) and keep it under
+1,536 characters, where the skill listing truncates.
 
 Three rules that are not optional:
 

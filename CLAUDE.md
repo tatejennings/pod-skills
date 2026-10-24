@@ -21,7 +21,7 @@ build step.
     harness and the docs, and proposes new features worth adopting. **Run it
     after Claude Code upgrades.** Kept apart from `/audit-orca` because the two
     upgrade on unrelated schedules.
-    Last audited against Claude Code: **never** (first run sweeps everything).
+    Last audited against Claude Code **2.1.310**, 2026-10-24.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/pod/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/pod:<skill-name>`.
@@ -31,6 +31,10 @@ build step.
 - The frontmatter `description` is the only thing Claude sees before deciding to
   load a skill — put all trigger phrases and "use when" contexts there, and make
   it pushy (skills undertrigger by default). Keep the body imperative.
+  **Write it as a `description: >-` block and keep it under 1,536 characters.**
+  Unquoted, ` #84` starts a YAML comment and silently drops the rest; past
+  1,536 the skill listing truncates it. Both cut the "not for" sentences first,
+  since they come last.
 - **Verify every `orca` CLI fact against live `orca <group> --help` before
   writing it into a skill — never from memory, never from a plan document.**
   This rule has caught real defects, including a repo selector that would have

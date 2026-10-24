@@ -1,6 +1,26 @@
 ---
 name: verify
-description: The evidence gate, run on demand - check a finished branch or PR against its issue's own "### Acceptance criteria" acceptance checklist, mechanically. Runs the criteria that are commands, greps the branch diff for the criteria that are diff assertions, and handles the ones only a human can judge, then reports pass / pass-agent-judged / pass-with-review / fail with the evidence for each. Verifies the branch and the commands, never the executor's report of them. Posts the verdict as a PR comment, which is the durable record that a branch was gated. Never merges and never closes an issue. Lanes already gate themselves before opening a PR, so this is usually a RE-gate - use it when the base has moved, when new commits landed after the verdict, when a verdict looks wrong, or when /pod:status shows a PR as ungated (awaiting-gate). Use when the user says "/pod:verify", "/pod:verify 84", "verify this branch", "re-verify", "check the acceptance criteria", "did this actually satisfy the issue", "gate this PR", "is this PR ready", "this PR was never gated", or "the gate verdict looks wrong". Also use for "did the agent actually finish this", "check the lane's work", "prove this is done", or "does this meet the criteria". Not for reviewing code quality or finding bugs - that is a code review, use /code-review or /review instead; this checks only whether the issue's stated criteria are met, and it is not CI.
+description: >-
+  The evidence gate, run on demand - check a finished branch or PR against its
+  issue's own "### Acceptance criteria" acceptance checklist, mechanically.
+  Runs the criteria that are commands, greps the branch diff for the criteria
+  that are diff assertions, and handles the ones only a human can judge, then
+  reports pass / pass-agent-judged / pass-with-review / fail with the evidence
+  for each. Verifies the branch and the commands, never the executor's report
+  of them. Posts the verdict as a PR comment, which is the durable record that
+  a branch was gated. Never merges and never closes an issue. Lanes already
+  gate themselves before opening a PR, so this is usually a RE-gate - use it
+  when the base has moved, when new commits landed after the verdict, when a
+  verdict looks wrong, or when /pod:status shows a PR as ungated
+  (awaiting-gate). Use when the user says "/pod:verify", "/pod:verify 84",
+  "verify this branch", "re-verify", "check the acceptance criteria", "did
+  this actually satisfy the issue", "gate this PR", "is this PR ready", "this
+  PR was never gated", or "the gate verdict looks wrong". Also use for "did
+  the agent actually finish this", "check the lane's work", "prove this is
+  done", or "does this meet the criteria". Not for reviewing code quality or
+  finding bugs - that is a code review, use /code-review or /review instead;
+  this checks only whether the issue's stated criteria are met, and it is not
+  CI.
 ---
 
 # Verify — the evidence gate

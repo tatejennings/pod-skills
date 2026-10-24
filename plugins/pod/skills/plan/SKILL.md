@@ -1,6 +1,25 @@
 ---
 name: plan
-description: Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a free-form feature/bug description. Researches docs and codebase with parallel agents, drafts an execution-ready plan, then has a cold-reader agent adversarially review it for completeness, holes, single-context feasibility, and blast radius. Writes the "### Acceptance criteria" acceptance checklist onto the issue, since that is what gates the work later, and saves the plan to a file so it survives the session. With --launch it continues straight into /pod:launch, starting the work as a lane instead of stopping for approval. With --auto it plans unattended - never asking, never entering plan mode, deferring any real fork into the plan file as a named question - and stops at the finished plan; this is what /pod:wave --auto and /pod:tech-lead send into a terminal nobody is watching. Use when the user says "/pod:plan", "/pod:plan 84", "/pod:plan fix the vent double-tap bug", "plan issue N", "plan this feature", "plan milestone X", "help me plan this", "plan and launch this", "how should we approach #84", "what is the best way to fix X", "figure out how to do issue 84", "scope out #84", "break down what needs to happen for X", "think this through before we build it", "design the approach for X", or "what would it take to add X" - any request to work out HOW to do something before implementing it. This plans one piece of work; it does not implement. Planning several issues at once is /pod:wave, starting the work in a lane is /pod:launch, and driving the Orca app directly is Orca's bundled orca-cli skill.
+description: >-
+  Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a
+  free-form feature/bug description. Researches with parallel agents, drafts
+  an execution-ready plan, has a cold-reader agent adversarially review it,
+  writes the "### Acceptance criteria" checklist onto the issue, and saves the
+  plan to a file. With --launch it continues straight into /pod:launch. With
+  --auto it plans unattended - never asking, never entering plan mode,
+  deferring forks into the plan file - and stops at the finished plan; this is
+  what /pod:wave --auto and /pod:tech-lead send into a terminal nobody is
+  watching. Use when the user says "/pod:plan", "/pod:plan 84", "/pod:plan fix
+  the vent double-tap bug", "plan issue N", "plan this feature", "plan
+  milestone X", "help me plan this", "plan and launch this", "how should we
+  approach #84", "what is the best way to fix X", "figure out how to do issue
+  84", "scope out #84", "break down what needs to happen for X", "think this
+  through before we build it", "design the approach for X", or "what would it
+  take to add X" - any request to work out HOW to do something before
+  implementing it. This plans one piece of work; it does not implement.
+  Planning several issues at once is /pod:wave, starting the work in a lane is
+  /pod:launch, and driving the Orca app directly is Orca's bundled orca-cli
+  skill.
 ---
 
 # Plan

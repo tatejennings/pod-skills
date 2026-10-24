@@ -1,6 +1,25 @@
 ---
 name: launch
-description: Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree with an agent already implementing it, so the work happens in a separate lane instead of this session. Reads the issue and its "### Acceptance criteria" checklist, refuses to launch over work already in flight or marked manual, derives the worktree name, writes an executor contract to a file outside the repo, creates the worktree with the issue linked natively, starts one agent pointed at that contract, reports the lane, and STOPS. Use when the user says "/pod:launch", "/pod:launch 84", "launch a lane for #84", "start work on issue 84", "spin up a session to build this", "run this in a new worktree", "put this in its own lane", or "hand off #84" / "hand this off" / "give this to another agent" WHEN the work is a GitHub issue or a plan agreed in this repo - this skill adds the issue's acceptance criteria, the in-flight and manual-label checks, and the executor contract on top of a raw handover. Deciding WHAT to build, or an issue with no acceptance criteria yet, is /pod:plan; launching several planned issues at once is /pod:wave --launch, which checks their plans for collisions first. For a handover with no issue and no plan behind it, or raw worktree and terminal mechanics, use Orca's bundled orca-cli skill; for supervised coordination with waits and decision gates, its orchestration skill.
+description: >-
+  Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree
+  with an agent already implementing it, so the work happens in a separate
+  lane instead of this session. Reads the issue and its "### Acceptance
+  criteria" checklist, refuses to launch over work already in flight or marked
+  manual, derives the worktree name, writes an executor contract to a file
+  outside the repo, creates the worktree with the issue linked natively,
+  starts one agent pointed at that contract, reports the lane, and STOPS. Use
+  when the user says "/pod:launch", "/pod:launch 84", "launch a lane for #84",
+  "start work on issue 84", "spin up a session to build this", "run this in a
+  new worktree", "put this in its own lane", or "hand off #84" / "hand this
+  off" / "give this to another agent" WHEN the work is a GitHub issue or a
+  plan agreed in this repo - this skill adds the issue's acceptance criteria,
+  the in-flight and manual-label checks, and the executor contract on top of a
+  raw handover. Deciding WHAT to build, or an issue with no acceptance
+  criteria yet, is /pod:plan; launching several planned issues at once is
+  /pod:wave --launch, which checks their plans for collisions first. For a
+  handover with no issue and no plan behind it, or raw worktree and terminal
+  mechanics, use Orca's bundled orca-cli skill; for supervised coordination
+  with waits and decision gates, its orchestration skill.
 ---
 
 # Launch

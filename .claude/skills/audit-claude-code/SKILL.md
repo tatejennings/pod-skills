@@ -6,7 +6,7 @@ description: Audit this plugin's skills against the installed Claude Code - re-c
 # Audit against the installed Claude Code
 
 These skills run inside Claude Code and lean on it: they name its tools, read
-`$ARGUMENTS`, enter plan mode, tell the user to `/loop`. **Claude Code updates
+`\$ARGUMENTS`, enter plan mode, tell the user to `/loop`. **Claude Code updates
 independently and often.** A renamed tool fails silently: the skill says "use
 AskUserQuestion", the tool isn't there, and the agent improvises.
 
@@ -66,12 +66,12 @@ a skill's agent will actually have. For each name the skills use:
 The rest of the surface is behavior, not a name:
 
 ```bash
-grep -rnE '\$ARGUMENTS|/loop|plan mode|/reload-plugins|claude plugin [a-z]+|claude --[a-z-]+' plugins/pod/skills/ README.md CLAUDE.md
+grep -rnE '[$]ARGUMENTS|/loop|plan mode|/reload-plugins|claude plugin [a-z]+|claude --[a-z-]+' plugins/pod/skills/ README.md CLAUDE.md
 ```
 
 For each hit, check the claim against the docs (§ Sources):
 
-- **`$ARGUMENTS`**: still the substitution for skill arguments, and still
+- **`\$ARGUMENTS`**: still the substitution for skill arguments, and still
   substituted in plugin skills.
 - **`/loop`**: the interval syntax the skills show (`/loop 15m /pod:status`)
   still parses.
@@ -92,13 +92,17 @@ The shipped skills use only `name` and `description`. Fetch the current skill
 frontmatter reference and plugin manifest schema, and for each field this repo
 does not use, ask whether a specific skill would be better with it:
 
-- **Tool restrictions** (e.g. `allowed-tools`): `status` and `verify` promise
-  to only read. A frontmatter restriction would enforce that promise rather
-  than state it.
-- **Argument hints**: every skill reading `$ARGUMENTS` has an argument shape
+- **Tool restrictions** (`disallowed-tools`, not `allowed-tools`, which
+  pre-approves rather than restricts): `status` and `verify` promise to only
+  read. A restriction would enforce that promise rather than state it.
+- **Argument hints**: every skill reading `\$ARGUMENTS` has an argument shape
   the user could be shown.
 - **Invocation control** (e.g. user-only invocation): a skill that should never
-  auto-trigger.
+  auto-trigger. A user-only skill cannot run under `/loop` or be invoked by
+  `tech-lead` through the Skill tool.
+- **YAML in descriptions**: in an unquoted description, ` #` starts a comment
+  and drops the rest. `grep -n '^description:.* #' plugins/pod/skills/*/SKILL.md`
+  must come back empty.
 - **Model or context settings**: a skill that would be better forked or on a
   different model.
 - **Description limits**: a length cap or truncation rule. The descriptions

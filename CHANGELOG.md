@@ -4,6 +4,50 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.5 — 2026-10-24
+
+### Five descriptions were losing their tails
+
+The first `/audit-claude-code` run found two ways the skill listing was
+cutting descriptions short, and both cut the "not for" sentences first, since
+those come last:
+
+- **A YAML comment.** Every description was an unquoted scalar, where ` #`
+  starts a comment. `launch` stopped at `"launch a lane for`, losing 801 of
+  1,386 characters, including its whole boundary with Orca's `orca-cli` and
+  `orchestration`. `plan` lost its boundary sentence. `tech-lead` lost *"A bare
+  read-only 'what should I work on next' … is /pod:status"*, which is the
+  collision `CLAUDE.md` warns about, and *"Never merges"*.
+- **The 1,536-character listing cap.** `triage` and `wave` were already
+  truncated there; `plan` and `tech-lead` would have been once the YAML was
+  fixed.
+
+All eight descriptions are now `>-` blocks. `plan`, `tech-lead`, `triage` and
+`wave` were trimmed to 1,336–1,484 characters by cutting how-it-works prose.
+Every "not for" sentence still names the same skills. All but `tech-lead`'s
+are word for word; its list was condensed, dropping "with worker_done
+semantics" from the orchestration case. The only trigger phrases dropped are
+`tech-lead`'s `"take the epic"` (covered by `"push <epic> forward"`),
+`"what's next on the <epic> - go do it"` and `"only reviews for now"`.
+`claude plugin details` confirms the fix: `launch`'s always-on cost went from
+~200 to ~470 tokens.
+
+`CLAUDE.md` and `CONTRIBUTING.md` now state both rules.
+
+### `/audit-claude-code` fixes from its first run
+
+- Literal `$ARGUMENTS` in its prose was being substituted away, along with the
+  backslash in its grep. Prose now writes `\$ARGUMENTS`; the grep uses
+  `[$]ARGUMENTS`.
+- It recommended `allowed-tools` as a restriction. That field pre-approves; the
+  restriction is `disallowed-tools`.
+- New check: no description may contain an unquoted ` #`.
+
+Recorded as audited against Claude Code 2.1.310. Two risks from the run are
+open, not fixed: `tech-lead` calls `ScheduleWakeup` outside `/loop`, which the
+docs only describe inside it, and compaction re-attaches only a skill's first
+5,000 tokens while `tech-lead` is about 10,000.
+
 ## 2.2.4 — 2026-10-24
 
 ### New: `/audit-claude-code`

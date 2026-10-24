@@ -1,6 +1,26 @@
 ---
 name: wave
-description: Plan several issues at once, each in its own terminal in the current worktree, so you can move between them answering their questions instead of planning one at a time. Takes a list of issue numbers (or offers the active milestone's ready ones), starts a planning context per issue in its own tab, titled with the issue number and a two-word topic so you can tell them apart at a glance, waits for you to work through them, then reviews the finished plans against each other for file collisions before anything is launched. Stops there - launching the survivors as lanes is a second, deliberate step. Use when the user says "/pod:wave", "/pod:wave 84 85 86", "plan these all at once", "plan a wave", "start planning several issues", "I want to plan these in parallel", or asks to work through the ready list together. With --auto each context plans unattended and only stops if a real fork comes up, so use it for "plan these without asking me", "just plan them", "auto-plan these", or "only ask if something is ambiguous" - it still never launches without the collision review. Also owns the second half of the wave: "check these plans against each other", "do these plans conflict", "will these collide", "are these safe to run in parallel" (--review, which takes the same issue numbers and skips any that already have a lane), and "launch the ones that do not collide", "start the surviving plans", "launch the wave" (--launch). This plans in parallel; it does not create worktrees - each planning context shares the current checkout, and only /pod:launch creates a lane. For planning a single issue, use /pod:plan directly.
+description: >-
+  Plan several issues at once, each in its own terminal tab in the current
+  worktree (titled with the issue number and a two-word topic), so you can
+  move between them answering their questions. Takes issue numbers (or offers
+  the active milestone's ready ones), waits while you work through them, then
+  reviews the finished plans against each other for file collisions. Stops
+  there - launching is a second, deliberate step. Use when the user says
+  "/pod:wave", "/pod:wave 84 85 86", "plan these all at once", "plan a wave",
+  "start planning several issues", "I want to plan these in parallel", or asks
+  to work through the ready list together. With --auto each context plans
+  unattended and only stops if a real fork comes up, so use it for "plan these
+  without asking me", "just plan them", "auto-plan these", or "only ask if
+  something is ambiguous" - it still never launches without the collision
+  review. Also owns the second half of the wave: "check these plans against
+  each other", "do these plans conflict", "will these collide", "are these
+  safe to run in parallel" (--review, which takes the same issue numbers and
+  skips any that already have a lane), and "launch the ones that do not
+  collide", "start the surviving plans", "launch the wave" (--launch). This
+  plans in parallel; it does not create worktrees - each planning context
+  shares the current checkout, and only /pod:launch creates a lane. For
+  planning a single issue, use /pod:plan directly.
 ---
 
 # Wave

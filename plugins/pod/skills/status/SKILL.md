@@ -1,6 +1,21 @@
 ---
 name: status
-description: Dashboard joining Orca's lane state against the GitHub backlog - every worktree's branch, issue, PR state, session liveness and a verdict saying what needs attention, plus active-milestone progress and a READY NEXT list of unblocked issues, which makes this the answer to "what should I work on next". Also regenerates the gitignored ROADMAP.md from GitHub state on every run, so the rendering never goes stale; --no-roadmap suppresses that. With --reap it deletes provably-finished lanes after strict safety checks. Non-interactive and conservative by construction, so looping it is safe. Use when the user says "/pod:status", "/pod:status --reap", "what should I work on next", "what's ready", "what's blocked", "what's left in this milestone", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "regenerate the roadmap", or sets up "/loop 15m /pod:status". For driving the Orca app - creating worktrees, running terminals - use Orca's bundled orca-cli skill instead; apart from the roadmap file and the narrowly-scoped --reap deletion, this skill only reads.
+description: >-
+  Dashboard joining Orca's lane state against the GitHub backlog - every
+  worktree's branch, issue, PR state, session liveness and a verdict saying
+  what needs attention, plus active-milestone progress and a READY NEXT list
+  of unblocked issues, which makes this the answer to "what should I work on
+  next". Also regenerates the gitignored ROADMAP.md from GitHub state on every
+  run, so the rendering never goes stale; --no-roadmap suppresses that. With
+  --reap it deletes provably-finished lanes after strict safety checks.
+  Non-interactive and conservative by construction, so looping it is safe. Use
+  when the user says "/pod:status", "/pod:status --reap", "what should I work
+  on next", "what's ready", "what's blocked", "what's left in this milestone",
+  "how are the lanes doing", "status of my worktrees", "any lanes to clean
+  up", "reap merged worktrees", "regenerate the roadmap", or sets up "/loop
+  15m /pod:status". For driving the Orca app - creating worktrees, running
+  terminals - use Orca's bundled orca-cli skill instead; apart from the
+  roadmap file and the narrowly-scoped --reap deletion, this skill only reads.
 ---
 
 # Status
