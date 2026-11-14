@@ -24,8 +24,8 @@ worktree is identified, how to resolve one safely, and which facts are native
 > `--linear-issue` fallback to a skill here — a lane whose criteria live where
 > the gate cannot read them silently loses the gate.
 
-Verified against `orca` **1.4.229**, 2026-10-24 — every command and flag below
-re-checked against live `--help` at that version, with no breaks from 1.4.200.
+Verified against `orca` **1.4.258**, 2026-11-14 — every command and flag below
+re-checked against live `--help` at that version, with no breaks from 1.4.229.
 Re-verify with `orca <group> --help` before writing any new CLI fact into a
 skill — never from memory. That rule has caught real defects, including one
 below.
@@ -164,9 +164,11 @@ user-prefixed and derived from the worktree name. The username comes from Orca's
 per-repo `gitUsername`, which is **not** necessarily the GitHub account you
 expect, so predicting the full ref is unwise even when the pattern holds.
 
-- **There is no branch-name flag.** Verified against `worktree create --help`:
-  `--base-branch` sets what you branch *from*, not what the new branch is called.
-  The name is always `<gitUsername>/<name>`.
+- **`--branch <name>` exists as of 1.4.258** ("Git branch name to use instead of
+  the prefixed default"), but these skills do not pass it yet: its response shape
+  is unprobed, and the post-create rename below is verified. `--base-branch` sets
+  what you branch *from*, not what the new branch is called. Without `--branch`
+  the name is always `<gitUsername>/<name>`.
 - **Never pass a hand-built `<type>/<slug>` branch and assume it took.**
 - **Read `branch` back** from the create response and use that value downstream.
 

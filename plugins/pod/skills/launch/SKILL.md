@@ -249,9 +249,10 @@ A short kebab-case slug from the issue title or the work: `fix-vent-retap`,
 author is in every commit. **`<type>/<slug>` says what the work is**, which is
 what a branch list, a PR list, and a changelog generator all want.
 
-`worktree create` has **no branch-name flag** (verified: `--base-branch` sets
-what you branch *from*, not what the new branch is called), so rename it
-immediately after creating, while the branch is fresh and has no commits:
+`worktree create` grew a `--branch <name>` flag in 1.4.258, but this skill does
+not pass it yet — its response shape is unprobed, and the rename is verified.
+(`--base-branch` sets what you branch *from*, not what the new branch is called.)
+Rename immediately after creating, while the branch is fresh and has no commits:
 
 ```bash
 git -C <worktree-path> branch -m <type>/<slug>

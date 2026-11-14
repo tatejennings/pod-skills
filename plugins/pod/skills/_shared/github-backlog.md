@@ -12,7 +12,7 @@ Point at this file.
 > referencing a shared one; if you maintain such a copy elsewhere, a fix here
 > belongs there too.
 
-Verified against `gh` 2.97.0, 2026-09-11. Floor is `gh` 2.94.0, the release that
+Verified against `gh` 2.103.3, 2026-11-14. Floor is `gh` 2.94.0, the release that
 added dependencies, sub-issues, and issue types.
 
 ## The tracked-progress-file guard

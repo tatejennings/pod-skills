@@ -4,6 +4,50 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.6 — 2026-11-14
+
+### Re-verified against `orca` 1.4.258 and `gh` 2.103.3
+
+`/audit-orca` after the CLI upgrade from 1.4.229. **No breaks** — every
+command and flag the skills reference still exists in live `--help`; the
+`automations` flags (`--trigger`, `--time`, `--workspace-mode`, `--precheck`,
+`--disabled`, `--enabled`) all hold; `blockedBy.nodes[]` still carries the
+blocker's `state`, re-confirmed on live data; `gh issue edit` still takes
+`--add-blocked-by` / `--add-blocking`. No new bundled-skill collisions: the
+`orca-cli` overlap on "hand off" / "give this to another agent" is the one
+`/pod:launch` already scopes to GitHub issues, and `orchestration` now also
+lists "another worktree" as an `orca-cli` phrase, which `/pod:launch` already
+names as the fallback for a handover with no issue behind it.
+
+**One fact went stale and is corrected**: `worktree create` now has a
+`--branch <name>` flag ("Git branch name to use instead of the prefixed
+default"). `orca-lanes.md` and `/pod:launch` §2a both stated there was no
+such flag. Both now say it exists and that the skills still rename after
+creating, because the flag's response shape has not been probed live and the
+rename has. Adopting it is a proposal, below.
+
+Stamps updated in `orca-lanes.md`, `automation.md`, `github-backlog.md`, and
+the README's requirements table.
+
+Noted but not adopted (proposals only):
+
+- **`worktree create --branch <type>/<slug>`** would replace `/pod:launch`
+  §2a's post-create `git branch -m` and `review-fix.md`'s fix-lane naming.
+  Needs a live probe first: whether the returned `branch` field reflects it,
+  and whether Orca still applies the `gitUsername/` prefix.
+- **`worktree ps --agent-wait`** adds each agent's terminal wait verdict to the
+  JSON, which would let `/pod:status` and `/pod:tech-lead` drop their separate
+  `terminal wait --for tui-idle` probe per lane. Response shape unprobed.
+- **`terminal send --wait-submit <seconds>`** observes whether the prompt
+  started a turn without resending; `/pod:tech-lead` §3.3 and `/pod:wave` send
+  `/pod:plan … --auto` into a terminal and currently trust `--enter`.
+- **`terminal read --screen`** returns the current frame instead of history;
+  `/pod:status`'s liveness read could use it for TUI agents.
+- **`worktree rm --delete-branch`** is now explicit; `/pod:status --reap`
+  does not say whether the branch goes with the lane. Still open from 2.2.3.
+- Still open from 2.2.3: Jira is not fenced off in `orca-lanes.md` the way
+  Linear is.
+
 ## 2.2.5 — 2026-10-24
 
 ### Five descriptions were losing their tails
