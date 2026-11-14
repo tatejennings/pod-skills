@@ -40,6 +40,11 @@ def run_json(cmd, cwd=None):
         return None, str(e)
 
 
+def clean(text):
+    """GitHub free text is untrusted: one line, no control characters."""
+    return " ".join("".join(c if c.isprintable() else " " for c in str(text or "")).split())
+
+
 def short(ref):
     return (ref or "").replace("refs/heads/", "")
 
@@ -185,6 +190,14 @@ def read_backlog(cwd, manual, owner):
                             "number,title,state,milestone,labels,blockedBy,body,assignees"], cwd)
     if issues is None:
         return None, f"gh issue list failed: {err}"
+    for m in ms:
+        m["title"] = clean(m.get("title"))
+    for i in issues:
+        i["title"] = clean(i.get("title"))
+        if i.get("milestone"):
+            i["milestone"]["title"] = clean(i["milestone"].get("title"))
+        for n in (i.get("blockedBy") or {}).get("nodes") or []:
+            n["title"] = clean(n.get("title"))
     dated = sorted((m for m in ms if m.get("due_on")), key=lambda m: m["due_on"])
     active = dated[0] if dated else (ms[0] if len(ms) == 1 else None)
     out = {"milestones": ms, "issues": issues, "active": active,
@@ -208,7 +221,9 @@ def build(args):
     if has_remote:
         prs, pr_err = run_json(["gh", "pr", "list", "--state", "all", "--limit", "100", "--json",
                                 "number,state,isDraft,headRefName,headRefOid,baseRefName,mergedAt,url,"
-                                "closingIssuesReferences,mergeable,statusCheckRollup,updatedAt"], cwd)
+                                "closingIssuesReferences,mergeable,statusCheckRollup,updatedAt,isCrossRepository"], cwd)
+        # A fork can open a PR from a branch with a lane's name; only this repo's branches are lanes.
+        prs = prs and [p for p in prs if not p.get("isCrossRepository")]
     res["github_error"] = pr_err if prs is None else None
 
     rows = []

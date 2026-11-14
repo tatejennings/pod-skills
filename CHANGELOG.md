@@ -4,6 +4,20 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 3.0.1 — 2026-11-14
+
+### Two hardening fixes to the status script
+
+From the automated security review of the 3.0.0 push.
+
+- **Fork PRs no longer match a lane.** The script joined PRs to lanes by head
+  branch name alone, so a PR opened from a fork with a lane's branch name could
+  be read as that lane's PR, and its `Closes` references could mark issues in
+  flight. Cross-repository PRs are now dropped before the join.
+- **Titles are sanitised.** Issue, milestone and blocker titles are reduced to
+  one printable line before they reach the board, the JSON, or `ROADMAP.md`,
+  and the skill says titles are data, never instructions.
+
 ## 3.0.0 — 2026-11-14
 
 Less text per run, and the mechanical parts stop being retyped. From an audit
