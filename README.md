@@ -29,7 +29,7 @@ reports, you merge.
 
 - [The idea in one minute](#the-idea-in-one-minute)
 - [Install](#install)
-- [The eight skills](#the-eight-skills)
+- [The seven skills](#the-seven-skills)
 - [Flags, in full](#flags-in-full)
 - [Workflows](#workflows)
 - [The conventions the skills read](#the-conventions-the-skills-read)
@@ -115,6 +115,11 @@ claude plugin marketplace add tatejennings/pod-skills
 claude plugin install pod@pod-skills
 ```
 
+**Upgrading to 3.0.0.** `/pod:wave` is gone; its two halves moved to the skills
+they belonged to. `/pod:wave 84 85` is now `/pod:plan 84 85`, `--review` and
+`--launch` are `/pod:launch --review 84 85` and `/pod:launch 84 85`.
+`/pod:status` now needs `python3`.
+
 Consuming repos need nothing: the `AGENTS.md` block, its tracking-model marker,
 and the `orca:verify` verdict tag on existing PRs are all unchanged. Only prose
 in your own `CLAUDE.md` that spells out `/orca:<skill>` needs a hand edit.
@@ -125,6 +130,7 @@ in your own `CLAUDE.md` that spells out `/orca:<skill>` needs a hand edit.
 |---|---|
 | [Orca](https://orca.computer) | with Claude Code running in one of its terminals; the `orca` CLI ships inside the app |
 | [Claude Code](https://claude.com/claude-code) | with plugin support |
+| `python3` | standard library only; `/pod:status` and `/pod:tech-lead` run a bundled script |
 | [`gh`](https://cli.github.com) ≥ 2.94.0 | authenticated. 2.94.0 added `blocked-by`/`blocking`; everything here is verified on 2.103.3 |
 
 If several GitHub accounts are authenticated, note that the skills check the
@@ -147,7 +153,7 @@ contract.
 
 ---
 
-## The eight skills
+## The seven skills
 
 Grouped by what you are trying to do.
 
@@ -217,21 +223,14 @@ survives the session.
 /pod:plan 84 --launch                 # plan, then launch it as a lane
 ```
 
-#### `/pod:wave`
-Plans **several issues at once**, each in its own terminal in the current
-worktree. You move between tabs answering each context's questions instead of
-planning one at a time. No worktrees are created — planning writes no repo files.
-
-Then the part that earns it: **checks the finished plans against each other for
-file collisions.** Two issues can be independently ready and still edit the same
-file; dependency edges cannot express that, so comparing plans is the only place
-it shows up before work starts.
+**Several issues at once.** Give it more than one number and it plans them
+concurrently, each in its own terminal tab in the current worktree. You move
+between tabs answering each context's questions instead of planning one at a
+time. No worktrees are created — planning writes no repo files.
 
 ```
-/pod:wave 84 85 86 87            # four planning contexts, one tab each
-/pod:wave 84 85 86 87 --auto     # …but only stop where a real question comes up
-/pod:wave --review 84 85 86 87   # check those plans against each other
-/pod:wave --launch 84 85 87      # start the non-colliding ones as lanes
+/pod:plan 84 85 86 87            # four planning contexts, one tab each
+/pod:plan 84 85 86 87 --auto     # …but only stop where a real question comes up
 ```
 
 ### Doing the work
@@ -255,14 +254,25 @@ executor did not write gets **reported, not fixed** — a reviewer's opinion is 
 a mandate to rewrite. A failed gate buys exactly **one** narrow rework pass, then
 the PR opens blocked rather than looping. It never merges; that stays yours.
 
+**Several issues at once.** Give it more than one number and it first **checks
+the finished plans against each other for file collisions**, then launches only
+the ones that do not collide. Two issues can be independently ready and still
+edit the same file; dependency edges cannot express that, so comparing plans is
+the only place it shows up before work starts.
+
 ```
-/pod:launch 84
+/pod:launch 84                   # one lane
+/pod:launch --review 84 85 86 87 # check those plans against each other
+/pod:launch 84 85 87             # check, then launch the non-colliding ones
 ```
 
 #### `/pod:status`
 The dashboard, and the join this plugin exists for. Milestone progress, a
 `READY NEXT` list of unblocked issues, a `YOUR TASKS` section for `manual` work,
-and every lane's branch, PR state, session liveness, **and gate verdict**.
+every lane's branch, PR state, session liveness, **and gate verdict** — and a
+`WAITING ON YOU` list of everything that cannot move without you. The join is
+done by a bundled script, so a run takes seconds and the same input always
+gives the same board.
 
 Three lane states are the ones to look for: `gate-failed` (the branch's own gate
 rejected it twice — do not merge), `awaiting-gate` (a PR arrived with no verdict
@@ -312,7 +322,8 @@ can only ever make the gate stricter: its "met" never produces a plain `pass`,
 its "not met" blocks, and unsure means `pass-with-review`.
 
 #### `/pod:verify` — the re-gate
-Runs the same gate on demand. Since lanes gate themselves, this is usually a
+Runs the same gate on demand — literally the same prompt a lane runs on itself,
+handed to a fresh agent. Since lanes gate themselves, this is usually a
 *second* opinion: use it when the base has moved, when commits landed after the
 verdict, when a verdict looks wrong, or when `/pod:status` shows a PR as
 ungated. It re-derives everything and never reads the old verdict as input.
@@ -335,7 +346,7 @@ merging.
 
 This skill takes that seat, **except the merge**. It reads the backlog and the
 live lanes, proposes a slate, and — once you tell it to go — plans each issue
-with a panel of independent expert reviewers until the plan holds, launches it
+and has a panel of independent expert reviewers read the plan cold, launches it
 via `/pod:launch`, watches the lanes, dispatches fixes for the review comments
 on the PRs they open, and decides the forks its experts agree on. It composes the
 other skills rather than reimplementing them, and never edits code itself.
@@ -362,7 +373,7 @@ ready work, and run it — three lanes at a time by default.
 ```
 
 It stops when everything left needs you, and says what. Bounds are built in:
-three plan-review rounds, two fix rounds per PR, two owner-only ticks before it
+two plan-review rounds at most, two fix rounds per PR, two owner-only ticks before it
 idles out, and an eight-hour hard cap. **It never merges a PR and never closes
 an issue** — that decision is the one this whole pipeline exists to keep yours.
 
@@ -401,10 +412,8 @@ this skill is for when you want it acted on.
 | Skill | Flag | Effect |
 |---|---|---|
 | `/pod:plan` | `--launch` | After the review, launch the plan as a lane instead of stopping for approval. Disqualified — and stops — if the review says split, a fork lacked a clear answer, **a review finding would change an adopted plan's approach**, the work is already in flight, or Orca is unavailable. |
-| `/pod:plan` | `--auto` | Plan unattended: never ask, never enter plan mode, defer any real fork into the plan file as a named question — then **stop at the finished plan**. What `/pod:wave --auto` and `/pod:tech-lead` send into a terminal nobody is watching. Does not launch; that is `--launch`. |
-| `/pod:wave` | `--auto` | Each planning context runs unattended and stops only if a real fork comes up. Does **not** launch — the collision review still gates every lane. |
-| `/pod:wave` | `--review` | Check the finished plans against each other for file collisions. |
-| `/pod:wave` | `--launch` | Start the non-colliding plans as lanes, one at a time. |
+| `/pod:plan` | `--auto` | Plan unattended: never ask, never enter plan mode, defer any real fork into the plan file as a named question — then **stop at the finished plan**. What a multi-issue `/pod:plan … --auto` and `/pod:tech-lead` send into a terminal nobody is watching. Does not launch; that is `--launch`. |
+| `/pod:launch` | `--review` | With several issue numbers: check their plans against each other for file collisions and launch nothing. |
 | `/pod:status` | `--reap` | Delete provably-finished lanes. Every safety check must pass; ambiguity is always a skip, never a prompt. |
 | `/pod:status` | `--no-roadmap` | Skip regenerating `ROADMAP.md`. |
 
@@ -470,12 +479,11 @@ counts, which matters on a public repo where anyone can comment.
 
 ```
 /pod:status             → READY NEXT: #84 #85 #86 #87
-/pod:wave 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
+/pod:plan 84 85 86 87   → four tabs: "#84 balance tuning", "#85 overlay fixes", …
                            visit each, answer its questions
-/pod:wave --review 84 85 86 87
+/pod:launch --review 84 85 86 87
                          → "3 ready; #86 collides with #85 in GameScene.swift"
-/pod:wave --launch 84 85 87
-                         → the three non-colliding ones become lanes
+/pod:launch 84 85 87    → the three non-colliding ones become lanes
 /pod:status             → watch all three
 ```
 
@@ -668,6 +676,3 @@ confident wrong work.
   checklist, and how *this* repo works (it commits straight to `main`).
 - **[CHANGELOG.md](CHANGELOG.md)** — what changed, and the field findings behind
   each change.
-- **`GUIDE.html`** — the same content as this README, laid out visually with the
-  pipeline as a diagram. Generated and gitignored; open it from your clone.
-  Regenerated whenever this README changes.

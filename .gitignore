@@ -5,7 +5,4 @@ CLAUDE.local.md
 tmp/
 scratch/
 local/
-
-# Visual guide — generated from README.md, regenerate rather than editing.
-# Gitignored so it never diverges from the README in review.
-GUIDE.html
+__pycache__/

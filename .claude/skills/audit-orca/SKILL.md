@@ -36,6 +36,14 @@ Collect the distinct commands the skills reference:
 grep -rhoE 'orca [a-z-]+( [a-z-]+)?' plugins/pod/skills/ | sort -u
 ```
 
+**The status script holds CLI facts the grep cannot see.**
+`plugins/pod/skills/status/scripts/status.py` calls `orca status`,
+`orca worktree current` and `orca worktree ps --limit 200`, and reads
+`runtime.reachable`, `repoId`, `worktreeId`, `isMainWorktree`, `branch`,
+`linkedIssue`, `liveTerminalCount`, `agents[].state`, `truncated` from their
+JSON. Check those commands and fields too, then run the script in a repo with
+a backlog and confirm it prints a board.
+
 Filter out prose matches (`orca skills get <name>` is a real command; "orca
 worktree" alone in a sentence is not). Then check each:
 
@@ -155,8 +163,7 @@ facts were verified, and moving it forward over known-broken facts is worse than
 leaving it stale. Fix first, or leave the stamp and say why.
 
 If anything was fixed, follow the repo's after-edit checklist in `CLAUDE.md`:
-validate, bump the version, add a CHANGELOG entry, regenerate `GUIDE.html` if the
-README changed, and publish.
+validate, bump the version, add a CHANGELOG entry, and publish.
 
 ## What this skill does not do
 

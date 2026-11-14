@@ -4,22 +4,24 @@ description: >-
   Launch a lane for a GitHub issue or an agreed plan - a fresh Orca worktree
   with an agent already implementing it, so the work happens in a separate
   lane instead of this session. Reads the issue and its "### Acceptance
-  criteria" checklist, refuses to launch over work already in flight or marked
-  manual, derives the worktree name, writes an executor contract to a file
-  outside the repo, creates the worktree with the issue linked natively,
-  starts one agent pointed at that contract, reports the lane, and STOPS. Use
-  when the user says "/pod:launch", "/pod:launch 84", "launch a lane for #84",
-  "start work on issue 84", "spin up a session to build this", "run this in a
-  new worktree", "put this in its own lane", or "hand off #84" / "hand this
-  off" / "give this to another agent" WHEN the work is a GitHub issue or a
-  plan agreed in this repo - this skill adds the issue's acceptance criteria,
-  the in-flight and manual-label checks, and the executor contract on top of a
-  raw handover. Deciding WHAT to build, or an issue with no acceptance
-  criteria yet, is /pod:plan; launching several planned issues at once is
-  /pod:wave --launch, which checks their plans for collisions first. For a
-  handover with no issue and no plan behind it, or raw worktree and terminal
-  mechanics, use Orca's bundled orca-cli skill; for supervised coordination
-  with waits and decision gates, its orchestration skill.
+  criteria" checklist, refuses work already in flight or marked manual, writes
+  an executor contract outside the repo, creates the worktree with the issue
+  linked natively, starts one agent on that contract, reports the lane, and
+  STOPS. Given several issue numbers it first checks their plans against each
+  other for file collisions and launches only the ones that do not collide;
+  --review does that check alone. Use when the user says "/pod:launch",
+  "/pod:launch 84", "/pod:launch 84 85 87", "launch a lane for #84", "start
+  work on issue 84", "run this in a new worktree", "put this in its own lane",
+  "do these plans conflict", "will these collide", "are these safe to run in
+  parallel", "launch the ones that do not collide", "launch the wave", or
+  "hand off #84" / "hand this off" / "give this to another agent" WHEN the
+  work is a GitHub issue or a plan agreed in this repo - this skill adds the
+  acceptance criteria, the in-flight and manual-label checks, and the executor
+  contract on top of a raw handover. Deciding WHAT to build, or an issue with
+  no acceptance criteria yet, is /pod:plan. For a handover with no issue and
+  no plan behind it, or raw worktree and terminal mechanics, use Orca's
+  bundled orca-cli skill; for supervised coordination with waits and decision
+  gates, its orchestration skill.
 ---
 
 # Launch
@@ -96,7 +98,12 @@ means the work belongs to *this* lane instead.
 
 ## 1. Resolve the work
 
-`$ARGUMENTS` is an issue number (`#84` or `84`), or empty.
+`$ARGUMENTS` is an issue number (`#84` or `84`), several, or empty.
+
+**Several issue numbers, or `--review`** ⇒ read
+[`references/collision-review.md`](references/collision-review.md) first. It
+checks the finished plans against each other, then sends each surviving issue
+through §1–§5 below one at a time; under `--review` it launches nothing.
 
 ### With an issue number
 
@@ -176,7 +183,7 @@ produces an executor that opens a second PR against its own branch:
 | | Fresh launch | Rework |
 |---|---|---|
 | Worktree | created | **already exists — reuse it** |
-| Branch | Orca derives it | **already checked out** |
+| Branch | named with `--branch` | **already checked out** |
 | PR | open one | **push to the existing PR** |
 | Scope | the whole issue | **only the failed criteria** |
 
@@ -193,14 +200,18 @@ Steps:
      run;
    - which criteria **passed**, so they are not re-litigated or broken;
    - the four differences above, stated plainly;
-   - the same **cold-reader review** the fresh contract carries (step 6), with
+   - a `## Files` section and the same two copied files as a fresh launch (§3),
+     with new names beside the rework contract. The points below are what the
+     rework contract says **in addition**, and they override the steps file
+     where they differ;
+   - the same **cold-reader review** the steps file carries (step 6), with
      its scope question narrowed to the rework: *does this diff address the
      failed criteria without touching what already passed?* Scope creep is a
      bigger risk here than on a fresh build — the executor is reading a whole
      branch it did not write, so the durability question must apply **only to
      lines this rework changed.** Pre-existing structure is out of bounds; it
      passed the gate once and is not this run's to relitigate.
-   - the same **in-lane gate** the fresh contract carries (step 7), run against
+   - the same **in-lane gate** the steps file carries (step 7), run against
      **the issue's full criteria, not just the failed ones.** A rework can break
      what previously passed, and a gate that only re-checks the failures would
      never notice. This is also why the rework gets its own gate pass rather than
@@ -236,29 +247,15 @@ number.
 
 ## 2. Derive the worktree name and branch
 
-A short kebab-case slug from the issue title or the work: `fix-vent-retap`,
-`audio-device-enum`. Rules:
+**Name** — a short kebab-case slug from the issue title or the work:
+`fix-vent-retap`, `audio-device-enum`. Under ~30 characters and recognizable in
+a sidebar. Check existing worktrees first; a name in use gets a `-2` suffix.
+Compare against the worktree *name*, not a path prefix.
 
-- **Orca derives the branch itself** as `refs/heads/<git-username>/<name>` — do
-  **not** hand-build a `<type>/<slug>` branch and assume it took. Read `branch`
-  back from the create response (`../_shared/orca-lanes.md`).
-
-### 2a. Rename the branch to a type prefix
-
-`<git-username>/<slug>` says *who* made the branch, which nobody needs — the
-author is in every commit. **`<type>/<slug>` says what the work is**, which is
-what a branch list, a PR list, and a changelog generator all want.
-
-`worktree create` grew a `--branch <name>` flag in 1.4.258, but this skill does
-not pass it yet — its response shape is unprobed, and the rename is verified.
-(`--base-branch` sets what you branch *from*, not what the new branch is called.)
-Rename immediately after creating, while the branch is fresh and has no commits:
-
-```bash
-git -C <worktree-path> branch -m <type>/<slug>
-```
-
-Pick `<type>` from the issue's labels and title:
+**Branch** — `<type>/<slug>`, passed to `worktree create` as `--branch` (§4).
+It says what the work is, which is what a branch list, a PR list, and a
+changelog generator want. Without `--branch`, Orca names the branch
+`<git-username>/<name>`.
 
 | Signal | Type |
 |---|---|
@@ -272,33 +269,19 @@ Pick `<type>` from the issue's labels and title:
 (`git branch -r --sort=-committerdate | head -20`) and use the prefixes already
 in use. A repo using `feature/` should not suddenly get `feat/`.
 
-Then **read the branch back from git**, not from the create response, since the
-response predates the rename:
+A taken branch name gets a numeric suffix from Orca, so **read `branch` back
+from the create response** and use that value everywhere downstream. Never
+predict it.
 
-```bash
-git -C <worktree-path> branch --show-current
-```
+## 3. Write the lane's three files
 
-Report that value, and use it everywhere downstream.
-
-**Verified safe:** `orca worktree ps` reports the renamed branch correctly, so
-`/pod:status` and every other skill keep working. (`orca worktree show` caches
-the original and goes stale — a cosmetic Orca quirk, and a reason to resolve
-worktrees by `path:` or `id:` rather than `branch:` after a rename.)
-
-If the rename fails, **do not stop the launch** — report the branch Orca gave
-you and carry on. A branch name is cosmetic; the lane is the point.
-- **Collision guard.** Check existing worktrees before creating; a name in use
-  gets a `-2` suffix. Compare against the worktree *name*, not a path prefix.
-- Keep it under ~30 characters and recognizable in a sidebar.
-
-## 3. Write the executor contract
-
-Write to an absolute path **outside the repo** — a new checkout cannot see
-another checkout's untracked files, but any absolute path is readable:
+All three go to an absolute path **outside the repo** — a new checkout cannot
+see another checkout's untracked files, but any absolute path is readable:
 
 ```
-~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md
+~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md   the contract
+~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.steps.md    how to work — copied
+~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.gate.md     the gate prompt — copied
 ```
 
 `<repo-name>` is the **primary checkout's folder name** — not the cwd basename
@@ -308,42 +291,37 @@ and not the GitHub repo name, so it matches where `/pod:plan` wrote the plan:
 basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 ```
 
-The contract is the whole reason this skill exists rather than a raw CLI call.
-Fill in every section; omit a section only when it genuinely has no content.
+**Copy the steps and the gate prompt; write only the contract.**
 
-**The full contract template lives in
-[`references/contract-template.md`](references/contract-template.md)** — it is
-long, it is copied rather than reasoned about, and it carries its own rules about
-snapshots and overwriting. Read it and fill it in; do not reconstruct it from
-memory, and do not summarise it into the contract you write.
+```bash
+cp "${CLAUDE_SKILL_DIR}/references/executor-steps.md" <abs path>.steps.md
+cp "${CLAUDE_SKILL_DIR}/references/gate-prompt.md"    <abs path>.gate.md
+```
 
-**Paste the gate prompt into step 7 in full**, from
-[`references/self-gate.md`](references/self-gate.md) (the block under "The
-prompt"). The executor runs in a worktree of the *user's* repo and cannot see
-this plugin at all, so a file path there would be unresolvable — the contract has
-to carry the procedure itself. This is the one section that is copied rather than
-filled in, and the contract is unusable without it: an executor with no gate
-prompt will improvise a check, which is precisely the self-report the gate
-exists to replace.
+(`${CLAUDE_SKILL_DIR}` is this skill's base directory; if it appears here
+unexpanded, use the base directory shown when the skill loaded.)
 
-What it must always contain, so a missing section is noticeable without opening
-the file:
+The steps file binds the executor to implement, run one cold-reader review,
+have a **separate** agent gate the branch, rework a `FAIL` once, and open a
+normal PR carrying the verdict comment. It is identical for every lane, so it
+is never retyped — a paraphrase drops rules without anyone noticing.
 
-| Section | Carries |
-|---|---|
-| `## The work` | the goal and chosen approach, plus the issue link |
-| `## Context` | why now; the issue body quoted, not paraphrased |
-| `## Decisions already made` | choices locked in planning, so they are not re-litigated |
-| `## Acceptance criteria` | the issue’s checklist **verbatim** — what the gate will check |
-| `## How to work` | the ten numbered steps, including the cold-reader review (6) and the in-lane gate (7/7a) |
-| `## Out of scope` | explicit non-goals, especially adjacent work that looks related |
-| `## Finish with` | what the final summary must report, including the gate verdict |
+The contract is the part that is specific to this lane. Fill in
+[`references/contract-template.md`](references/contract-template.md): the work,
+the issue, the `## Files` section naming the two copied files and the base
+branch, context, decisions already made, the plan, the acceptance criteria
+**verbatim**, and what is out of scope.
 
-**A contract is a snapshot, not a link** — it is written once and read by the
-executor, so updating this skill does not reach a lane already launched. That
-rule and its two companions (never overwrite; the launch prompt stays one
-sentence) are stated in full in the reference file, where the template they
-govern lives.
+**Base branch** for the contract's `## Files`: the branch the repo's own
+instructions name for integrating work, else the default —
+`gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`. The gate
+computes its diff against it, so a wrong one gates the wrong diff.
+
+Confirm all three files exist before launching. A contract whose `## Files`
+points at a file that was never copied is a lane that improvises its own gate.
+
+The three rules about these files — a snapshot not a link, never overwrite, the
+launch prompt stays one sentence — are in the reference file.
 
 ## 4. Launch the lane
 
@@ -351,12 +329,17 @@ Per `../_shared/orca-lanes.md`:
 
 ```bash
 orca worktree create --name <slug> --no-parent \
+  --branch <type>/<slug> \
   --agent claude \
   --prompt "Read the file <absolute contract path> and execute its instructions exactly." \
   --issue <n> --json
 ```
 
 Drop `--issue <n>` when the work has no issue. Everything else stays.
+
+`--branch` rejected as an unknown flag (Orca before 1.4.258) ⇒ create without
+it, then `git -C <path> branch -m <type>/<slug>` while the branch has no
+commits, and read the name back with `git -C <path> branch --show-current`.
 
 **Verify the response rather than assuming it worked.** Response shape, confirmed
 live at 1.4.162 and still documented in `worktree create --help` at 1.4.182 —
@@ -444,7 +427,7 @@ when the base has moved a long way or a verdict looks wrong.
 ## Failure modes to avoid
 
 - **Launching a second lane on an issue that already has one.** Check §1.
-- **Assuming the branch name.** Orca derives it; read it back.
+- **Assuming the branch name.** A taken name gets a suffix; read it back.
 - **Writing the contract inside the repo.** The new checkout cannot see it.
 - **Overwriting an existing contract file.** Suffix instead.
 - **Cramming the contract into `--prompt`.** Quoting will eat it; the pointer
@@ -452,14 +435,8 @@ when the base has moved a long way or a verdict looks wrong.
 - **Substituting a different agent** when `claude` is rejected.
 - **Monitoring the lane afterwards.** That is a full handoff turning into
   supervision — a different skill (`orchestration`) and a different request.
-- **Writing a contract whose step 7 lets the executor gate its own work.** The
-  gate is a *separate* agent; an executor grading itself is the report the gate
-  exists to distrust, and the contract must say so in those words.
-- **Pointing at `self-gate.md` instead of pasting it in.** The executor cannot
-  see this plugin. A path it cannot resolve is a step it will improvise.
-- **Dropping the one-pass rework bound** from step 7a. Without it a lane can
-  grind on the same criterion indefinitely — a reviewer loop with no termination
-  rule always finds one more thing (1.13.1).
-- **Omitting the verdict comment** from step 9. An ungated-looking PR is the
-  default state, so a gate whose result never reaches the PR has done nothing
-  that `/pod:status` or a human reviewer can see.
+- **Retyping the steps or the gate prompt** instead of copying them, or
+  launching before both copies exist. The gate is a *separate* agent reading a
+  file; an executor left to improvise its own check is grading itself.
+- **Editing the copied steps for one lane.** The one-pass rework bound and the
+  verdict comment live there; a lane-specific exception goes in the contract.

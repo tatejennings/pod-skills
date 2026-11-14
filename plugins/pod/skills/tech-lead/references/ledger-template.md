@@ -12,8 +12,9 @@
 `v1-launch`, `reviews`, `issues-15-16`. Written at the end of every tick and after every steering
 message. Read first on `resume` and after compaction. **Never inside a checkout, never tracked.**
 
-Keep it short: the tick log is one line per tick, and old lines can be pruned once a lane is
-merged. This is state, not narrative.
+**Keep it under about 80 lines.** The tick log is one line per tick; when a lane merges, delete
+its row and its tick lines. A ledger that has grown into a narrative is one that has started
+storing the world — every row past the columns below is something to re-derive instead.
 
 ## Template
 
@@ -28,14 +29,17 @@ merged. This is state, not narrative.
 - Repo rules read: CLAUDE.md @ <commit>; locked decisions: <the file the repo names, or "none">
 - Gate identity: `<login this run posts verdicts as>` · trusted producers: `<login>`, `<…>`
 - Reviewers: owner `<login>`; adopted `<login>` (markers: `P1|P2|P3` badge) ; everyone else queued
-- Auto-merge armed on: none | **PR #21 (enabled by `<login>`)** ← re-checked every tick, not cached
+- Trust: solo-private | shared   ← from §0; re-derived on resume
 
 ## Lanes
 
-| Issue | Worktree id | Branch | PR | Verdict | Plan rounds | Fix rounds | Last-seen comment | Next |
-|---|---|---|---|---|---|---|---|---|
-| #15 | repo-1::/Users/…/<lane-slug> | feat/15-<lane-slug> | #21 | pr-open · PASS @ 9f1fd02 | 2 | 1 | 3788608310 | human-review-ready |
-| #16 | — | — | — | planning (terminal <handle>) | 1 | 0 | — | panel round 2 |
+| Issue | PR | Plan rounds | Fix rounds | Last-seen comment | Notified | Next |
+|---|---|---|---|---|---|---|
+| #15 | #21 | 1 | 1 | 3788608310 | ready <ISO time> | — |
+| #16 | — | planning (terminal <handle>) | 0 | — | — | panel |
+
+No worktree id, branch, verdict, head or CI column: those are the world, and the status script
+returns them fresh every tick.
 
 ## Decisions made
 
@@ -45,13 +49,11 @@ merged. This is state, not narrative.
 
 - #5 · manual · <what it needs>
 - #16 · fork: <A> vs <B> · panel 2–1 for A · my rec: A · queued <ISO time>
-- PR #23 · **auto-merge armed** by `<login>` — will merge itself on green CI; excluded until you decide
-- PR #24 · `gated-stale` — re-gated this tick, verdict expected next tick
-- #9 · review state unknown — no adopted reviewer completed against head `a1b2c3d`
+- PR #23 · auto-merge armed — excluded until you decide · queued <ISO time>
 
 ## Human-review-ready
 
-- PR #21 (#15) — gate PASS @ head `9f1fd02` · CI green · review complete · no open threads · notified <ISO time>
+- PR #21 (#15) · notified <ISO time>
 
 ## Skipped
 

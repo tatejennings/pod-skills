@@ -2,7 +2,7 @@
 
 §3.3 and §3.4 of `../SKILL.md`. `/pod:plan --auto` already produces a plan and runs one
 adversarial cold reader. The panel is what a tech lead adds on top: **several independent experts,
-each with a different lens, looping until the plan holds** — and a stated bar for which of their
+each with a different lens, reading the plan cold** — and a stated bar for which of their
 disagreements you resolve yourself.
 
 Two things — the roster (`seats.md`) and the decision bar (below) — decide how hands-off this
@@ -67,25 +67,38 @@ Give each seat this bar, verbatim, after its lens:
 
 ## Rounds
 
+**One round by default; a second only when the first changed the approach.**
+
 1. Run the panel. Collect findings.
 2. **Fold** the findings that are clearly right into the plan file (it lives outside the repo; you
    may edit it). Note under a `## Panel` heading in the plan what you folded and what you dismissed
    and why — that is the executor's and the user's protection against re-litigation.
 3. Findings where experts **disagree with each other**, or that change the approach rather than a
    step, are **forks** — collect them for the decision bar; do not fold them yet.
-4. Re-run the panel on the updated plan (fresh agents), **with the `## Panel` section withheld.**
-   That section records what you folded and what you dismissed and why — it is a rebuttal written
-   by the party under review, and a reviewer who reads "dismissed: X, because Y" is anchored
-   against raising X. Round one promised these agents a cold read (see *Inputs*); handing them the
-   previous round's disposition quietly converts round two into a review of your reasoning instead
-   of the plan. Keep the section in the file for the executor and the user; strip it from the copy
-   the panel sees.
+4. **If every fold was a step-level fix, the review is over.** Do not re-run the panel to confirm
+   its own findings were applied; a fresh read of an edited plan always finds something new.
+5. **If a fold or a decided fork changed the approach** — a different mechanism, a different
+   seam, a changed data shape — run **one** second round on the updated plan, with fresh agents
+   and **the `## Panel` section withheld**. That section is a rebuttal written by the party under
+   review, and a reviewer who reads "dismissed: X, because Y" is anchored against raising X. Keep
+   it in the file for the executor and the user; strip it from the copy the panel sees.
 
-   Stop when a round returns `holds` from every seat, **or after three rounds**. At three, launch
-   anyway with the remaining findings recorded in the plan under `## Panel` and, if any is a fork,
-   through the bar below.
+**Two rounds is the bound. Never run a third. Never skip round one because the issue looks small.**
 
-Never run a fourth round. Never skip round one because the issue looks small.
+### When review ends — every remaining finding gets a disposition
+
+The bound stops the *reviewing*. It does not waive what the last round found. Sort each finding
+still open, and let the worst one decide:
+
+| Remaining finding | Disposition |
+|---|---|
+| A criterion no step produces, a contradiction with a locked decision or non-negotiable, behaviour nobody can prove, a security or data-loss hazard | **Blocking — do not launch.** *Waiting on you*, with the finding quoted |
+| A fork | the decision bar below |
+| A split recommendation | *Waiting on you* (`SKILL.md` §3.3) — never the bar |
+| A risk you can state and the plan can carry | launch, with it recorded under `## Panel` and in the readout |
+
+A plan with a blocking finding the review budget ran out on is an unreviewed plan, not a reviewed
+one.
 
 ## The decision bar — what you resolve, what you queue
 

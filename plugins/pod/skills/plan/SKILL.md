@@ -1,25 +1,27 @@
 ---
 name: plan
 description: >-
-  Plan a piece of work end-to-end - a GitHub issue number, a milestone, or a
-  free-form feature/bug description. Researches with parallel agents, drafts
-  an execution-ready plan, has a cold-reader agent adversarially review it,
-  writes the "### Acceptance criteria" checklist onto the issue, and saves the
-  plan to a file. With --launch it continues straight into /pod:launch. With
-  --auto it plans unattended - never asking, never entering plan mode,
-  deferring forks into the plan file - and stops at the finished plan; this is
-  what /pod:wave --auto and /pod:tech-lead send into a terminal nobody is
-  watching. Use when the user says "/pod:plan", "/pod:plan 84", "/pod:plan fix
-  the vent double-tap bug", "plan issue N", "plan this feature", "plan
-  milestone X", "help me plan this", "plan and launch this", "how should we
-  approach #84", "what is the best way to fix X", "figure out how to do issue
-  84", "scope out #84", "break down what needs to happen for X", "think this
-  through before we build it", "design the approach for X", or "what would it
-  take to add X" - any request to work out HOW to do something before
-  implementing it. This plans one piece of work; it does not implement.
-  Planning several issues at once is /pod:wave, starting the work in a lane is
-  /pod:launch, and driving the Orca app directly is Orca's bundled orca-cli
-  skill.
+  Plan a piece of work end-to-end - a GitHub issue number, several issue
+  numbers, a milestone, or a free-form feature/bug description. Researches
+  with parallel agents, drafts an execution-ready plan, has a cold-reader
+  agent adversarially review it, writes the "### Acceptance criteria"
+  checklist onto the issue, and saves the plan to a file. Given several issue
+  numbers it plans them at once, each in its own terminal tab titled with the
+  issue, so the user can move between them answering questions. With --launch
+  it continues straight into /pod:launch. With --auto it plans unattended -
+  never asking, deferring forks into the plan file - and stops at the finished
+  plan. Use when the user says "/pod:plan", "/pod:plan 84", "/pod:plan 84 85
+  86", "plan issue N", "plan this feature", "plan milestone X", "help me plan
+  this", "plan and launch this", "plan these all at once", "plan a wave",
+  "plan these in parallel", "auto-plan these", "plan these without asking me",
+  "how should we approach #84", "what is the best way to fix X", "scope out
+  #84", "break down what needs to happen for X", "think this through before we
+  build it", "design the approach for X", or "what would it take to add X" -
+  any request to work out HOW to do something before implementing it. This
+  plans; it does not implement. Starting the work in a lane, and checking
+  several plans against each other for collisions, is /pod:launch; planning
+  and launching unattended is /pod:tech-lead; driving the Orca app directly is
+  Orca's bundled orca-cli skill.
 ---
 
 # Plan
@@ -39,17 +41,24 @@ skip the review**.
 ## What this skill is not for
 
 - **Starting the work in a lane** ⇒ `/pod:launch` (or `--launch` here, which
-  invokes it).
+  invokes it). Checking several finished plans against each other for file
+  collisions is also `/pod:launch`, given several issue numbers.
 - **Driving the Orca app** ⇒ Orca's bundled `orca-cli` skill.
 - **Checking finished work** ⇒ `/pod:verify`.
 
 ## 0. Preconditions
 
 - `$ARGUMENTS` empty ⇒ ask what to plan.
+- **More than one issue number** (`84 85 86`), or the user asked to plan
+  several at once ⇒ this context plans nothing itself. Read
+  [`references/fan-out.md`](references/fan-out.md) and follow it instead of the
+  rest of this file: one terminal tab per issue, each running `/pod:plan <n>`.
+  `--auto` passes through to each; `--launch` does not combine with several
+  issues — say so and drop it, because the collision review must come first.
 - Check for `--launch`: plan, review, then launch the lane via `/pod:launch` (§6).
 - Check for `--auto`: plan and review **unattended** — never ask, never enter
   plan mode, and **stop at the finished plan file without launching.** This is
-  what `/pod:wave --auto` and `/pod:tech-lead` send into a terminal nobody is
+  what a multi-issue `/pod:plan … --auto` and `/pod:tech-lead` send into a terminal nobody is
   watching, so anything that blocks on a human is a hang, not a pause. The
   deciding bar is in §3 under *"With `--auto`"*: decide alone only where the
   choice is overwhelming, and **defer with a named question** everywhere else —
@@ -156,8 +165,8 @@ Where a real trade-off needs the user's call, use AskUserQuestion **before**
 finalizing. Where a conventional default exists, decide it and record it under
 Decisions.
 
-**Inside a plain wave** (`/pod:wave` started this context in its own terminal,
-no `--auto`): **ask normally.** The point of a plain wave is that the user moves
+**Inside a plain wave** (a multi-issue `/pod:plan` started this context in its
+own terminal, no `--auto`): **ask normally.** The point of a plain wave is that the user moves
 between contexts answering questions, so asking and waiting is correct there; do
 not adopt a defer-instead-of-asking posture just because the context was started
 programmatically.
@@ -205,6 +214,9 @@ Rules that matter more than completeness:
 - **Write prose for what is genuinely not checkable.** Do not contort a criterion
   into a fake command to make a future gate go green; `issue-schema.md`'s human
   bucket exists for exactly this.
+- **Lint each item** against `../_shared/issue-schema.md`, "Lint the checklist
+  before writing it" — a criterion the lane cannot satisfy before its PR exists
+  fails the gate through no fault of the work.
 - **Never fabricate criteria** to look thorough. A criterion nobody can verify,
   or one that does not follow from the requirements, is worse than a short list.
 - **An existing `### Acceptance criteria` section is not yours to replace.** It was written
@@ -322,7 +334,7 @@ key on.
 
 This matters beyond tidiness: a plan that exists only in conversation cannot be
 compared against another plan, handed to a later session, or re-read after this
-context closes. `/pod:wave --review` reads these files to check plans against
+context closes. `/pod:launch` given several issues reads these files to check plans against
 each other, and `/pod:launch` can be pointed at one directly. **Never overwrite
 an existing plan file** — suffix `-2`, `-3` after the number or slug
 (`2026-08-15-84-2.md`), so the number stays the prefix and the newest is still
@@ -335,7 +347,7 @@ PLAN FILE: <the absolute path you just wrote>
 ```
 
 Under `--auto` this is the only way the caller learns where the plan went —
-`/pod:tech-lead` and `/pod:wave` read this line rather than guessing at a
+`/pod:tech-lead` reads this line rather than guessing at a
 glob, and a glob is how a caller ends up reviewing the wrong issue's plan or
 scraping a half-written one out of a terminal buffer. Print it even when a human
 is watching; it costs one line and it is the contract.

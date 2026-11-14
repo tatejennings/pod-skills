@@ -121,7 +121,7 @@ a skill does the hard way. Look hardest at:
   for scheduling, background monitoring, or workflow features that could carry
   part of it. **Its bounds are the design** (see `CLAUDE.md`): a feature can
   replace the mechanism, never relax a bound.
-- **`wave` and `launch`**: they drive terminals and agents. Check for native
+- **`plan` (several issues) and `launch`**: they drive terminals and agents. Check for native
   ways to watch or message a running agent.
 - **`claude plugin eval`**: this repo has no tests. An eval suite could check
   routing by behavior: that "what should I work on next" reaches `/pod:status`

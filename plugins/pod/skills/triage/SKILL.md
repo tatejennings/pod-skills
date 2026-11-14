@@ -280,6 +280,9 @@ This is the part that makes the issue gateable later, so it gets the care
   `docs/specs/<slug>.md`" — that is legitimate, not a failure.
 - **Never fabricate a criterion to look thorough.** A short honest checklist
   beats a long invented one, which would pass a gate that should have failed.
+- **Lint each item** against `../_shared/issue-schema.md`, "Lint the checklist
+  before writing it" — a criterion the lane cannot satisfy before its PR exists
+  fails the gate through no fault of the work.
 - Read the criteria back before writing them, in one line each. It is much
   cheaper to correct them now than after an executor has built the wrong thing.
 

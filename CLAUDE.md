@@ -2,7 +2,8 @@
 
 Local Claude Code plugin marketplace holding a backlog-and-planning layer for the
 Orca app in a single plugin named `pod` — a pod being what a group of orcas is
-called. It is not made by the Orca team. This repo contains only markdown and JSON — there is no
+called. It is not made by the Orca team. This repo is markdown and JSON plus **one script**,
+`plugins/pod/skills/status/scripts/status.py` (Python 3, standard library only) — there is no
 build step.
 
 ## Where things go
@@ -71,7 +72,7 @@ the shared file, not a skill's restatement of it:
 - `_shared/orca-lanes.md` — Orca identity, selectors, safety rules, the handoff
   invocation.
 - `_shared/evidence-gates.md` — how a criterion is checked, and the four
-  verdicts. Read by the lane's own self-gate (`launch/references/self-gate.md`),
+  verdicts. Read by the gate prompt every lane and `/pod:verify` run (`launch/references/gate-prompt.md`),
   by `/pod:verify`, and by `/pod:status`, which greps for the verdict string.
   **The verdict casing is part of the contract**: UPPERCASE (`PASS`, `FAIL`, …)
   is the literal string on the wire that consumers grep for; lowercase is only
@@ -88,17 +89,33 @@ shared one. Both files say so in a header — keep any copies you maintain in sy
 Repetition elsewhere (the handoff invocation, "nothing ever merges") is
 deliberate — an instruction present where it is needed cannot be missed.
 
+## Mechanical work is copied or scripted, never retyped
+
+Three things in this plugin are deterministic, and an agent re-deriving them
+each run is slower and drifts (3.0.0):
+
+- **The status join** is `status/scripts/status.py`. The skill runs it and
+  prints its output; `status/references/manual-join.md` is the same procedure in
+  prose, for when the script cannot run. **Change them together.** The script
+  holds `orca` and `gh` facts, so `/audit-orca` covers it.
+- **The executor's working rules and the gate prompt** are
+  `launch/references/executor-steps.md` and `gate-prompt.md`, copied with `cp`
+  beside each contract. Never have a skill paste or paraphrase them.
+- **There is one gate prompt.** The lane's self-gate, `/pod:verify`, and a
+  review-fix round all hand `gate-prompt.md` to a fresh agent. Do not write a
+  second gate procedure into a skill.
+
 ## `/pod:tech-lead` is the one skill that composes the others
 
 Every other skill is a leaf: it does its job and stops. `tech-lead` is the loop
 over them, so it has rules the others do not.
 
-- **It invokes, it never restates.** It calls `/pod:status` for the lane ×
+- **It invokes, it never restates.** It runs the status script for the lane ×
   backlog join, `/pod:plan` for planning, `/pod:launch` for lanes. If you find
   yourself writing a contract template or a status query into it, stop — the
   skill exists. Its own listed failure modes say this; keep it true.
-- **Its bounds are the design, not tuning knobs.** Three plan-review rounds, two
-  fix rounds per PR, one rework per gate, two owner-only ticks before idling out,
+- **Its bounds are the design, not tuning knobs.** Two plan-review rounds at most
+  (one by default, 3.0.0), two fix rounds per PR, one rework per gate, two owner-only ticks before idling out,
   an eight-hour hard cap. Same lesson as 1.13.1 and 1.16.0: a reviewer loop with
   no termination rule always finds one more thing. Do not relax one without
   saying in the changelog what replaces it.
@@ -138,7 +155,7 @@ wants it acted on. If you edit either description, re-check the other.
 ## How this repo itself works
 
 **Commit straight to `main`.** No branches, no PRs, no lanes. This repo is
-markdown and JSON with no runtime and no parallel work, so the lane workflow the
+markdown, JSON and one script, with no parallel work, so the lane workflow the
 skills describe does not apply to it — a plugin repo cannot dogfood its own
 skills. It is the one repo that opts out.
 
@@ -152,20 +169,7 @@ skills. It is the one repo that opts out.
    pipeline diagram, workflow examples, the TOC, and the **skill count in the
    "The N skills" heading and its TOC anchor** — adding a skill changes a
    heading, a slug, and a link, and missing one leaves a dead anchor.
-5. **Update `GUIDE.html` whenever `README.md` changes** — the visual version of
-   the same content, gitignored, so it never shows up in a diff to remind you.
-   Create it if missing. A guide that silently lags the README is worse than
-   none, because it reads as current. Keep them in step: every skill, every
-   flag, every workflow.
-
-   **It is hand-authored HTML with its own design system** — CSS variables, a
-   light/dark pair via both `prefers-color-scheme` and `:root[data-theme]`, and
-   `.node` / `.skill` / `.flow` component classes. Do not regenerate it from the
-   README mechanically; edit it, matching the existing markup, and reuse the
-   classes rather than adding inline styles. Its prose is deliberately tighter
-   than the README's, not a copy. Check the nesting after editing — an unclosed
-   tag renders as a blank page.
-6. Publish locally — local marketplaces do **not** auto-refresh, and the first
+5. Publish locally — local marketplaces do **not** auto-refresh, and the first
    command alone does NOT update the installed copy:
 
    ```bash

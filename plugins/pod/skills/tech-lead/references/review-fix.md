@@ -135,7 +135,13 @@ orca worktree ps --limit 200 --json     # filter repoId + linkedIssue == n + isM
 ## Dispatch — the review-fix contract
 
 Write to `~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>-review-fix-<k>.prompt.md`, `<k>` = the
-fix round. Never overwrite an earlier one. Then start the agent in the lane and hand it the pointer:
+fix round. Never overwrite an earlier one.
+
+The lane's gate prompt is the `.gate.md` beside its original contract. A lane launched before
+contracts carried one has none: copy `launch/references/gate-prompt.md` from this plugin to
+`<original contract path minus .prompt.md>.gate.md` first, and name that path in step 4.
+
+Then start the agent in the lane and hand it the pointer:
 
 ```bash
 orca terminal create --worktree id:<exact-id> --title "fix #<n> r<k>" --command "claude" --json
@@ -222,10 +228,10 @@ Reply to post: "<the reason, plainly>"
    lines this round changed — the rest of the branch passed a gate and is not yours to relitigate.
    Fix real blockers; report the rest. Run it once; do not re-review after fixing.
 4. **Gate**, by an agent that did not write it, against the issue's **full** `### Acceptance criteria` —
-   a fix can break what previously passed. <paste the gate prompt here in full, exactly as the
-   lane's original contract carried it — it is under "step 7" in
-   `~/.claude/plans/<repo-name>/<original-contract>.prompt.md`>. Give it only the criteria, the
-   worktree path, the base branch, and the issue number. Do not tell it what you believe passes.
+   a fix can break what previously passed. Tell it to read the lane's gate prompt
+   file, `<abs path of the lane's .gate.md>`, and follow it exactly. Give it only the criteria, the
+   worktree path, the base branch, the issue number, `Mode: gated in-lane before PR` and
+   `Judge prose criteria: yes`. Do not tell it what you believe passes.
    `FAIL` ⇒ one narrow fix, one fresh gate. A second `FAIL` ends it: push anyway and report blocked.
 5. Rebase onto the latest default branch if the PR shows conflicts, push to the existing branch,
    then post the gate verdict as a **new** PR comment: `gh pr comment <pr> --body-file <verdict>`.

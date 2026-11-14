@@ -4,6 +4,103 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 3.0.0 — 2026-11-14
+
+Less text per run, and the mechanical parts stop being retyped. From an audit
+of the whole plugin against how it has actually been used: 132 lanes launched,
+`/pod:status` loading about 78 KB of instructions to do a deterministic join,
+72% of every executor contract being static text an agent rewrote each time,
+and one recent contract that had lost two gate rules in the rewriting.
+
+### Breaking
+
+- **`/pod:wave` is removed; its halves moved to the skills they belonged to.**
+  `/pod:wave 84 85` ⇒ `/pod:plan 84 85` (one planning tab per issue, `--auto`
+  as before). `/pod:wave --review 84 85` ⇒ `/pod:launch --review 84 85`.
+  `/pod:wave --launch 84 85` ⇒ `/pod:launch 84 85`, which runs the collision
+  review first and launches only what does not collide. Nothing was dropped:
+  the procedures are `plan/references/fan-out.md` and
+  `launch/references/collision-review.md`. Seven skills, not eight.
+- **`/pod:status` needs `python3`** (standard library only). Without it the
+  skill falls back to the by-hand procedure.
+- **`GUIDE.html` is retired.** It was a hand-maintained second copy of the
+  README. The file moved to the gitignored `local/`; the after-edit checklist
+  no longer has a guide step.
+
+### `/pod:status` — a script does the join
+
+`status/scripts/status.py` reads Orca, git and `gh` and prints the board: lane
+verdicts, gate freshness (tag, trusted author, `head=`), CI, readiness,
+`YOUR TASKS`, and a new **`WAITING ON YOU`** list — gate failures, ungated and
+stale PRs, PRs awaiting merge, `needs-owner` and unblocked `manual` issues. It
+also writes `ROADMAP.md` under the same three guards. The skill is 136 lines,
+down from 497; the old body is kept as `references/manual-join.md` for when the
+script cannot run. `--json` is what `/pod:tech-lead` reads each tick, so a tick
+no longer reloads the dashboard's instructions.
+
+Verified: run against two real repos (about four seconds each), plus fixture
+tests of the nine lane verdicts and of verdict parsing (forged author, stale
+head, missing `head=`, English "PASS" in a comment). **Not verified against a
+live lane** — none was running when this was written.
+
+### `/pod:launch` — the contract is copied, and the branch is named at create
+
+- **A lane now gets three files.** The contract (`.prompt.md`) holds only what
+  is specific to the lane. The working rules (`.steps.md`) and the gate prompt
+  (`.gate.md`) are copied with `cp` from `references/executor-steps.md` and
+  `references/gate-prompt.md`. The rules themselves are unchanged; they are no
+  longer pasted through a model. Snapshot semantics are unchanged too — a lane
+  keeps the files it was launched with.
+- **`worktree create --branch <type>/<slug>`** replaces the post-create
+  `git branch -m`. Probed live at 1.4.258: the response's `branch` is the exact
+  name with no username prefix, and `ps`, `show` and git agree. §2a is gone.
+- `references/self-gate.md` is replaced by `references/gate-prompt.md`, which
+  is the prompt alone, takes its inputs from the message that points at it,
+  and gains two inputs: the mode line and whether to judge prose criteria.
+- The gate no longer asks the executor whether it plans to add `Closes #n`
+  when no PR exists yet. It skips that check and says so.
+
+### `/pod:verify` — a wrapper around the same gate
+
+It no longer carries its own copy of the checking rules. It resolves the
+target, reads the criteria, hands `gate-prompt.md` to a fresh agent, and posts
+what comes back. One gate procedure, three callers (the lane, this skill, a
+review-fix round). 153 lines, down from 312. Prose criteria are still left to
+the human by default when run by hand.
+
+### `/pod:tech-lead` — one panel round, and no launch over a blocking finding
+
+- **The plan panel runs once by default**, and a second time only when a fold
+  or a decided fork changed the approach. The bound was three rounds; ledgers
+  from real runs show about half of all paneled issues running all three,
+  which is the loop the bound exists to stop. **Two rounds is the new bound.**
+- **"At three, launch anyway" is gone.** When review ends, every remaining
+  finding gets a disposition, and a blocking one — a criterion no step
+  produces, a contradiction with a locked decision, a security or data-loss
+  hazard — sends the issue to *Waiting on you* instead of launching.
+- **Solo private repos skip the criteria-author check.** Private, not in an
+  organization, one collaborator ⇒ `Trust: solo-private`. Auto-merge is still
+  checked per PR every tick and review bots still have to be adopted.
+- **The ledger template lost its world-state columns** (worktree id, branch,
+  verdict) and gained a length cap. Real ledgers had grown past 400 lines by
+  recording what the status script re-derives every tick.
+
+### Smaller
+
+- **Criteria lint** in `issue-schema.md`, applied by `triage` and `plan`
+  before writing a checklist: satisfiable before the PR exists, one claim per
+  item, commands that exist and run unattended.
+- **`/pod:migrate`** moved its re-run sections (schema upgrade, drift audit) to
+  `references/rerun.md`; the skill is back under 500 lines.
+- `/audit-orca` now covers the CLI facts inside `status.py`.
+- `CLAUDE.md` gains "Mechanical work is copied or scripted, never retyped".
+
+### Not done
+
+- Skill bodies still narrate their own history ("verified 2026-07-31",
+  "1.13.1"). Pruning that is a separate pass.
+- `/pod:status` is still one repo at a time.
+
 ## 2.2.7 — 2026-11-14
 
 ### Four defects from a whole-plugin audit

@@ -28,7 +28,7 @@ The responsible shape is not "no automation" but: **human-approved issue →
 supervised implementation → evidence-gated PR → human review and merge.**
 The automation may drive the first leg. It must never drive the last.
 
-**Lanes now gate themselves before opening a PR** (`../launch/SKILL.md` step 7),
+**Lanes now gate themselves before opening a PR** (`../launch/references/executor-steps.md` step 7),
 which strengthens the middle leg — but it does not move the last one, and it is
 not a reason to enable this. Note what the self-gate is and is not:
 
@@ -115,7 +115,7 @@ are provided by installing this plugin.
 1. **The gate passes on real work in this repo**, and **has been seen to fail on
    a branch known to be incomplete.** A gate that has only ever returned `pass`
    is untested, and this requirement is unchanged by lanes now gating themselves
-   (`../launch/SKILL.md` step 7) — an automatic gate nobody has watched fail is
+   (`../launch/references/executor-steps.md` step 7) — an automatic gate nobody has watched fail is
    exactly as unproven as a manual one, and rather easier to stop thinking about.
 
    Watch it fail on purpose: give a lane an issue whose criteria the work cannot

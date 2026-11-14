@@ -156,37 +156,26 @@ Do not silently launch an agent into a shared checkout.
 The `projectId` prefix (`github:<owner>/<repo>` vs `repo:<uuid>`) is **not** the
 discriminator — a `kind: git` repo can carry either. Read `kind`.
 
-### Orca derives the branch itself — on a `kind: git` repo
+### Name the branch with `--branch`; read it back
 
-**Verified**: a real worktree create returned
-`branch: "refs/heads/<git-username>/shape-probe2"` — `refs/heads/<git-username>/<name>`,
-user-prefixed and derived from the worktree name. The username comes from Orca's
-per-repo `gitUsername`, which is **not** necessarily the GitHub account you
-expect, so predicting the full ref is unwise even when the pattern holds.
+**Verified live at 1.4.258**: `orca worktree create --name X --branch chore/X`
+returned `branch: "refs/heads/chore/X"` — the exact name, with no username
+prefix — and `git branch --show-current`, `worktree ps` and `worktree show` all
+agreed.
 
-- **`--branch <name>` exists as of 1.4.258** ("Git branch name to use instead of
-  the prefixed default"), but these skills do not pass it yet: its response shape
-  is unprobed, and the post-create rename below is verified. `--base-branch` sets
-  what you branch *from*, not what the new branch is called. Without `--branch`
-  the name is always `<gitUsername>/<name>`.
-- **Never pass a hand-built `<type>/<slug>` branch and assume it took.**
-- **Read `branch` back** from the create response and use that value downstream.
-
-**Renaming after creation works, and `ps` follows it.** A fresh worktree has no
-commits, so `git -C <path> branch -m <new-name>` is safe, and
-`orca worktree ps` reports the new name. **`orca worktree show` does not** — it
-caches the original and goes stale. Two consequences:
-
-- Prefer `ps` over `show` when a branch may have been renamed.
-- Resolve worktrees by `path:` or `id:` rather than `branch:` afterwards.
-
-The prefix itself is settable per repo — `orca project setup-update --setup <id>
---git-username <name>` — but it is one fixed string for every branch in that
-repo, so it cannot express a per-issue type. Renaming is the finer instrument.
+- **Pass `--branch <type>/<slug>`** on every create. Without it Orca derives
+  `refs/heads/<gitUsername>/<name>`, where `gitUsername` is Orca's per-repo
+  setting and not necessarily the GitHub account you expect.
+- **`--base-branch` is a different flag**: it sets what you branch *from*.
+- **A taken name gets a numeric suffix** (per `--help`; not probed), so read `branch` back from the create
+  response and use that value downstream. Strip `refs/heads/` for display.
 - **Never report an empty `branch` as though it were real.** It comes back empty
-  for `kind: folder` repos, and the primary worktree also reports `branch: ""` in
+  for `kind: folder` repos, and the primary worktree can report `branch: ""` in
   `worktree list`. Fall back to `git -C <path> branch --show-current`, and if
   that is empty too, say the branch could not be determined.
+- A lane created before this flag was adopted may have been renamed with
+  `git branch -m`; `worktree show` caches the original name for those, so
+  prefer `ps`, and resolve by `path:` or `id:`.
 
 ### Terminal handles are routing metadata, not identity
 
@@ -320,6 +309,7 @@ The one command that performs a full handoff — proven end-to-end:
 
 ```bash
 orca worktree create --name <slug> --no-parent \
+  --branch <type>/<slug> \
   --agent claude \
   --prompt "Read the file <abs path outside the repo> and execute its instructions exactly." \
   --issue <n> --json
@@ -329,6 +319,7 @@ Why each flag:
 
 - `--no-parent` — the lane is independent work, not a child of the caller's
   context. Without it, Orca infers a parent from the calling terminal.
+- `--branch` — names the branch for the work rather than for the user (see above).
 - `--agent claude` — one terminal, agent already running (see above).
 - `--prompt` — kept to a **single short pointer sentence**. The full contract
   lives in the file, so nothing multi-line has to survive shell quoting.

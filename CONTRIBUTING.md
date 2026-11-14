@@ -2,8 +2,8 @@
 
 ## How this repo works — it commits straight to `main`
 
-**No branches, no PRs, no lanes.** This repo is markdown and JSON with no
-runtime, no tests, and no parallel work. The plan → launch → verify → merge lane
+**No branches, no PRs, no lanes.** This repo is markdown, JSON and one
+script, with no tests and no parallel work. The plan → launch → verify → merge lane
 workflow these skills describe is for the *consuming* projects they are pointed
 at, not for the plugin itself.
 
@@ -66,11 +66,7 @@ claude --plugin-dir ./plugins/pod   # overrides the installed copy for that sess
 2. Bump `version` in `plugins/pod/.claude-plugin/plugin.json`.
 3. Add a `CHANGELOG.md` entry under that version.
 4. Check `README.md` (skills table, flag table, pipeline) for drift.
-5. **Regenerate `GUIDE.html` if `README.md` changed** — the visual guide is
-   generated from it and gitignored, so nothing in a diff will remind you.
-   Create it if absent; a guide that lags the README reads as current and is
-   worse than none.
-6. Publish locally — local marketplaces do not auto-refresh, and the first
+5. Publish locally — local marketplaces do not auto-refresh, and the first
    command alone does **not** update the installed copy:
 
    ```bash

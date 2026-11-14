@@ -93,6 +93,28 @@ Keep recognition loose and conservative:
   body means someone typed an `x`; it is not evidence. Verify checks the world,
   not the checkbox.
 
+## Lint the checklist before writing it
+
+Whoever writes criteria onto an issue — `/pod:triage`, `/pod:plan`,
+`/pod:migrate` — checks each item against these before the write. They are the
+ways a checklist fails its gate through no fault of the work:
+
+- **Satisfiable inside the lane, before the PR exists.** The gate runs on the
+  branch before the PR opens. "A screenshot is attached to the PR" or "the
+  reviewer approves" cannot be met there; write what the branch must contain
+  instead, or leave it as a prose criterion for the human.
+- **One claim per item.** "X works and a screenshot shows it" fails whole when
+  either half does. Split it.
+- **A command criterion names a command that exists** in the repo today, runs
+  non-interactively, and needs nothing outside the worktree — no simulator a
+  lane cannot boot, no credentials, no network fetch.
+- **A measurement names where it is recorded**, so the gate can tell a fresh
+  result from one that predates the change.
+- **Nothing the work cannot affect.** A criterion about another issue's
+  behaviour belongs on that issue.
+
+Say which items you changed and why when reading the criteria back to the user.
+
 ## Scope labels — reuse first, invent when nothing fits
 
 Beyond priority and status, most backlogs group work by **what part of the
