@@ -38,7 +38,7 @@ Only two parts are load-bearing:
   checklist written afterwards describes what happened; a checklist written up
   front describes what must happen. Only the second one is a gate.
 
-  > **`### Acceptance criteria` is the former name of this section and still reads.** Every
+  > **`### Done when` is the former name of this section and still reads.** Every
   > skill treats the two headings as the same section, so repos and issues
   > written before the rename keep working untouched. **Write
   > `### Acceptance criteria` for anything new**; `/pod:migrate` rewrites the old
@@ -174,6 +174,23 @@ Recognize the convention loosely — a repo may spell it `human`, `human only`, 
 `needs human`. Match on the label's meaning rather than requiring the exact
 string, and say which label you matched. Do not rename a repo's existing label to
 `manual`.
+
+## The `needs-owner` label — a decision only the owner can make
+
+The work is agent work, but something must be decided first that no agent may
+decide: a product behaviour, a price, a locked architecture choice.
+
+```bash
+gh label create needs-owner --description "Blocked on an owner decision — do not launch unattended"
+```
+
+Only `/pod:tech-lead` reads it: it never launches such an issue, never decides a
+fork on one, and lists it under *Waiting on you*. `/pod:launch` run by a present
+user is that user's decision, so it does not refuse. Remove the label once the
+decision is recorded on the issue.
+
+Recognize it loosely, as with `manual` — `decision`, `owner-decision`,
+`needs decision` — and say which label you matched.
 
 ## Finding the checklist — accept both headings
 

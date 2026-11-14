@@ -593,11 +593,12 @@ that quietly passes what it cannot prove is worse than no gate — but a gate th
 returns "needs your review" on every branch is one you stop reading, which comes
 to the same thing.
 
-**Two labels the skills understand:**
+**Three labels the skills understand:**
 
 | Label | Meaning |
 |---|---|
 | `manual` | Only a human can do this — account access, store configuration, a physical device. `/pod:launch` refuses it; `/pod:status` lists it under `YOUR TASKS`. |
+| `needs-owner` | Agent work, but waiting on a decision only you can make. `/pod:tech-lead` never launches it or decides its forks; it lists it under *Waiting on you*. |
 | scope labels (`sound`, `board ui`, …) | Which part of the system the work touches. Reuse an existing one; create one named for the area if none fits. |
 
 `manual` means the **whole task** is human. An issue with a few human *criteria*

@@ -245,8 +245,8 @@ times out) or whose tree is dirty (`git -C <path> status --porcelain` non-empty)
 
 While `live lanes < cap` and READY NEXT is non-empty and the scope has candidates:
 
-1. **Pick** — the scope's own order first (the slate the user approved), then smallest `scope:*`
-   label, then lowest issue number. Skip `manual`, `needs-owner`, anything with an `OPEN` blocker,
+1. **Pick** — the scope's own order first (the slate the user approved), then the smallest
+   size label if the repo uses one, then lowest issue number. Skip `manual`, `needs-owner`, anything with an `OPEN` blocker,
    anything in flight (open PR, assignee, or live lane with `linkedIssue == n`), anything with no
    `### Acceptance criteria` (say so — it needs `/pod:triage` or `/pod:plan` first, and `/pod:plan` is
    the next step anyway, so it will get one).

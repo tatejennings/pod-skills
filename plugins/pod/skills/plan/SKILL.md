@@ -301,7 +301,15 @@ ammunition against re-litigation later.
 ~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<issue-or-slug>.md
 ```
 
-`<repo-name>` comes from the primary checkout, not the cwd basename. The path is
+`<repo-name>` is the **primary checkout's folder name** — not the cwd basename
+(a lane's differs) and not the GitHub repo name (which often differs too, and
+splits one repo's plans across two directories):
+
+```bash
+basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+```
+
+The path is
 deliberately **outside the repo** — a plan is not repo content, and a lane's new
 checkout cannot see another checkout's untracked files anyway.
 
@@ -375,6 +383,11 @@ Then each part launches as an ordinary lane when its blockers close.
 part B is unverifiable without part A in the same tree — **it is not a split.**
 Say so and plan it as one lane. "Three parts in one worktree" is not an
 available shape.
+
+## 6. `--launch` — hand off directly
+
+**Only when `--launch` was passed.** Without it, §5 is the end of this skill —
+never launch a lane the user did not ask for.
 
 After folding in review findings, invoke the `pod:launch` skill via the Skill
 tool. It writes the executor contract, creates the worktree, launches the agent,

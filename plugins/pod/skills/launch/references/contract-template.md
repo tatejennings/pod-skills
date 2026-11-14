@@ -13,7 +13,8 @@ another checkout's untracked files, but any absolute path is readable:
 ~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md
 ```
 
-`<repo-name>` comes from the primary checkout, not the cwd basename.
+`<repo-name>` is the primary checkout's folder name, derived as `../SKILL.md` §3
+shows — never the cwd basename or the GitHub repo name.
 
 ## Three rules about the file
 

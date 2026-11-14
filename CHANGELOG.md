@@ -4,6 +4,36 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 2.2.7 — 2026-11-14
+
+### Four defects from a whole-plugin audit
+
+- **`/pod:plan` lost its `## 6. --launch` heading in 1.15.0**, when §5a was
+  inserted above it. The "invoke `pod:launch`" paragraph was left at the end
+  of §5a with no condition on it, so a plain `/pod:plan` could read as an
+  instruction to launch, and three `§6` references pointed at nothing. The
+  heading is back, with one line saying it applies only under `--launch`.
+- **`issue-schema.md` named the wrong heading as the former one.** The v2
+  rename rewrote the sentence about the old name, so it read "`### Acceptance
+  criteria` is the former name". It says `### Done when` again.
+- **`<repo-name>` in `~/.claude/plans/<repo-name>/` was underspecified.**
+  "From the primary checkout" was read as the folder name by some runs and
+  the GitHub repo name by others, and two consuming repos ended up with
+  plans, contracts and the tech-lead ledger split across two directories.
+  `plan`, `launch`, the contract template and the ledger template now give
+  the one command, which works from a lane: the primary checkout's folder
+  name. **Existing split directories are not merged by this release** — move
+  the files by hand into the folder-named directory.
+- **Two labels `/pod:tech-lead` read were never defined.** `needs-owner`
+  appeared in eight places and nowhere in `issue-schema.md`; it is now
+  defined there beside `manual`, matched loosely (`decision`,
+  `owner-decision`), and read only by the tech lead. `scope:*` / `scope:s`
+  assumed a size-label convention that contradicts the schema's own
+  definition of scope labels as areas; `tech-lead`, `seats.md` and
+  `expert-panel.md` now say "size label if the repo uses one" and "the
+  smallest issues". The README and guide label tables gain the
+  `needs-owner` row.
+
 ## 2.2.6 — 2026-11-14
 
 ### Re-verified against `orca` 1.4.258 and `gh` 2.103.3

@@ -40,7 +40,7 @@ The seats and their lenses live in **`seats.md`** — the one place a persona is
 panel round convenes, from that roster:
 
 - **Requirements & decisions, Architecture & codebase fit, Test & verification — always, three
-  seats, never fewer, including for `scope:s`.** A small issue is where an unreviewed plan is most
+  seats, never fewer, including for the smallest issues.** A small issue is where an unreviewed plan is most
   likely to be launched, so the floor does not move with size.
 - **UX & design, Security, Domain** — when `seats.md`'s *Convened* column or the repo's own
   instructions say so.

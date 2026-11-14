@@ -301,7 +301,12 @@ another checkout's untracked files, but any absolute path is readable:
 ~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md
 ```
 
-`<repo-name>` comes from the primary checkout, not the cwd basename.
+`<repo-name>` is the **primary checkout's folder name** — not the cwd basename
+and not the GitHub repo name, so it matches where `/pod:plan` wrote the plan:
+
+```bash
+basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+```
 
 The contract is the whole reason this skill exists rather than a raw CLI call.
 Fill in every section; omit a section only when it genuinely has no content.

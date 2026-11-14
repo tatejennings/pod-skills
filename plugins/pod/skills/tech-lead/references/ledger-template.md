@@ -6,7 +6,9 @@
 ~/.claude/plans/<repo-name>/tech-lead-<scope-slug>.md
 ```
 
-`<repo-name>` from the primary checkout; `<scope-slug>` from the words — `epic-loop`,
+`<repo-name>` is the primary checkout's folder name — the same directory `/pod:plan` and
+`/pod:launch` write to, never the GitHub repo name
+(`basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`); `<scope-slug>` from the words — `epic-loop`,
 `v1-launch`, `reviews`, `issues-15-16`. Written at the end of every tick and after every steering
 message. Read first on `resume` and after compaction. **Never inside a checkout, never tracked.**
 

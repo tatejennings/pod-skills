@@ -88,7 +88,7 @@ Before the proposal prints, after `/pod:status` has been read:
 ### The plan panel — three core seats plus domain seats (`SKILL.md` §3.3, `expert-panel.md`)
 
 - Requirements, Architecture, Test — **always, three seats, never fewer**, including for
-  `scope:s`. A small issue is where an unreviewed plan is most likely to launch.
+  the smallest issues. A small issue is where an unreviewed plan is most likely to launch.
 - Then UX & design, Security, Domain per the table's *Convened* column and the repo's
   instructions.
 - **Cap: five seats per round** — three core plus at most two domain seats. If the repo's
