@@ -21,7 +21,7 @@ build step.
     harness and the docs, and proposes new features worth adopting. **Run it
     after Claude Code upgrades.** Kept apart from `/audit-orca` because the two
     upgrade on unrelated schedules.
-    Last audited against Claude Code **2.1.318**, 2026-11-08.
+    Last audited against Claude Code **2.1.318**, 2026-11-14.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/pod/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/pod:<skill-name>`.
