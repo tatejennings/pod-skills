@@ -330,29 +330,46 @@ Per `../_shared/orca-lanes.md`:
 ```bash
 orca worktree create --name <slug> --no-parent \
   --branch <type>/<slug> \
-  --agent claude \
+  --agent claude --surface terminal \
   --prompt "Read the file <absolute contract path> and execute its instructions exactly." \
   --issue <n> --json
 ```
 
 Drop `--issue <n>` when the work has no issue. Everything else stays.
 
+`--surface terminal` is not optional. Without it the user's Chat | CLI setting
+picks, and a chat lane has no terminal — `/pod:status` and `/pod:tech-lead`
+read lanes through theirs.
+
+`--surface` rejected as an unknown flag ⇒ create without it; an Orca that old
+has no chat surface, and returns the handle as `result.agentTerminalHandle`.
+
 `--branch` rejected as an unknown flag (Orca before 1.4.258) ⇒ create without
 it, then `git -C <path> branch -m <type>/<slug>` while the branch has no
 commits, and read the name back with `git -C <path> branch --show-current`.
 
-**Verify the response rather than assuming it worked.** Response shape, confirmed
-live at 1.4.162 and still documented in `worktree create --help` at 1.4.182 —
-the help text there states the `agentTerminalHandle` / `startupTerminal.handle`
-fallback verbatim:
+**Verify the response rather than assuming it worked.** Response shape,
+confirmed live at 1.4.269:
 
 | What | Where |
 |---|---|
 | The created worktree | `result.worktree` — with `path`, `branch`, `id` |
-| The agent's terminal handle | `result.agentTerminalHandle` (also `result.startupTerminal.handle`) |
+| What started | `result.launch.outcome.kind` — must be `terminal` |
+| The agent's terminal handle | `result.launch.outcome.handle` |
+| Whether the prompt arrived | `result.launch.prompt.outcome` — `handed-to-terminal` |
 | Warnings | `result.warnings`, when present |
 
-An absent handle is not by itself a failure; folder-based repos may return none.
+**`outcome.kind` is not `terminal` ⇒ report it, quoting
+`result.launch.receipt.detail`, and say the lane is a chat.** The agent is
+running and the work is real, so do not delete the lane — but `/pod:status`
+will not see a terminal in it. No `result.launch` at all is the older-Orca
+shape above, not a failure.
+
+**`ok: false` with `agent_session_operation_unknown` ⇒ never launch again
+afresh.** The agent may already be running with the prompt submitted. Re-issue
+the identical command once with `--retry-launch <error.data.operationId>`
+added. Still unknown ⇒ check `orca worktree ps --json` for the lane, report
+what is there, and stop (`../_shared/orca-lanes.md`).
 
 ### Then verify the lane is actually isolated — this is not optional
 

@@ -8,7 +8,12 @@ preconditions.**
 This is a config artifact, not a skill. Nothing invokes it; a human creates it
 when they decide the guardrails below are in place.
 
-Verified against `orca` 1.4.258, 2026-11-14 (`orca automations create --help`).
+Verified against `orca` 1.4.271, 2026-11-22 (`orca automations create --help`).
+
+**Not verified: whether a run opens a chat or a terminal.** `automations
+create` has no `--surface`, and its help does not say which the `--provider`
+agent gets. The lanes a run launches are terminals either way, because
+`/pod:launch` pins them. Check the first run's surface before enabling this.
 
 ## Why disabled
 

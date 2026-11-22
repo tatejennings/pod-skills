@@ -242,6 +242,9 @@ is already in flight or marked `manual`, writes an executor contract *outside*
 the repo, creates the worktree with the issue linked natively, starts one agent
 on it, and **stops**.
 
+The agent always starts in a **terminal**, whatever your Chat | CLI setting in
+Orca says — the other skills watch a lane through its terminal.
+
 The contract binds the executor: implement, self-review, run a **cold-reader
 review** — one subagent asking two questions of the diff: *does this implement
 what was asked, no more and no less?* and *will this be hard to change later, or
@@ -281,6 +284,10 @@ gated, then more commits landed — so the code now on the PR is unchecked).
 
 Read-only apart from regenerating `ROADMAP.md`, and conservative by construction
 — safe to put on a loop.
+
+A chat you open in a lane by hand counts as a live session while its agent is
+working or waiting on you, so `--reap` leaves that lane alone. Reaping removes
+the worktree; Orca keeps the local branch.
 
 ```
 /pod:status                    # the dashboard, + regenerate ROADMAP.md

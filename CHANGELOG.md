@@ -4,6 +4,60 @@ Notable changes to the `pod` plugin (named `orca` before 2.0.0). Versions track
 `plugins/pod/.claude-plugin/plugin.json`. Entries below 2.0.0 use the old
 `/orca:` invocations — they were true when written and are left as history.
 
+## 3.0.2 — 2026-11-22
+
+Re-verified against `orca` 1.4.271 (from 1.4.258). No command or flag
+vanished, but `worktree create --agent` now follows the user's Chat | CLI
+setting. On a machine set to Chat, a launched lane was a chat with no
+terminal: `/pod:status` called it `stalled` once the agent went idle, and
+`/pod:tech-lead` had nothing to wait on or read.
+
+### `/pod:launch` — lanes are pinned to a terminal
+
+- **The handoff passes `--surface terminal`.** Probed live: without it the
+  launch returned `launch.outcome.kind: "structured"` and `liveTerminalCount:
+  0`; with it, one terminal. An Orca too old to know the flag has no chat
+  surface, so the fallback is to create without it.
+- **The response shape is corrected.** The handle is
+  `result.launch.outcome.handle`, and `launch.prompt.outcome` says whether the
+  prompt arrived. `result.agentTerminalHandle` is gone from current Orca. A
+  launch that still comes back as a chat is reported, not deleted.
+- **A lost launch reply is retried by id.** `agent_session_operation_unknown`
+  means the agent may already be running; the skill re-issues the same command
+  once with `--retry-launch` and never launches afresh.
+
+### `/pod:status` — a chat counts as a live session
+
+- **Liveness looks at agents as well as terminals.** A lane is live with a
+  terminal, or with an agent `working`, `blocked` or `waiting`. Before this, a
+  merged lane with a chat still working read `merged-reapable` and passed the
+  reap check. `done` does not count, because a closed chat stays listed as
+  `done`. Script and `manual-join.md` changed together.
+- **`--reap` re-checks agents before each delete**, and says that Orca now
+  keeps the local branch after `worktree rm --force`.
+- `stalled` reads "no live session" instead of "session gone"; a lane with no
+  issue no longer prints `(#None)`.
+
+### `/pod:tech-lead` — no fix dispatched beside a busy chat
+
+A lane with no agent terminal counts as idle only when its `worktree ps` row
+has no agent `working`, `blocked` or `waiting`. A chat lane it cannot read is
+named under *Waiting on you*. The bounds are unchanged.
+
+### Shared specs and repo files
+
+- `_shared/orca-lanes.md`: the pin, the `result.launch` table, the agents half
+  of pre-deletion check 4, branch retention, and the retry rule.
+- `_shared/automation.md`: re-stamped, with a note that the surface a
+  scheduled run opens is not verified.
+- `/audit-orca` gains a handoff probe, since `--help` cannot show a changed
+  response, and re-reads the version before stamping — Orca updated itself
+  during this audit.
+- `CLAUDE.md` records the terminal pin as a design rule.
+
+Not done, on purpose: chat lanes are not supported. Orca has no wait-for-idle
+and no close for a chat, so there is nothing to replace `terminal wait` with.
+
 ## 3.0.1 — 2026-11-14
 
 ### Two hardening fixes to the status script

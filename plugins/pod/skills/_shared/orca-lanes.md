@@ -24,8 +24,10 @@ worktree is identified, how to resolve one safely, and which facts are native
 > `--linear-issue` fallback to a skill here — a lane whose criteria live where
 > the gate cannot read them silently loses the gate.
 
-Verified against `orca` **1.4.258**, 2026-11-14 — every command and flag below
-re-checked against live `--help` at that version, with no breaks from 1.4.229.
+Verified against `orca` **1.4.271**, 2026-11-22 — every command and flag below
+re-checked against live `--help` at that version. One break from 1.4.258:
+`worktree create --agent` now follows the user's Chat | CLI setting, so the
+handoff pins `--surface terminal` (below).
 Re-verify with `orca <group> --help` before writing any new CLI fact into a
 skill — never from memory. That rule has caught real defects, including one
 below.
@@ -179,18 +181,38 @@ agreed.
 
 ### Terminal handles are routing metadata, not identity
 
-A handle returned by `worktree create` (`agentTerminalHandle`) **can differ**
-from what `terminal list` reports for the same terminal minutes later. Never
-cache one across operations — re-resolve via
+A handle returned by `worktree create` (`result.launch.outcome.handle`) **can
+differ** from what `terminal list` reports for the same terminal minutes later.
+Never cache one across operations — re-resolve via
 `orca terminal list --worktree <selector> --json` at each use.
 
-### `--agent` produces exactly one terminal
+### `--agent` starts a chat or a terminal — pin `--surface terminal`
 
-Passing `--agent <id>` to `worktree create` launches the agent in the first
-terminal and creates no stray fallback shell. Confirmed empirically. With
-`--agent --json`, read the handle from `result.agentTerminalHandle`; older
-runtimes return only `result.startupTerminal.handle`, and folder-based repos may
-return neither.
+**Verified live at 1.4.271.** `worktree create --agent <id>` goes through
+Orca's agent launch, which follows the user's Chat | CLI setting for that
+agent. Unpinned, on a machine set to Chat, it returned
+`launch.outcome.kind: "structured"` — a chat, with **no terminal at all**:
+`liveTerminalCount: 0` and an empty `terminal list`.
+
+Every skill here waits on, reads and types into a lane's terminal, so **the
+handoff passes `--surface terminal`**. With it the same probe returned
+`kind: "terminal"`, one terminal, and `liveTerminalCount: 1`.
+
+With `--agent --json`, read what started from `result.launch`:
+
+| Field | Value |
+|---|---|
+| `outcome.kind` | `terminal`, or `structured` for a chat |
+| `outcome.handle` | the agent's handle (`term_…` for a terminal) |
+| `receipt.detail` | one sentence saying why that surface was chosen |
+| `prompt.outcome` | `handed-to-terminal`, or `journaled` for a chat |
+
+`result.agentTerminalHandle` is what an older Orca returns instead (per
+`--help`; not probed); current Orca does not return it.
+
+**A chat can still be in a lane** — opened by hand, or launched before the pin.
+It shows up only in `agents[]`, never in `liveTerminalCount`, and it stays
+listed as `done` after it finishes, so `done` does not prove a chat is open.
 
 ### What Orca tracks natively — do not reconstruct it
 
@@ -205,8 +227,8 @@ return neither.
 | `branch` | current branch |
 | `linkedIssue`, `linkedPR` | native issue/PR links — no frontmatter needed |
 | `workspaceStatus` | board column (`todo`, `in-progress`, `in-review`, `completed`) |
-| `liveTerminalCount`, `hasAttachedPty` | session liveness |
-| `agents[]` | `state`, `agentType`, current `toolName` per agent |
+| `liveTerminalCount`, `hasAttachedPty` | **terminal** liveness — zero for a chat agent |
+| `agents[]` | `state` (`working`, `blocked`, `waiting`, `done`), `agentType`, current `toolName` per agent — chats and terminals both |
 | `lastActivityAt`, `lastOutputAt` | staleness |
 | `parentWorktreeId`, `childWorktreeIds` | lineage |
 | `comment` | free-text note set via `worktree set --comment` |
@@ -279,15 +301,21 @@ the seconds since a scan. Only 2 (a merged PR's state) is settled and reusable:
 1. **Linked worktree** — the `--git-dir` ≠ `--git-common-dir` proof above.
 2. **PR merged** — from `gh`, not from `linkedPR` (which is only a number).
 3. **Clean tree** — `git -C <path> status --porcelain` is empty.
-4. **No live terminals** — `liveTerminalCount == 0`. Necessary but **not
-   sufficient**: a terminal can outlive its process, so zero means "nobody is
-   watching", not "no work is in flight". Checks 1–3 are what make deletion safe.
+4. **No live session** — `liveTerminalCount == 0` **and** no `agents[]` entry
+   in `working`, `blocked` or `waiting`. The second half is what catches a chat,
+   which has no terminal. Necessary but **not sufficient**: a terminal can
+   outlive its process, so zero means "nobody is watching", not "no work is in
+   flight". Checks 1–3 are what make deletion safe.
 5. **`HEAD` matches the PR's `headRefOid`** — post-merge commits would be lost.
 
 Any check failing ⇒ skip and report which one. Never prompt, never retry.
 
 Deletion itself: `orca worktree rm --worktree <selector> --force`. Repo-defined
 `orca.yaml` archive hooks are skipped unless `--run-hooks` is passed.
+
+**The local branch survives the delete**, `--force` included (verified live at
+1.4.269). `--delete-branch` asks Orca to remove it, and Orca keeps any branch
+it cannot prove merged — so a branch left behind is not a failed delete.
 
 ### Degraded mode — when Orca is not there
 
@@ -310,7 +338,7 @@ The one command that performs a full handoff — proven end-to-end:
 ```bash
 orca worktree create --name <slug> --no-parent \
   --branch <type>/<slug> \
-  --agent claude \
+  --agent claude --surface terminal \
   --prompt "Read the file <abs path outside the repo> and execute its instructions exactly." \
   --issue <n> --json
 ```
@@ -320,7 +348,9 @@ Why each flag:
 - `--no-parent` — the lane is independent work, not a child of the caller's
   context. Without it, Orca infers a parent from the calling terminal.
 - `--branch` — names the branch for the work rather than for the user (see above).
-- `--agent claude` — one terminal, agent already running (see above).
+- `--agent claude --surface terminal` — one terminal, agent already running.
+  Without `--surface` the user's Chat | CLI setting decides, and a chat lane has
+  no terminal for these skills to wait on (see above).
 - `--prompt` — kept to a **single short pointer sentence**. The full contract
   lives in the file, so nothing multi-line has to survive shell quoting.
 - `--issue <n>` — sets `linkedIssue` natively. This is why no plan-file
@@ -345,6 +375,20 @@ has no ref to branch from. Make the initial commit first, or use
 `orca terminal create --worktree path:<repo> --command "claude"` to run an agent
 in the existing checkout instead.
 
-For a fresh agent in an *existing* checkout, always use `terminal create` — not
-`worktree create`. Orca's own doctrine: create a worktree only when the user
-explicitly asks for one, or a concrete checkout conflict makes sharing unsafe.
+For a fresh agent in an *existing* checkout, use `terminal create --command
+"claude"` — not `worktree create`. Orca's own doctrine: create a worktree only
+when the user explicitly asks for one, or a concrete checkout conflict makes
+sharing unsafe.
+
+Orca's help now points agent starts at `orca agent launch`, which follows the
+Chat | CLI setting like `worktree create --agent` does. These skills keep
+`terminal create` because it is a terminal by construction.
+
+### A lost launch reply is retried by id, never afresh
+
+`worktree create --agent` can fail with `agent_session_operation_unknown`: Orca
+could not confirm the outcome, and the agent may already be running with the
+prompt submitted. Re-issue the **identical** command once, from the same
+directory, adding `--retry-launch <error.data.operationId>`. A fresh launch
+risks a second agent on the same work. Still unknown ⇒ look for the worktree
+with `orca worktree ps --json`, report what is there, and stop.

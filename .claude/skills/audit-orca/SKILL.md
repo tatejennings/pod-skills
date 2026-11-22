@@ -28,6 +28,10 @@ delta is the reason to keep reading.
 Orca unreachable or the CLI missing ⇒ stop. This audit is meaningless without
 the real binary; do not fall back to memory.
 
+**Orca updates itself while running.** Read the version again before writing
+the stamp (§6); if it moved mid-audit, diff `--help` for the commands the
+skills use and stamp the version you actually finished on.
+
 ## 1. Every referenced command still exists
 
 Collect the distinct commands the skills reference:
@@ -42,7 +46,9 @@ grep -rhoE 'orca [a-z-]+( [a-z-]+)?' plugins/pod/skills/ | sort -u
 `runtime.reachable`, `repoId`, `worktreeId`, `isMainWorktree`, `branch`,
 `linkedIssue`, `liveTerminalCount`, `agents[].state`, `truncated` from their
 JSON. Check those commands and fields too, then run the script in a repo with
-a backlog and confirm it prints a board.
+a backlog and confirm it prints a board. It treats agent states `working`,
+`blocked` and `waiting` as an open session — confirm `orca agent list --help`
+still lists those names.
 
 Filter out prose matches (`orca skills get <name>` is a real command; "orca
 worktree" alone in a sentence is not). Then check each:
@@ -75,6 +81,22 @@ Three findings to report separately:
   `_shared/automation.md` precisely because it is easy to get wrong.
 - **A new flag that would simplify something we do the hard way** — not a break,
   but worth surfacing (§4).
+
+## 2b. Probe the handoff — help does not show response shapes
+
+A flag can survive while what the command returns changes: at 1.4.269 the
+handoff began starting a chat instead of a terminal, with every flag intact.
+Run the invocation from `_shared/orca-lanes.md` with a throwaway name and a
+one-line prompt, then check:
+
+- `result.launch.outcome.kind` is `terminal`, and `result.launch.prompt.outcome`
+  is `handed-to-terminal`;
+- the lane's `worktree ps` row has `liveTerminalCount: 1`;
+- the status script calls the lane `working`.
+
+Then remove the lane (`terminal close --worktree id:<id> --all`, `worktree rm
+--force --delete-branch`) and confirm no probe branch is left. A probe that
+fails with a git error is not an Orca finding — retry it before reporting.
 
 ## 3. `gh` facts too
 
@@ -156,7 +178,8 @@ Then, **only if the checks passed**, update the stamp in
 Verified against `orca` **<version>**, <YYYY-MM-DD>.
 ```
 
-Do the same for `gh` in `_shared/github-backlog.md` if it moved.
+`_shared/automation.md` carries its own `orca` stamp — move it too. Do the same
+for `gh` in `_shared/github-backlog.md` if it moved.
 
 **Never update a stamp on a run that found breaks** — the stamp asserts the
 facts were verified, and moving it forward over known-broken facts is worse than

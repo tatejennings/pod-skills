@@ -19,6 +19,8 @@ MANUAL = {"manual", "human", "human only", "human-only", "needs human", "needs-h
 OWNER = {"needs-owner", "needs owner", "decision", "owner-decision", "needs decision", "needs-decision"}
 # Orca agent states are working | blocked | waiting | done; only the first is mid-task.
 ACTIVE_STATES = {"working"}
+# A chat agent has no terminal; done is excluded because a closed chat stays listed as done.
+OPEN_STATES = {"working", "blocked", "waiting"}
 PASSING = {"PASS", "PASS-AGENT-JUDGED", "PASS-WITH-REVIEW"}
 
 
@@ -140,8 +142,9 @@ def read_verdict(pr, trusted, path, cwd):
 
 def classify(lane, pr, git, verdict, prs_unreadable=False):
     """One verdict per lane, in the resolution order the skill documents."""
-    live = (lane.get("liveTerminalCount") or 0) > 0
-    active = any(a.get("state") in ACTIVE_STATES for a in lane.get("agents") or [])
+    states = {a.get("state") for a in lane.get("agents") or []}
+    live = (lane.get("liveTerminalCount") or 0) > 0 or bool(states & OPEN_STATES)
+    active = bool(states & ACTIVE_STATES)
     if git.get("error"):
         return "needs-attention", f"could not read the worktree: {git['error']}"
     if git["detached"]:
@@ -149,13 +152,13 @@ def classify(lane, pr, git, verdict, prs_unreadable=False):
     if prs_unreadable:
         return "needs-attention", "PR state could not be read from GitHub — nothing about this lane is known"
     if pr is None:
-        return ("working", "") if (active or live) else ("stalled", "session gone with unmerged work")
+        return ("working", "") if (active or live) else ("stalled", "no live session, unmerged work")
     if pr["state"] == "MERGED":
         if git["dirty"]:
             return "needs-attention", "dirty tree on a merged PR"
         if git["head"] != pr["headRefOid"]:
             return "needs-attention", "merged PR but HEAD has commits the PR does not"
-        return ("merged-live", "merged; close its terminals, then reap") if live else ("merged-reapable", "run /pod:status --reap")
+        return ("merged-live", "merged; close its terminals and chats, then reap") if live else ("merged-reapable", "run /pod:status --reap")
     if pr["state"] == "CLOSED":
         return "needs-attention", "PR closed without merging"
     v = verdict or {"state": "none"}
@@ -320,7 +323,8 @@ def waiting(res):
     for r in sorted(res["lanes"] or [], key=lambda r: order.index(r["verdict"]) if r["verdict"] in order else 99):
         if r["verdict"] in order:
             pr = f"PR #{r['pr']['number']}" if r["pr"] else r["name"]
-            items.append(f"{pr} (#{r['issue']}) · {r['verdict']} — {r['action']}")
+            issue = f" (#{r['issue']})" if r["issue"] else ""
+            items.append(f"{pr}{issue} · {r['verdict']} — {r['action']}")
         for f in r["flags"]:
             items.append(f"{r['name']} · {f}")
     b = res["backlog"] or {}

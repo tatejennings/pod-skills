@@ -124,8 +124,10 @@ orca worktree ps --limit 200 --json     # filter repoId + linkedIssue == n + isM
 
 - Lane present ⇒ `git -C <path> status --porcelain` must be empty, and the lane's agent must be idle
   (`orca terminal list --worktree id:<exact-id> --json`, then `terminal wait --for tui-idle
-  --timeout-ms 60000` on its agent terminal, or no agent terminal at all). Busy or dirty ⇒ skip this
-  tick, note it, try next tick.
+  --timeout-ms 60000` on its agent terminal). **No agent terminal counts as idle only when the
+  lane's `ps` row has no agent `working`, `blocked` or `waiting`** — a chat has no terminal, and a
+  fix dispatched beside a busy one collides with it. Busy or dirty ⇒ skip this tick, note it, try
+  next tick.
 - Lane gone (reaped) ⇒ the branch still exists on the remote. The fix agent checks out **that
   branch** in a fresh worktree — never a new branch. Use `orca worktree create --name <slug>-fix
   --no-parent --base-branch <branch> --issue <n> --json` and let the contract say the branch is

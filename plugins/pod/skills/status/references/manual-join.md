@@ -220,14 +220,14 @@ Exactly one per lane:
 
 | Verdict | Condition |
 |---|---|
-| `working` | agents active or terminals live; PR absent |
+| `working` | PR absent, and an agent is `working`, or a session is open: a live terminal, or an agent `blocked` or `waiting` |
 | `awaiting-gate` | a PR is open, no agent is active, and **no gate verdict is on it** — the lane's self-gate did not run; gate it with `/pod:verify` |
 | `gated-stale` | a valid verdict exists but its `head=` is not the PR's current `headRefOid` (or the base moved under it) — **commits landed after the gate ran.** Not a failure: nobody has checked this tree. Re-gate with `/pod:verify` |
 | `gate-failed` | a PR is open and the newest valid verdict is `FAIL` — the lane reworked once, failed again, and stopped |
 | `pr-open` | a PR is open and a passing gate verdict, **from a trusted author and matching the current head**, has been posted |
-| `merged-reapable` | PR merged + clean + `HEAD == headRefOid` + no live terminals |
-| `merged-live` | PR merged + clean + `HEAD == headRefOid` + terminals still live |
-| `stalled` | no live terminals, no open PR |
+| `merged-reapable` | PR merged + clean + `HEAD == headRefOid` + no live session |
+| `merged-live` | PR merged + clean + `HEAD == headRefOid` + a session still live |
+| `stalled` | no live session, no open PR |
 | `needs-attention` | anything contradictory (see below) |
 
 Resolution order:
@@ -248,6 +248,10 @@ Resolution order:
    wins: a fix agent mid-push is expected to invalidate the old verdict and post a
    new one, so staleness there is a normal intermediate state, not a finding.
 5. `pr-open` beats `working` — the PR supersedes; the session is just waiting.
+
+**A live session** is `liveTerminalCount > 0`, or any `agents[]` entry in
+`working`, `blocked` or `waiting`. A chat agent has no terminal, so the count
+alone misses it. `done` never counts: a closed chat stays listed as `done`.
 
 Notes: `HEAD != headRefOid` only counts as contradictory on a **merged** PR
 (post-merge commits a deletion would lose). On an open PR it is ordinary unpushed
@@ -358,8 +362,8 @@ the one distinction the reader needs at merge time.
   does not supersede it.
 - `merged-reapable` → "run `/pod:status --reap` to clean it up" (or reap now if
   `--reap` was passed)
-- `merged-live` → "merged — close its terminals, then it can be reaped"
-- `stalled` → "session gone with unmerged work" — and **name both exits**, since
+- `merged-live` → "merged — close its terminals and chats, then it can be reaped"
+- `stalled` → "no live session, unmerged work" — and **name both exits**, since
   neither is obvious:
   - **Resume it.** The executor contract still exists at
     `~/.claude/plans/<repo>/<date>-<slug>.prompt.md` and is exactly what a
@@ -462,7 +466,8 @@ All checks pass ⇒ delete:
 orca worktree rm --worktree id:<exact-id> --force
 ```
 
-Use the **exact id string** from the earlier call — never assemble one.
+Use the **exact id string** from the earlier call — never assemble one. Orca
+keeps the local branch after the delete; that is not a failed reap.
 
 Report per candidate: reaped, or skipped **with the exact failed check**. Any
 failure ⇒ skip, no prompt, no retry; the next run sees it again. This is what

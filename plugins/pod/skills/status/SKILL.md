@@ -73,14 +73,14 @@ checkmark — the three passing verdicts are different claims
 
 | Verdict | Means | Next action |
 |---|---|---|
-| `working` | an agent is mid-task (Orca state `working`), or terminals are live with no PR | none |
+| `working` | an agent is mid-task (Orca state `working`), or a session is open with no PR — a live terminal, or an agent `blocked` or `waiting` | none |
 | `awaiting-gate` | PR open and **never gated** — the lane's self-gate did not run | `/pod:verify <n>` before merging |
 | `gated-stale` | gated, then commits landed or the base moved — the current code is **unchecked**, not failed | `/pod:verify <n>` |
 | `gate-failed` | the newest valid verdict is `FAIL` — do not merge | `/pod:launch <n>` reworks it in the existing lane; the lane already spent its automatic rework |
 | `pr-open` | gated against the current head by a trusted author | yours to review and merge; name which passing verdict it carries, and the judged or unjudged criteria |
-| `merged-reapable` | merged, clean, `HEAD` matches, no terminals | `/pod:status --reap` |
-| `merged-live` | merged, but terminals still open | close them, then reap |
-| `stalled` | no terminals, no PR | resume: `orca terminal create --worktree <selector> --command "claude"` and point it at the lane's contract in `~/.claude/plans/<repo-name>/`; or abandon: close any PR, run the pre-deletion checklist in `../_shared/orca-lanes.md`, then `orca worktree rm` |
+| `merged-reapable` | merged, clean, `HEAD` matches, no live session | `/pod:status --reap` |
+| `merged-live` | merged, but a terminal or a chat agent is still open | close them, then reap |
+| `stalled` | no live session, no PR | resume: `orca terminal create --worktree <selector> --command "claude"` and point it at the lane's contract in `~/.claude/plans/<repo-name>/`; or abandon: close any PR, run the pre-deletion checklist in `../_shared/orca-lanes.md`, then `orca worktree rm` |
 | `needs-attention` | something contradictory — the script names it | fix the named contradiction; never reaped |
 
 The gate column shows a verdict only when it is fresh; `stale` means a verdict
@@ -126,15 +126,19 @@ can appear in that time.
 git -C <path> rev-parse --git-dir --git-common-dir     # equal ⇒ NEVER delete
 git -C <path> status --porcelain                        # must be empty
 git -C <path> rev-parse HEAD                            # must equal the PR's headRefOid
-orca worktree ps --limit 200 --json                     # liveTerminalCount == 0 for this lane
+orca worktree ps --limit 200 --json                     # liveTerminalCount == 0, and no agent working, blocked or waiting
 orca worktree rm --worktree id:<exact id> --force
 ```
+
+The agents half of that check is what catches a chat: it has no terminal, so
+`liveTerminalCount` stays zero while it works.
 
 The script prints a `reap: id=… path=… pr_head=…` line under each
 `merged-reapable` lane; take the id, path and PR head from it, exactly. Never
 assemble an id. Any check failing ⇒ skip and
 report which one — no prompt, no retry. Deletion removes the worktree and its
-Orca entry, not the remote branch or the PR.
+Orca entry, not the PR and not the branch: Orca keeps the local branch even
+with `--force`, and the remote one is untouched.
 
 ## Failure modes to avoid
 

@@ -22,7 +22,7 @@ build step.
     harness and the docs, and proposes new features worth adopting. **Run it
     after Claude Code upgrades.** Kept apart from `/audit-orca` because the two
     upgrade on unrelated schedules.
-    Last audited against Claude Code **2.1.318**, 2026-11-14.
+    Last audited against Claude Code **2.1.326**, 2026-11-22.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/pod/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/pod:<skill-name>`.
@@ -42,6 +42,13 @@ build step.
   failed in every skill. Worktree IDs are `<repoId>::<absolute-path>`; note that
   `worktree list` returns it as `id` while `worktree ps` returns it as
   `worktreeId`.
+- **A lane's agent runs in a terminal, and the handoff pins it with
+  `--surface terminal`.** Orca starts an agent as a chat or a terminal per the
+  user's setting, and a chat has no terminal to wait on, read, or close.
+  Liveness is the one place that looks past terminals: a lane is live if it has
+  a terminal **or** an agent `working`, `blocked` or `waiting`, so a chat the
+  user opened by hand is never reaped or dispatched into. Do not drop the pin
+  without replacing every `terminal wait` / `terminal read` that depends on it.
 - **Every skill states what it is NOT for, and names the bundled Orca skill that
   owns that case.** These skills sit on top of the Orca app, so their *subject*
   overlaps with Orca's own `orca-cli` and `orchestration` skills — "hand this off

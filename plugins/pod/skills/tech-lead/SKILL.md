@@ -261,9 +261,12 @@ For each open lane PR, in this precedence:
 - **`stalled` / `needs-attention`** ⇒ read the lane terminal (`orca terminal read`) once to tell
   *quiet* from *dead*: heartbeat-style activity or a busy TUI means alive — leave it. An exited
   agent with uncommitted work ⇒ *Waiting on you*. Never kill or restart a lane on a hunch.
+  A lane with no terminal but an agent in its `worktree ps` row is a chat: you cannot read or
+  wait on it, so name it under *Waiting on you* and leave it.
 
 Never dispatch a fix into a lane whose agent is not idle (`orca terminal wait --for tui-idle`
-times out) or whose tree is dirty (`git -C <path> status --porcelain` non-empty). Report and skip.
+times out, or its `worktree ps` row has an agent `working`, `blocked` or `waiting`) or whose tree
+is dirty (`git -C <path> status --porcelain` non-empty). Report and skip.
 
 ### 3.3 Fill capacity
 
